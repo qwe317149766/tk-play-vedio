@@ -6,6 +6,7 @@
 
 import time
 import threading
+import asyncio
 import urllib3
 from typing import Optional, Dict, Any, Union, List
 from curl_cffi import requests
@@ -71,15 +72,20 @@ class HttpClient:
 
     def _create_session(self):
         """创建新 Session"""
-        s = requests.Session()
-        s.headers.update({"Connection": "keep-alive"})
-        if self.proxy:
-            s.proxies = {"http": self.proxy, "https": self.proxy}
-        with self._lock:
-            self._pool.append(s)
-            self._session_count += 1
-        if self.debug:
-            print(f"[HttpClient] 创建新连接，总数={self._session_count}")
+        try:
+            s = requests.Session()
+            s.headers.update({"Connection": "keep-alive"})
+            if self.proxy:
+                s.proxies = {"http": self.proxy, "https": self.proxy}
+            with self._lock:
+                self._pool.append(s)
+                self._session_count += 1
+            if self.debug:
+                print(f"[HttpClient] 创建新连接，总数={self._session_count}")
+        except Exception as e:
+            if self.debug:
+                print(f"[HttpClient] 创建 Session 失败: {e}")
+            raise
 
     def _grow_pool(self):
         """扩容连接池"""
@@ -91,29 +97,74 @@ class HttpClient:
 
     def _get_session(self) -> requests.Session:
         """线程安全地获取 Session"""
+        import time
+        wait_start = time.time()
+        max_wait_time = 30.0  # 最多等待30秒
+        
         with self._pool_cond:
             while not self._closed:
                 if self._pool:
+                    elapsed = time.time() - wait_start
+                    if elapsed > 0.1 and self.debug:
+                        print(f"[HttpClient] 等待 Session 耗时: {elapsed:.3f}s")
                     return self._pool.pop()
+                
+                elapsed = time.time() - wait_start
+                if elapsed > max_wait_time:
+                    if self.debug:
+                        print(f"[HttpClient] 等待 Session 超时（{max_wait_time}秒），当前池大小: {len(self._pool)}, 总连接数: {self._session_count}")
+                    raise TimeoutError(f"等待 Session 超时（{max_wait_time}秒）")
+                
                 if self._session_count < self.pool_max_size:
                     self._grow_pool()
                     continue
-                self._pool_cond.wait(timeout=0.5)
+                
+                remaining_time = max_wait_time - elapsed
+                self._pool_cond.wait(timeout=min(0.5, remaining_time))
         raise RuntimeError("HttpClient 已关闭，无法获取连接")
 
     def _release_session(self, session: requests.Session):
         """释放 Session"""
         if self._closed:
-            session.close()
+            try:
+                session.close()
+            except Exception:
+                pass
+            return
+
+        # 检查 Session 是否已关闭
+        try:
+            # 尝试检查 Session 状态
+            if hasattr(session, 'closed') and session.closed:
+                # Session 已关闭，不放入池中
+                with self._lock:
+                    self._session_count -= 1
+                if self.debug:
+                    print("[HttpClient] Session 已关闭，移除连接")
+                return
+        except Exception:
+            # 无法检查状态，假设 Session 可能有问题，不放入池中
+            try:
+                session.close()
+            except Exception:
+                pass
+            with self._lock:
+                self._session_count -= 1
+            if self.debug:
+                print("[HttpClient] Session 状态异常，移除连接")
             return
 
         if not self.enable_keep_alive:
-            session.close()
+            try:
+                session.close()
+            except Exception:
+                pass
             with self._lock:
                 self._session_count -= 1
             if self.debug:
                 print("[HttpClient] Keep-Alive关闭，销毁连接")
         else:
+            # 将 Session 放回池中
             with self._pool_cond:
                 self._pool.append(session)
                 self._pool_cond.notify()
@@ -130,16 +181,37 @@ class HttpClient:
             alive = []
             for s in sessions_snapshot:
                 try:
+                    # 检查 Session 是否已关闭
+                    if hasattr(s, 'closed') and s.closed:
+                        try:
+                            s.close()
+                        except Exception:
+                            pass
+                        if self.debug:
+                            print("[HttpClient] 检测到已关闭的连接，移除")
+                        continue
+                    
+                    # 尝试检查 Session 状态
+                    # 注意：curl_cffi 的 Session 对象可能没有 curl 属性，或者 getinfo 需要参数
+                    # 我们只检查 closed 属性，不调用 getinfo
+                    if hasattr(s, "closed") and s.closed:
+                        continue
+                    
+                    # 如果 Session 有 curl 属性，尝试简单检查（但不调用 getinfo）
+                    # 因为 getinfo 需要参数，我们只检查对象是否存在
                     if hasattr(s, "curl"):
-                        s.curl.getinfo()
+                        # 不调用 getinfo，只检查 curl 对象是否存在
+                        pass
+                    
                     alive.append(s)
-                except Exception:
+                except Exception as e:
+                    # Session 已损坏或关闭
                     try:
                         s.close()
                     except Exception:
                         pass
                     if self.debug:
-                        print("[HttpClient] 检测到失效连接，已关闭")
+                        print(f"[HttpClient] 检测到失效连接，已关闭: {e}")
 
             with self._lock:
                 before = len(self._pool)
@@ -181,16 +253,50 @@ class HttpClient:
 
     def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
         """带重试机制的请求执行"""
+        import time
+        request_start = time.time()
         attempt = 0
+        session = None
         while attempt < self.max_retries:
-            session = self._get_session()
             try:
+                if self.debug:
+                    print(f"[HttpClient] 尝试获取 Session (尝试 {attempt + 1}/{self.max_retries})...")
+                session_start = time.time()
+                session = self._get_session()
+                session_elapsed = time.time() - session_start
+                if session_elapsed > 0.1 or self.debug:
+                    print(f"[HttpClient] 获取 Session 耗时: {session_elapsed:.3f}s")
+                
+                if self.debug:
+                    print(f"[HttpClient] 开始执行 {method} 请求: {url[:80]}...")
                 func = getattr(session, method.lower())
+                request_elapsed_start = time.time()
                 resp = func(url, **kwargs)
+                request_elapsed = time.time() - request_elapsed_start
+                if self.debug or request_elapsed > 5.0:
+                    print(f"[HttpClient] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}")
+                
                 self._stats["requests"] += 1
+                # 请求成功，释放 Session 回池
+                self._release_session(session)
+                session = None
+                
+                total_elapsed = time.time() - request_start
+                if total_elapsed > 5.0 or self.debug:
+                    print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
                 return resp
-            except requests.RequestsError as e:
+            except (requests.RequestsError, ConnectionError, TimeoutError) as e:
                 self._stats["failures"] += 1
+                # Session 可能已损坏，关闭并移除
+                if session is not None:
+                    try:
+                        session.close()
+                    except Exception:
+                        pass
+                    with self._lock:
+                        self._session_count -= 1
+                    session = None
+                
                 attempt += 1
                 if attempt >= self.max_retries:
                     raise
@@ -200,11 +306,44 @@ class HttpClient:
                 time.sleep(self.retry_delay)
             except Exception as e:
                 self._stats["failures"] += 1
+                # 检查是否是网络相关错误（需要重试）
+                error_str = str(e).lower()
+                is_network_error = (
+                    "session is closed" in error_str or 
+                    "closed" in error_str or
+                    "connection to proxy closed" in error_str or
+                    "connection closed" in error_str or
+                    "proxy" in error_str and "closed" in error_str or
+                    "connection" in error_str and "closed" in error_str
+                )
+                
+                if is_network_error:
+                    # 网络错误，移除 Session 并重试
+                    if session is not None:
+                        try:
+                            session.close()
+                        except Exception:
+                            pass
+                        with self._lock:
+                            self._session_count -= 1
+                        session = None
+                    
+                    attempt += 1
+                    if attempt >= self.max_retries:
+                        raise
+                    self._stats["retries"] += 1
+                    if self.debug:
+                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
+                    time.sleep(self.retry_delay)
+                    continue
+                
+                # 其他错误，释放 Session 后抛出
+                if session is not None:
+                    self._release_session(session)
+                    session = None
                 if self.debug:
                     print(f"[HttpClient] 未知错误: {e}")
                 raise
-            finally:
-                self._release_session(session)
 
     # ---------------------- 公共接口 ----------------------
 
@@ -224,7 +363,29 @@ class HttpClient:
 
     def delete(self, url: str, headers=None, **kwargs):
         req = self._prepare_request_kwargs(headers=headers, **kwargs)
-        return self._request_with_retry("DELETE", url, **req)
+        return self._request_with_retry("DELETE", url, **kwargs)
+    
+    # ---------------------- 异步接口 ----------------------
+    
+    async def get_async(self, url: str, headers=None, params=None, impersonate=None, **kwargs):
+        """异步 GET 请求（在线程池中执行，不阻塞事件循环）"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.get, url, headers, params, impersonate, **kwargs)
+    
+    async def post_async(self, url: str, headers=None, data=None, json=None, impersonate=None, http_version=None, **kwargs):
+        """异步 POST 请求（在线程池中执行，不阻塞事件循环）"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.post, url, headers, data, json, impersonate, http_version, **kwargs)
+    
+    async def put_async(self, url: str, headers=None, data=None, json=None, **kwargs):
+        """异步 PUT 请求（在线程池中执行，不阻塞事件循环）"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.put, url, headers, data, json, **kwargs)
+    
+    async def delete_async(self, url: str, headers=None, **kwargs):
+        """异步 DELETE 请求（在线程池中执行，不阻塞事件循环）"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.delete, url, headers, **kwargs)
 
     # ---------------------- 实用工具 ----------------------
 

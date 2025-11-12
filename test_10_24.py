@@ -49,11 +49,21 @@ def url_params_to_json(url):
     return result
 def build_query_string(params):
     return urlencode(params,safe='*').replace('%25', '%').replace('=&', '&').replace('+', '%20')
-def make_did_iid(device,proxy=""):
-    proxies = {
-       'http': proxy,
-       'https': proxy,
-    }
+def make_did_iid(device, proxy="", http_client=None):
+    """
+    注册设备并获取 device_id 和 install_id
+    
+    Args:
+        device: 设备信息字典
+        proxy: 代理地址（如果 http_client 为 None 时使用）
+        http_client: HttpClient 实例（优先使用）
+    """
+    use_http_client = http_client is not None
+    if not use_http_client:
+        proxies = {
+           'http': proxy,
+           'https': proxy,
+        }
     # --- 小工具：生成紧凑 JSON，按真机习惯转义斜杠 ---
     def to_compact_json(d: dict, escape_slash: bool = True) -> str:
         s = json.dumps(d, ensure_ascii=False, separators=(',', ':'))
@@ -268,17 +278,29 @@ def make_did_iid(device,proxy=""):
     }
 
     # 发送时：URL里就是上面那个 query_string；body 就是 body_json
-    if proxy!="":
+    request_start = time.time()
+    
+    if use_http_client:
+        # 使用 HttpClient
+        print(f"[make_did_iid] 开始调用 http_client.post, url={url[:80]}...")
+        try:
+            resp = http_client.post(url, headers=headers, data=body_json)
+            elapsed = time.time() - request_start
+            print(f"[make_did_iid] http_client.post 完成, 耗时: {elapsed:.3f}s, 状态码: {resp.status_code}")
+        except Exception as e:
+            elapsed = time.time() - request_start
+            print(f"[make_did_iid] http_client.post 出错, 耗时: {elapsed:.3f}s, 错误: {e}")
+            raise
+    elif proxy != "":
         resp = requests.post(url, headers=headers, data=body_json, timeout=15,
                              proxies=proxies,
                              verify=False,
-                             # impersonate="okhttp4_android" # Match User-Agent profile
+                             impersonate="okhttp4_android"
                              )
     else:
         resp = requests.post(url, headers=headers, data=body_json, timeout=15,
-                             # proxies=proxies,
-                             # verify=False,
-                             # impersonate="okhttp4_android" # Match User-Agent profile
+                             verify=False,
+                             impersonate="okhttp4_android"
                              )
     # print(resp.text)
     # 调试
@@ -295,11 +317,21 @@ def make_did_iid(device,proxy=""):
     device["install_id"] = str(install_id) if install_id is not None else ""
     # print("device_id:", device_id,"install_id:", install_id)
     return [device,device_id]
-def alert_check(device,proxy=""):
-    proxies = {
-        'http': proxy,
-        'https': proxy,
-    }
+def alert_check(device, proxy="", http_client=None):
+    """
+    检查设备告警
+    
+    Args:
+        device: 设备信息字典
+        proxy: 代理地址（如果 http_client 为 None 时使用）
+        http_client: HttpClient 实例（优先使用）
+    """
+    use_http_client = http_client is not None
+    if not use_http_client:
+        proxies = {
+            'http': proxy,
+            'https': proxy,
+        }
     now = time.time()
     utime = int(now * 1000)  # 毫秒
     stime = int(now)  # 秒
@@ -391,17 +423,26 @@ def alert_check(device,proxy=""):
         # 3. Send the GET request.
         # The 'impersonate' parameter mimics a real Android app's TLS fingerprint.
         # Based on 'tt-ok' in the User-Agent, we choose to impersonate an OkHttp client.
-        if proxy!="":
+        if use_http_client:
+            # 使用 HttpClient（已包含重试和超时机制）
+            response = http_client.get(url, headers=dict(headers))
+            return "success"
+        elif proxy != "":
             response = requests.get(
                 url,
-                headers=dict(headers)
-                ,proxies=proxies,verify=False
+                headers=dict(headers),
+                proxies=proxies,
+                verify=False,
+                timeout=30,
+                impersonate="okhttp4_android"
             )
         else:
             response = requests.get(
                 url,
-                headers=dict(headers)
-
+                headers=dict(headers),
+                timeout=30,
+                verify=False,
+                impersonate="okhttp4_android"
             )
         # print(response.text)
         # if response.text=='{"message":"success"}':
@@ -410,6 +451,7 @@ def alert_check(device,proxy=""):
 
     except Exception as e:
         print(f"An error occurred during the request: {e}")
+        return f"error: {str(e)}"
 # if __name__ == '__main__':
 #     proxy = "socks5h://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000"
 #     for i in range(10000):

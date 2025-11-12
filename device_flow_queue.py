@@ -16,14 +16,6 @@ from config_loader import ConfigLoader
 # ===================== 业务函数导入 =====================
 from devices import getANewDevice
 from tiktok_api import TikTokAPI
-try:
-    from test_10_24 import make_did_iid, alert_check
-except ImportError:
-    # 兼容性导入
-    try:
-        from __main__ import make_did_iid, alert_check
-    except ImportError:
-        raise ImportError("无法导入 make_did_iid 和 alert_check")
 
 # ===================== 配置加载 =====================
 def load_config():
@@ -117,10 +109,10 @@ class Stats:
             return self.ok, self.fail
 
 # ===================== 业务逻辑 =====================
-def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, str, Dict]:
+async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, str, Dict]:
     """
-    执行设备流程（业务逻辑）
-    使用 TikTokAPI 进行请求
+    执行设备流程（业务逻辑）- 异步版本
+    使用 TikTokAPI 进行请求（异步执行，不阻塞）
     
     Args:
         job: 任务数据
@@ -133,57 +125,100 @@ def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, str, Dic
     device_id = None
     seed_type = None
     try:
+        print(f"[RUN_DEVICE_FLOW] 开始执行设备流程: job={job}, proxy_url={proxy_url}")
         # 使用全局 TikTokAPI 实例
         global _api_instance
         if _api_instance is None:
             raise RuntimeError("TikTokAPI 实例未初始化")
         api = _api_instance
         
-        # 1) new device
+        # 1) new device（同步操作，在线程池中执行）
         step = "new_device"
-        device = getANewDevice()
-
-        # 2) did/iid
-        step = "did_iid"
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 获取新设备")
         try:
-            dev1, device_id = make_did_iid(device, proxy=proxy_url)
-        except TypeError:
-            dev1, device_id = make_did_iid(device, proxy=proxy_url)
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # 如果没有运行中的事件循环，尝试获取当前事件循环
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                # 事件循环已关闭，无法执行
+                return False, "事件循环已关闭，无法执行任务", {"step": step}
+        
+        try:
+            device = await loop.run_in_executor(None, getANewDevice)
+        except RuntimeError as e:
+            if "cannot schedule new futures" in str(e):
+                return False, f"事件循环已关闭: {e}", {"step": step}
+            raise
+
+        # 2) did/iid - 使用 TikTokAPI（通过 HttpClient，异步执行）
+        step = "did_iid"
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 make_did_iid_async")
+        try:
+            dev1, device_id = await api.make_did_iid_async(device)
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: make_did_iid_async 完成, device_id={device_id}")
+        except Exception as ex:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: make_did_iid_async 出错: {ex}")
+            return False, f"did/iid error: {ex}", {"step": step}
         if not device_id:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: device_id 为空")
             return False, "did/iid empty device_id", {"step": step}
 
-        # 3) alert_check
+        # 3) alert_check - 使用 TikTokAPI（通过 HttpClient，异步执行）
         step = "alert_check"
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 alert_check_async")
         try:
-            chk = alert_check(dev1, proxy=proxy_url)
-        except TypeError:
-            chk = alert_check(dev1, proxy=proxy_url)
+            chk = await api.alert_check_async(dev1)
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check_async 完成, chk={chk}")
+        except Exception as ex:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check_async 出错: {ex}")
+            return False, f"alert_check error: {ex}", {"step": step, "device_id": device_id}
         if str(chk).lower() != "success":
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check 失败, chk={chk}")
             return False, f"alert_check fail ({chk})", {"step": step, "device_id": device_id}
 
-        # 4) seed - 使用 TikTokAPI
+        # 4) seed - 使用 TikTokAPI（异步执行）
         step = "seed"
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_seed_async")
         try:
-            seed, seed_type = api.get_seed(dev1)
+            seed, seed_type = await api.get_seed_async(dev1)
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 完成, seed={seed[:20] if seed else None}..., seed_type={seed_type}")
         except Exception as ex:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 出错: {ex}")
             return False, f"seed error: {ex}", {"step": step, "device_id": device_id}
         if not seed:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: seed 为空")
             return False, "seed empty", {"step": step, "device_id": device_id}
 
-        # 5) token - 使用 TikTokAPI
+        # 5) token - 使用 TikTokAPI（异步执行）
         step = "token"
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_token_async")
         try:
-            token = api.get_token(dev1)
+            token = await api.get_token_async(dev1)
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 完成, token={token[:20] if token else None}...")
         except Exception as ex:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 出错: {ex}")
             return False, f"token error: {ex}", {"step": step, "device_id": device_id, "seed_type": seed_type}
         if not token:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: token 为空")
             return False, "token empty", {"step": step, "device_id": device_id, "seed_type": seed_type}
 
-        # 6) 回填 & 落盘
+        # 6) 回填 & 落盘（文件写入在线程池中执行）
         dev1["seed"] = seed
         dev1["seed_type"] = seed_type
         dev1["token"] = token
-        append_device_jsonl(dev1)
+        try:
+            await loop.run_in_executor(None, append_device_jsonl, dev1)
+        except RuntimeError as e:
+            if "cannot schedule new futures" in str(e):
+                # 事件循环已关闭，直接同步写入（作为后备方案）
+                try:
+                    append_device_jsonl(dev1)
+                except Exception:
+                    pass  # 忽略写入错误
+            else:
+                raise
         return True, "ok", {"device_id": device_id, "seed_type": seed_type}
 
     except Exception as ex:
@@ -199,7 +234,10 @@ async def execute_device_flow_task(task_data: Dict[str, Any]):
     """
     global _proxy, _logger, _stats
     
+    print(f"[EXECUTE_TASK] 开始执行设备流程任务: {task_data}")
+    
     if _proxy is None or _logger is None or _stats is None:
+        print(f"[EXECUTE_TASK] 全局变量未初始化: _proxy={_proxy}, _logger={_logger}, _stats={_stats}")
         return
     
     try:
@@ -210,19 +248,19 @@ async def execute_device_flow_task(task_data: Dict[str, Any]):
         meta = {}
         
         try:
-            # 执行业务逻辑
-            ok, msg, meta = await asyncio.to_thread(
-                run_device_flow,
-                task_data,
-                _proxy
-            )
+            # 执行业务逻辑（现在是异步函数，直接 await）
+            print(f"[EXECUTE_TASK] 开始调用 run_device_flow: {task_data}")
+            ok, msg, meta = await run_device_flow(task_data, _proxy)
+            print(f"[EXECUTE_TASK] run_device_flow 完成: {task_data}, ok={ok}, msg={msg}")
         except Exception as ex:
             ok = False
             msg = f"EX:{type(ex).__name__}:{ex}\n{traceback.format_exc(limit=1)}"
+            print(f"[EXECUTE_TASK] run_device_flow 出错: {task_data}, 错误: {ex}")
         
         elapsed = time.time() - t0
         (_stats.add_ok() if ok else _stats.add_fail())
         _logger.log(f"[proxy={_proxy}] job={task_data} -> {msg} {meta} elapsed={elapsed:.3f}s")
+        print(f"[EXECUTE_TASK] 任务完成: {task_data}, elapsed={elapsed:.3f}s")
         
     except Exception as ex:
         if _logger:
@@ -238,27 +276,50 @@ _task_counter_lock = threading.Lock()
 _max_tasks = 0  # 0 表示无限制
 
 def threshold_callback():
-    """阈值补给回调"""
-    global _task_counter, _max_tasks
+    """阈值补给回调（同步函数，应该快速执行）"""
+    global _task_counter, _max_tasks, CONFIG
     
-    with _task_counter_lock:
-        if _max_tasks > 0 and _task_counter >= _max_tasks:
-            return []  # 没有更多任务
-        
-        # 每次补给一批任务
-        batch_size = CONFIG.get("max_concurrent", 1000)
-        remaining = _max_tasks - _task_counter if _max_tasks > 0 else batch_size
-        batch_size = min(batch_size, remaining) if _max_tasks > 0 else batch_size
-        
-        tasks = [{"i": _task_counter + i} for i in range(batch_size)]
-        _task_counter += batch_size
-        
-        return tasks if tasks else []
+    try:
+        with _task_counter_lock:
+            if _max_tasks > 0 and _task_counter >= _max_tasks:
+                return []  # 没有更多任务
+            
+            # 每次补给一批任务（减少批次大小，避免一次性生成太多任务）
+            max_concurrent = CONFIG.get("max_concurrent", 1000)
+            # 每次只补给 max_concurrent 的一半，避免一次性生成太多
+            batch_size = min(max_concurrent // 2, 500)  # 最多500个任务
+            if batch_size < 100:
+                batch_size = 100  # 最少100个任务
+            
+            remaining = _max_tasks - _task_counter if _max_tasks > 0 else batch_size
+            batch_size = min(batch_size, remaining) if _max_tasks > 0 else batch_size
+            
+            if batch_size <= 0:
+                return []
+            
+            # 快速生成任务列表
+            tasks = [{"i": _task_counter + i} for i in range(batch_size)]
+            _task_counter += batch_size
+            
+            return tasks
+    except Exception as e:
+        print(f"[ERROR] threshold_callback 执行失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 async def task_callback(task_data: Dict[str, Any]):
     """任务执行回调（异步）"""
     # 直接执行任务（message_queue 已经使用 create_task 包装，不会阻塞）
-    await execute_device_flow_task(task_data)
+    try:
+        # 任务回调被调用，说明已经获取到信号量，可以执行
+        print(f"[TASK_CALLBACK] 开始执行任务: {task_data}")
+        await execute_device_flow_task(task_data)
+        print(f"[TASK_CALLBACK] 任务执行完成: {task_data}")
+    except Exception as e:
+        # 错误会被 _execute_task 捕获并记录，这里不需要重复处理
+        print(f"[TASK_CALLBACK] 任务执行出错: {task_data}, 错误: {e}")
+        raise
 
 def main():
     """主函数"""
@@ -271,12 +332,17 @@ def main():
     
     print(f"使用代理: {_proxy}")
     
-    # 创建 TikTokAPI 实例（全局单例）
+    # 创建 TikTokAPI 实例（全局单例，使用全局 HttpClient）
+    # 增加重试次数和延迟，以应对代理连接不稳定的情况
     _api_instance = TikTokAPI(
         proxy=_proxy,
-        pool_initial_size=CONFIG.get("pool_initial_size", 1000),
-        pool_max_size=CONFIG.get("pool_max_size", 5000),
-        pool_grow_step=CONFIG.get("pool_grow_step", 50)
+        timeout=30,
+        max_retries=1,  # 增加重试次数到 5 次
+        retry_delay=2.0,  # 重试延迟 2 秒
+        pool_initial_size=CONFIG.get("pool_initial_size", 100),
+        pool_max_size=CONFIG.get("pool_max_size", 2000),
+        pool_grow_step=CONFIG.get("pool_grow_step", 10),
+        use_global_client=True
     )
     
     # 创建日志和统计
@@ -309,6 +375,29 @@ def main():
             ok, fail = _stats.snapshot()
             d_ok, d_fail = ok - last_ok, fail - last_fail
             last_ok, last_fail = ok, fail
+            
+            # 打印并发数信息
+            current_running = queue_stats.get("running_tasks", 0)
+            max_concurrent = queue_stats.get("max_concurrent", 0)
+            queue_size = queue_stats.get("queue_size", 0)
+            completed = queue_stats.get("completed_tasks", 0)
+            failed = queue_stats.get("failed_tasks", 0)
+            
+            # 计算并发率
+            concurrency_rate = (current_running / max_concurrent * 100) if max_concurrent > 0 else 0
+            
+            print(f"\n{'='*80}")
+            print(f"[并发监控] 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"  当前并发数: {current_running}/{max_concurrent} ({concurrency_rate:.1f}%)")
+            print(f"  队列大小: {queue_size}")
+            print(f"  已完成: {completed}, 失败: {failed}")
+            print(f"  成功/失败: {d_ok}/{d_fail} (最近{stats_every}秒)")
+            print(f"{'='*80}")
+            
+            # 如果并发数明显低于配置值，发出警告
+            if max_concurrent > 0 and current_running < max_concurrent * 0.8:
+                print(f"⚠️  警告: 当前并发数({current_running})低于配置值({max_concurrent})的80%")
+                print(f"   可能原因: 任务执行过快、队列任务不足、或任务被阻塞")
             
             print(f"[stats] ok={ok} (+{d_ok}) fail={fail} (+{d_fail}) "
                   f"queue_total={queue_stats['total_tasks']} "

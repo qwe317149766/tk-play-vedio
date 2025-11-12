@@ -10,7 +10,21 @@ from headers.device_ticket_data import make_device_ticket_data
 from mssdk.get_seed.seed_test import get_get_seed
 from mssdk.get_token.token_test import get_get_token
 
-def stats_3(aweme_id,seed,seed_type,token,device,signcount,proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000'):
+def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000', http_client=None):
+    """
+    统计数据接口
+    
+    Args:
+        aweme_id: 视频 ID
+        seed: seed 字符串
+        seed_type: seed 类型
+        token: token 字符串
+        device: 设备信息字典
+        signcount: 签名计数
+        proxy: 代理地址（如果 http_client 为 None 时使用）
+        http_client: HttpClient 实例（优先使用）
+    """
+    use_http_client = http_client is not None
     # 禁用 HTTPS 警告
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     device_id = device["device_id"]
@@ -31,10 +45,13 @@ def stats_3(aweme_id,seed,seed_type,token,device,signcount,proxy='socks5://1pjw6
     # seed,seed_type = get_get_seed(device,proxy)
     # token = get_get_token(device,proxy)
 
-    proxies = {
-        'http': proxy,
-        'https': proxy,
-    }
+    if not use_http_client:
+        proxies = {
+            'http': proxy,
+            'https': proxy,
+        }
+    else:
+        proxies = None
     timee = time.time()
     utime = int(timee * 1000)
     stime = int(timee)
@@ -150,15 +167,19 @@ def stats_3(aweme_id,seed,seed_type,token,device,signcount,proxy='socks5://1pjw6
     }
 
     try:
-        resp = requests.post(
-            url,
-            headers=headers,
-            data=data,
-            verify=False,
-            proxies=proxies,
-            impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
-            http_version="v2"  # 强制使用 HTTP/2
-        )
+        if use_http_client:
+            # 使用 HttpClient（已包含重试和超时机制）
+            resp = http_client.post(url, headers=headers, data=data)
+        else:
+            resp = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                verify=False,
+                proxies=proxies,
+                impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
+                http_version="v2"  # 强制使用 HTTP/2
+            )
 
         print(f"Status Code: {resp.status_code}")
         print("--- Response Body ---")
@@ -168,19 +189,23 @@ def stats_3(aweme_id,seed,seed_type,token,device,signcount,proxy='socks5://1pjw6
         return resp.text
 
     except Exception as e:
-        resp = requests.post(
-            url,
-            headers=headers,
-            data=data,
-            verify=False,
-            proxies=proxies,
-            impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
-            http_version="v1"  # 强制使用 HTTP/2
-        )
+        if use_http_client:
+            # HttpClient 已包含重试机制，如果失败则抛出异常
+            raise
+        else:
+            resp = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                verify=False,
+                proxies=proxies,
+                impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
+                http_version="v1"  # 强制使用 HTTP/1
+            )
 
-        print(f"Status Code: {resp.status_code}")
-        print("--- Response Body ---")
-        print(resp.text)
-        # 如果返回的是 gzipped 数据，你可能需要解压
-        # print(resp.content)
-        return resp.text
+            print(f"Status Code: {resp.status_code}")
+            print("--- Response Body ---")
+            print(resp.text)
+            # 如果返回的是 gzipped 数据，你可能需要解压
+            # print(resp.content)
+            return resp.text

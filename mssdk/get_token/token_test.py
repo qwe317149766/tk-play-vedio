@@ -432,19 +432,31 @@ def mssdk_decrypt(encrypted_hex: str, is_report: bool, is_request: bool) -> str:
     return original_pb_hex
 
 
-def get_get_token(cookie_data:dict,proxy=""):
+def get_get_token(cookie_data:dict, proxy="", http_client=None):
+    """
+    获取 token
+    
+    Args:
+        cookie_data: 设备信息字典
+        proxy: 代理地址（如果 http_client 为 None 时使用）
+        http_client: HttpClient 实例（优先使用）
+    """
+    use_http_client = http_client is not None
     # 1. Define the URL and query parameters
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    # Proxy settings for debugging with tools like Charles or Fiddler
-    proxies = {
-        'http': 'http://127.0.0.1:7777',
-        'https': 'http://127.0.0.1:7777',
-    }
-    proxies = {
-        'http': proxy,
-        'https': proxy,
-    }
+    if not use_http_client:
+        # Proxy settings for debugging with tools like Charles or Fiddler
+        proxies = {
+            'http': 'http://127.0.0.1:7777',
+            'https': 'http://127.0.0.1:7777',
+        }
+        proxies = {
+            'http': proxy,
+            'https': proxy,
+        }
+    else:
+        proxies = None
     # iid = cookie_data["install_id"]
     # device_id = cookie_data["device_id"]
     # ttreq = cookie_data["ttreq"]
@@ -569,23 +581,27 @@ def get_get_token(cookie_data:dict,proxy=""):
 
     # 5. Make the request and print the response
     res = ""
-    if proxy!="":
+    if use_http_client:
+        # 使用 HttpClient（已包含重试和超时机制）
+        response = http_client.post(url, headers=dict(headers), data=data)
+    elif proxy != "":
         response = requests.post(
             url,
             headers=dict(headers),
             data=data,
             proxies=proxies,
             verify=False,
-            # impersonate="okhttp4_android"
+            timeout=30,
+            impersonate="okhttp4_android"
         )
     else:
         response = requests.post(
             url,
             headers=dict(headers),
             data=data,
-            # proxies=proxies,
-            # verify=False,
-            # impersonate="okhttp4_android"
+            verify=False,
+            timeout=30,
+            impersonate="okhttp4_android"
         )
 
     # print(f"Status Code: {response.status_code}")

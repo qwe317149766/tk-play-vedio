@@ -368,14 +368,26 @@ def mssdk_encrypt(pb:hex,is_report: bool):
     res = last_aes_encrypt(for_aes)
     # print("res",res)
     return res
-def get_get_seed(cookie_data:dict,proxy=""):
+def get_get_seed(cookie_data:dict, proxy="", http_client=None):
+    """
+    获取 seed
+    
+    Args:
+        cookie_data: 设备信息字典
+        proxy: 代理地址（如果 http_client 为 None 时使用）
+        http_client: HttpClient 实例（优先使用）
+    """
+    use_http_client = http_client is not None
     # 配置代理
-    if proxy:
-        # 确保代理 URL 格式正确
-        proxies = {
-            'http': proxy,
-            'https': proxy,
-        }
+    if not use_http_client:
+        if proxy:
+            # 确保代理 URL 格式正确
+            proxies = {
+                'http': proxy,
+                'https': proxy,
+            }
+        else:
+            proxies = None
     else:
         proxies = None
     # iid = cookie_data["install_id"]
@@ -498,22 +510,27 @@ def get_get_seed(cookie_data:dict,proxy=""):
     
     while retry_count < max_retries:
         try:
-            # 统一请求参数
-            request_kwargs = {
-                'url': url,
-                'headers': dict(headers),
-                'data': data,
-                'verify': False,
-                'timeout': 30,
-                'impersonate': "okhttp4_android"  # 使用 impersonate 可能有助于解决 SSL 问题
-            }
-            
-            # 如果有代理，添加代理配置
-            if proxies:
-                request_kwargs['proxies'] = proxies
-            
-            response = requests.post(**request_kwargs)
-            break  # 成功则跳出循环
+            if use_http_client:
+                # 使用 HttpClient（已包含重试和超时机制）
+                response = http_client.post(url, headers=dict(headers), data=data)
+                break  # 成功则跳出循环
+            else:
+                # 统一请求参数
+                request_kwargs = {
+                    'url': url,
+                    'headers': dict(headers),
+                    'data': data,
+                    'verify': False,
+                    'timeout': 30,
+                    'impersonate': "okhttp4_android"  # 使用 impersonate 可能有助于解决 SSL 问题
+                }
+                
+                # 如果有代理，添加代理配置
+                if proxies:
+                    request_kwargs['proxies'] = proxies
+                
+                response = requests.post(**request_kwargs)
+                break  # 成功则跳出循环
         except Exception as e:
             retry_count += 1
             if retry_count >= max_retries:
