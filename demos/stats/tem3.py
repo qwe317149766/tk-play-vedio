@@ -1,0 +1,186 @@
+import gzip
+import random
+import time
+
+from curl_cffi import requests, curl
+import urllib3
+
+from headers import make_headers
+from headers.device_ticket_data import make_device_ticket_data
+from mssdk.get_seed.seed_test import get_get_seed
+from mssdk.get_token.token_test import get_get_token
+
+def stats_3(aweme_id,seed,seed_type,token,device,signcount,proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000'):
+    # 禁用 HTTPS 警告
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    device_id = device["device_id"]
+    install_id = device["install_id"]
+    ua = device["ua"]
+    apk_first_install_time = device["apk_first_install_time"]
+    apk_last_update_time = device["apk_last_update_time"]
+    last_install_time = apk_last_update_time // 1000
+    # device = {"device_type":"Pixel 6"
+    #           ,"ua":"com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en; Pixel 6; Build/BP1A.250505.005; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)"
+    #           ,"device_id":device_id,
+    #           "install_id":"{install_id}",
+    #           "apk_first_install_time":1762624604}
+
+    # 代理设置 (来自你的上一个脚本)
+    # proxy = 'socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000'
+
+    # seed,seed_type = get_get_seed(device,proxy)
+    # token = get_get_token(device,proxy)
+
+    proxies = {
+        'http': proxy,
+        'https': proxy,
+    }
+    timee = time.time()
+    utime = int(timee * 1000)
+    stime = int(timee)
+    # 目标 URL
+    query_string = f"os=android&_rticket={utime}&is_pad=0&last_install_time={last_install_time}&host_abi=arm64-v8a&ts={stime}&ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand=google&device_id={device_id}&device_platform=android&device_type=Pixel%206&dpi=420&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3"
+    url = f"https://aggr16-normal.tiktokv.us/aweme/v1/aweme/stats/?os=android&_rticket={utime}&is_pad=0&last_install_time={last_install_time}&host_abi=arm64-v8a&ts={stime}&"
+    pre_play_time = random.randint(100,1000)
+    dt = f"pre_item_playtime={pre_play_time}&user_algo_refresh_status=false&first_install_time={apk_first_install_time}&item_id={aweme_id}&is_ad=0&follow_status=0&pre_item_watch_time={utime-pre_play_time}&sync_origin=false&follower_status=0&action_time={stime}&tab_type=22&pre_hot_sentence=&play_delta=1&request_id=&aweme_type=0&order=&pre_item_id={aweme_id}"
+    post_data = dt.encode("utf-8").hex()
+    data = gzip.compress(dt.encode("utf-8"))
+    # POST 数据 (来自你的上一个脚本, 长度为 215 字节)
+    # data = bytes.fromhex(
+    #     "1f8b08000000000000ff6d8f416ec4200c456fe335610899597016cb0dce0489400a8ea2dc7e98b451abaa5b4beff9fdb53006e105d748878485ddad1b1eb0552e48f199b1f054b8ce588564ab6ea25819a650aa6048ed18239e5837586db5b1cac0e90bde0dbd7dd8db608deecdbd53c63471a848de2998728c79bfac1dac57c74e32cebf94f7de34b457508f34622ee119d255713a5ae8b745018d1272fa4b83d007cab1b2d3fa7c3467c1ca49388dece0bd1c3d47a1d651f873e3f736ef80765ef80b54908be7e27e3affdff702e43b98564f010000")
+    # post_data = gzip.decompress(data).hex()
+    # x_ss_stub, x_khronos, x_argus, x_ladon, x_gorgon = make_headers.make_headers(
+    #         "device_id",  # 依你的实现
+    #         1762685412,
+    #         210,
+    #         2,
+    #         4,
+    #         stime - random.randint(1, 10),
+    #         "AtehUvuakUNaxD3fltTD4utYE",
+    #         "Pixel 6",  # 用真实 model
+    #         "MDGnHZ7VqnsBIDh8yTpmlIK0y7Z/TXV2UDcp9PkHSh2BLEmFFzA7FwV4Qhm3NQSm2ekBJAbOxxKfvQ7OUKWjBFOVkmDdVrABd95nmk5AuDQx/MkTFrnkoHoTMSrauYXOBPE=", 5, '', "", "",
+    #         query_string,
+    #         post_data  # 注意：传 bytes，不是 hex
+    #     )
+    x_ss_stub, x_khronos, x_argus, x_ladon, x_gorgon = make_headers.make_headers(
+            device_id,  # 依你的实现
+            stime,
+            signcount,
+            2,
+            4,
+            stime - random.randint(1, 10),
+            token,
+            "Pixel 6",  # 用真实 model
+            seed,seed_type , '', "", "",
+            query_string,
+            post_data  # 注意：传 bytes，不是 hex
+        )
+    # 合并所有 cookie 到一个字符串中
+    cookie_string = (
+        "store-idc=useast5; "
+        # "passport_csrf_token=581c95925528254e2aa7287966b76c12; "
+        # "passport_csrf_token_default=581c95925528254e2aa7287966b76c12; "
+        "store-country-code=us; "
+        # "tt_ticket_guard_has_set_public_key=1; "
+        "tt-target-idc=useast8; "
+        # "d_ticket=dede348c4997f17e0e38f72104369b086a14b; "
+        # "multi_sids=7563872164294853645%3A9cdece2aec36a4906715b88d7b29ef39%7C7570594612478280718%3Ac535b47faacd6dc95a57bc9b74d70d56%7C7570598231240492046%3A6dd70a36c928a1c6445f089cc3dd7d48%7C7570629804304860173%3A7943bb02c44fed9c8c5a623fb175f92a%7C7570636100524885047%3Afdb15013f227a68c1d9b3d4c712869dc; "
+        # "cmpl_token=AgQQAPNSF-RPsLkuo8uvuh0O824a_JARP4zZYKPdLg; "
+        # "sid_guard=fdb15013f227a68c1d9b3d4c712869dc%7C1762680659%7C15552000%7CFri%2C+08-May-2026+09%3A30%3A59+GMT; "
+        # "uid_tt=17f52e71caa0d3de98b1ad29ec163f5eff4bbe630af838b2d27e35bb277e6d5c; "
+        # "uid_tt_ss=17f52e71caa0d3de98b1ad29ec163f5eff4bbe630af838b2d27e35bb277e6d5c; "
+        # "sid_tt=fdb15013f227a68c1d9b3d4c712869dc; "
+        # "sessionid=fdb15013f227a68c1d9b3d4c712869dc; "
+        # "sessionid_ss=fdb15013f227a68c1d9b3d4c712869dc; "
+        # "tt_session_tlb_tag=sttt%7C5%7C_bFQE_Inpowdmz1McShp3P_________ubE_QJSYq49EjL6-ZFazM17vO2gLDJ1jsj9n9nW26Edk%3D; "
+        # "store-country-code-src=uid; "
+        f"install_id={install_id}; "
+        # "ttreq=1$9205bebb95b0c9de217ca4017890aabf70010e33; "
+        # "store-country-sign=MEIEDNmnx6usf2uBOFnKGQQgLJE2zo3vMzsnMd6LC5zuEcdezShTDUeMFn-wLc3i2hIEEJk1fDTjlBFN13gUuf49v5I; "
+        # "odin_tt=79638f57ce3ce832784de8c119f52e2ff00b9d91d0303f7521acbad40892abeaa1b4b07ae95d450dbf895bfa70c7cd0662ab465198c9ba075e18ce85c6d303c029a0f28c3d75a1ff584b7a6684fa34bd; "
+        # "msToken=chLSZTooKbc02fcrKmLmLTR4pMZdem6auE-4OOZWJlDfxcHh7w7pdTVlm9vQLdlcTirDez-6Z500xPepxDqOm0mtBMHgf64lGmY-N2zJWPGyE01EWOFEGO-NGU80; "
+        # "BUYER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjc1NzA2MzYxMDA1MjQ4ODUwNDcsIk9lY1VpZCI6NzQ5NDI0NTM3OTIyNDAxMjE0MCwiUGlnZW9uVWlkIjo3NTcwNjM2NTA3MzgwMjg3MjQ2LCJleHAiOjE3NjI3NzE1NzQsIm5iZiI6MTc2MjY4NDE3NH0.k6_mWm8VhDQCFEgItvXvVNzgNip-DopHKZse0Aur6ys; "
+        # "user_oec_info=0a538d1b0d819252819936cbd6b421ba70d87c1048e0e6f136e6959b1729975f7b474138ec525072851ca9914bca193941cc574b6974626aef0bb21299f201ff07a5a875af1ba01a614cb331d2f5ffadd15aa03b9b1a490a3c000000000000000000004fb17bfaa1b1b3ff8bada28bc46f05d89b16123a720932414dd2770cadbd7fe1a93826601c5dafd1d4562e9f2e6e3ba3d36e10d88a810e1886d2f6f20d220104a5eec27d"
+    )
+
+    # 所有的请求头
+    headers = {
+        "authority": "aggr16-normal.tiktokv.us",
+        "cookie": cookie_string,
+        "x-tt-pba-enable": "1",
+        "x-bd-kmsv": "0",
+        "x-tt-dm-status": "login=0;ct=0;rt=1",
+        # "x-ss-req-ticket": "1762685410967",
+        "sdk-version": "2",
+        # "x-tt-token": "04fdb15013f227a68c1d9b3d4c712869dc0027311ad9c409182af4b9145ce6e3b5b4a5eb6bb8c2ae2e2a12a7a1f15683255921f13485b2872150c3b9b4cf4c85dbce56bec258468469c6a3ebeda1d94bd799231b1cd320d81459b3a8e5d27eea45935--0a4e0a20e8918dd7b268d857d868a762ff6663b78ffc64dd2a594098567bfbd8b3e469cf12205940a7251d2535f13c85c2164250087d3f978aef2a8759417889650f5b4682321801220674696b746f6b-3.0.1",
+        "passport-sdk-version": "-1",
+        "x-vc-bdturing-sdk-version": "2.3.17.i18n",
+        # "rpc-persist-pns-region-1": "US|6252001|5332921",
+        # "rpc-persist-pns-region-2": "US|6252001|5332921",
+        # "rpc-persist-pns-region-3": "US|6252001|5332921",
+        # "tt-device-guard-iteration-version": "1",
+        # "tt-ticket-guard-public-key": "BP+7LYWCqhIfMHQGxYZ2fKaqcZ1kLBf6QkhqUSfjv/5avebLZiLLpXhSNbqIFM9Lh1aWBjKs3KDkTcCktJy9UWY=",
+        # "tt-device-guard-client-data": "eyJkZXZpY2VfdG9rZW4iOiIxfHtcImFpZFwiOjEyMzMsXCJhdlwiOlwiNDIuNC4zXCIsXCJkaWRcIjpcIjc1NzA0MTQ0MjQ3ODA4MzQzMThcIixcImlpZFwiOlwiNzU3MDQxNDg4ODkzODgzMzcxOVwiLFwiZml0XCI6XCIxNzYyNjI0NjA0XCIsXCJzXCI6MSxcImlkY1wiOlwidXNlYXN0OFwiLFwidHNcIjpcIjE3NjI2ODUwNTBcIn0iLCJ0aW1lc3RhbXAiOjE3NjI2ODU0MTAsInJlcV9jb250ZW50IjoiZGV2aWNlX3Rva2VuLHBhdGgsdGltZXN0YW1wIiwiZHRva2VuX3NpZ24iOiJ0cy4xLk1FVUNJUUNVUVhZZXV4aHVjeXZjdFI2M29lTEZOSTRzc3k1QkRDRkt0bUorRGZYMHJBSWdhU005UWZSWFNhQW1hSEhCOVwvWWpWQkszVTh0V1Vqa3BFR1FXV2RMVlpVaz0iLCJkcmVxX3NpZ24iOiJNRVVDSURpbmlUeWNBMWZMUGZxK3lIbHlqbHZxNVFGR1dZOXhTXC85VmhWZGtORzJYQWlFQTRjdlwva21LVXZHZVVvaURJemtWbFNcLzEzSFVYK1gzVlhCMmVOK0NsZ3IrRT0ifQ==",
+        "tt-device-guard-client-data": make_device_ticket_data(device,stime,"/aweme/v1/aweme/stats/"),
+        "oec-vc-sdk-version": "3.2.1.i18n",
+        "x-tt-request-tag": "n=0;nr=111;bg=0;rs=112",
+
+        # 这一行是关键，它告诉服务器 body 是 gzip 压缩过的
+        "x-bd-content-encoding": "gzip",
+
+        # Content-Type 仍然是 x-www-form-urlencoded
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+
+        "x-ss-stub": f"{x_ss_stub}",
+        "rpc-persist-pyxis-policy-state-law-is-ca": "1",
+        "rpc-persist-pyxis-policy-v-tnc": "1",
+        "x-tt-ttnet-origin-host": "api16-core-useast8.tiktokv.us",
+        "x-ss-dp": "1233",
+        # "x-tt-trace-id": "00-683ce03b10690f83cf3f8e060e3b04d1-683ce03b10690f83-01",
+        "user-agent": ua,
+        "accept-encoding": "gzip, deflate, br",
+
+        # 你的签名参数
+        "x-argus": f"{x_argus}",
+        "x-gorgon": f"{x_gorgon}",
+        "x-khronos": f"{stime}",
+        "x-ladon": f"{x_ladon}",
+
+        "x-common-params-v2": f"ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand=google&device_id={device_id}&device_platform=android&device_type=Pixel%206&dpi=420&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3",
+    }
+
+    try:
+        resp = requests.post(
+            url,
+            headers=headers,
+            data=data,
+            verify=False,
+            proxies=proxies,
+            impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
+            http_version="v2"  # 强制使用 HTTP/2
+        )
+
+        print(f"Status Code: {resp.status_code}")
+        print("--- Response Body ---")
+        print(resp.text)
+        # 如果返回的是 gzipped 数据，你可能需要解压
+        # print(resp.content)
+        return resp.text
+
+    except Exception as e:
+        resp = requests.post(
+            url,
+            headers=headers,
+            data=data,
+            verify=False,
+            proxies=proxies,
+            impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
+            http_version="v1"  # 强制使用 HTTP/2
+        )
+
+        print(f"Status Code: {resp.status_code}")
+        print("--- Response Body ---")
+        print(resp.text)
+        # 如果返回的是 gzipped 数据，你可能需要解压
+        # print(resp.content)
+        return resp.text

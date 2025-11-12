@@ -1,0 +1,23 @@
+# HTTP 请求库
+curl-cffi>=0.5.0
+requests>=2.28.0
+urllib3>=1.26.0
+
+# 加密相关
+pycryptodome>=3.15.0
+gmssl>=3.2.1
+ecdsa>=0.18.0
+
+# Protobuf
+protobuf>=4.21.0
+
+# 数据库
+pymysql>=1.0.2
+redis>=4.5.0
+
+# 配置文件支持（可选，如果使用 YAML 格式配置文件）
+# PyYAML>=6.0
+
+# Java 互操作（可选，如果使用 jpype）
+# JPype1>=1.4.0
+
