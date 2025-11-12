@@ -94,19 +94,15 @@ class MessageQueue:
             try:
                 # 执行任务回调（完全异步，不阻塞其他任务）
                 if self.task_callback:
-                    logger.info(f"开始调用任务回调: {task} (当前并发: {current_running}/{self.max_concurrent})")
+                    logger.debug(f"调用任务回调: {task}")
                     if asyncio.iscoroutinefunction(self.task_callback):
                         # 异步函数，直接 await（不会阻塞其他任务，因为每个任务都是独立的协程）
-                        logger.debug(f"任务回调是异步函数，开始执行: {task}")
                         await self.task_callback(task)
-                        logger.debug(f"任务回调异步执行完成: {task}")
                     else:
                         # 如果是同步函数，在线程池中执行（不阻塞事件循环）
-                        logger.debug(f"任务回调是同步函数，在线程池中执行: {task}")
                         loop = asyncio.get_event_loop()
                         await loop.run_in_executor(None, self.task_callback, task)
-                        logger.debug(f"任务回调同步执行完成: {task}")
-                    logger.info(f"任务回调执行完成: {task}")
+                    logger.debug(f"任务回调执行完成: {task}")
                 else:
                     logger.warning(f"没有任务回调函数，任务 {task} 未执行")
                 
@@ -244,35 +240,34 @@ class MessageQueue:
                 # 改进逻辑：只有当队列大小明显下降时才补充（避免频繁回调）
                 # 条件1：队列大小小于阈值
                 # 条件2：队列大小比上次检查时明显减少（至少减少10%或减少100个任务）
-                #        或者队列大小很小（小于 max_concurrent）且没有正在执行的任务（说明任务执行很快）
+                #        或者队列大小很小（小于 max_concurrent）且没有任务在执行（说明任务执行很快）
                 # 条件3：冷却时间已过
                 # 条件4：阈值回调不在执行
-                # 条件5：有任务正在执行（说明任务在被消费），或者队列为空（需要立即补充）
                 queue_decreased = (last_queue_size - queue_size) >= max(100, last_queue_size * 0.1)
-                # 只有当队列很小且没有正在执行的任务时，才认为需要立即补充
+                # 只有当队列很小且没有任务在执行时，才认为需要立即补充
                 # 如果队列很小但有任务在执行，说明任务执行很快，不需要立即补充
                 queue_too_small = queue_size < self.max_concurrent and current_running == 0
                 
-                # 只有当队列大小明显减少，或者队列很小且没有任务在执行时，才触发补给
-                # 这样可以避免在任务执行慢时频繁补给
-                should_replenish = (queue_size < threshold_size and 
+                should_replenish = (
+                    queue_size < threshold_size and 
                     (queue_decreased or queue_too_small) and  # 队列明显减少或太小且没有任务在执行
                     not self.threshold_calling and 
                     not self.is_stopped and
-                    current_time - last_replenish_time >= replenish_cooldown)
-                
-                # 每10次循环打印一次状态（避免日志过多）
-                if int(current_time * 5) % 10 == 0:  # 大约每2秒打印一次
-                    logger.debug(f"队列状态: 队列大小={queue_size}, 正在执行={current_running}/{self.max_concurrent}, "
-                               f"上次队列大小={last_queue_size}, 队列减少={queue_decreased}, "
-                               f"队列太小={queue_too_small}, 应该补给={should_replenish}")
+                    current_time - last_replenish_time >= replenish_cooldown
+                )
                 
                 if should_replenish:
                     
                     # 调用阈值补给
+                    logger.info(f"触发阈值补给: 队列大小={queue_size}, 上次队列大小={last_queue_size}, 正在执行={current_running}")
                     new_tasks = await self._threshold_replenish()
                     last_replenish_time = current_time
-                    last_queue_size = queue_size + len(new_tasks) if new_tasks else queue_size
+                    # 更新上次队列大小（只有在成功补充任务时才更新）
+                    if new_tasks:
+                        last_queue_size = queue_size + len(new_tasks)
+                    else:
+                        # 没有新任务，保持当前队列大小
+                        last_queue_size = queue_size
                     
                     if new_tasks:
                         # 将新任务加入队列

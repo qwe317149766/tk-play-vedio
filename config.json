@@ -31,7 +31,7 @@
     "log_flush_every": 20,
     "stats_every": 5,
     "pool_initial_size": 10,
-    "pool_max_size": 10,
+    "pool_max_size": 20,
     "pool_grow_step": 1
   }
 }
