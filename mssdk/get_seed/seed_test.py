@@ -425,7 +425,6 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None, session=None):
         # print(tem)
         zlib1 = tt_zlib(tem)
         zlib_res = zlib1.compressed()
-        # print(len(zlib_res))
         if len(zlib_res) == 154:
             biaozhi = True
             break

@@ -3,6 +3,7 @@
 基于 message_queue.py 重构 async_thread_main.py 的业务逻辑
 """
 import os
+import sys
 import time
 import json
 import threading
@@ -128,16 +129,62 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
     flow_session = None
     try:
         print(f"[RUN_DEVICE_FLOW] 开始执行设备流程: job={job}, proxy_url={proxy_url}")
-        # 使用全局 TikTokAPI 实例
-        global _api_instance
+        sys.stdout.flush()
+        # 使用全局 TikTokAPI 实例和队列实例
+        global _api_instance, _queue_instance
         if _api_instance is None:
             raise RuntimeError("TikTokAPI 实例未初始化")
         api = _api_instance
         
         # 获取流程专用Session（同一流程复用同一个Session）
+        # 在线程池中执行，避免阻塞事件循环
         http_client = api.http_client
-        flow_session = http_client.get_flow_session()
-        print(f"[RUN_DEVICE_FLOW] 获取流程Session: {id(flow_session)}")
+        print(f"[RUN_DEVICE_FLOW] 准备获取流程Session...")
+        sys.stdout.flush()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                return False, "事件循环已关闭，无法执行任务", {"step": "init"}
+        
+        # 在线程池中执行 get_flow_session，避免阻塞事件循环，并添加超时保护
+        print(f"[RUN_DEVICE_FLOW] 开始在线程池中获取流程Session（带超时保护，最多等待5秒）...")
+        sys.stdout.flush()
+        try:
+            flow_session = await asyncio.wait_for(
+                loop.run_in_executor(None, http_client.get_flow_session),
+                timeout=5.0
+            )
+            print(f"[RUN_DEVICE_FLOW] 获取流程Session成功: {id(flow_session)}")
+            sys.stdout.flush()
+        except asyncio.TimeoutError:
+            print(f"[RUN_DEVICE_FLOW] 获取流程Session超时（5秒），尝试直接创建新Session...")
+            sys.stdout.flush()
+            # 超时时直接创建新 session，不等待连接池
+            # 使用 curl_cffi.requests 而不是标准 requests，以支持 impersonate 参数
+            from curl_cffi import requests as curl_requests
+            flow_session = curl_requests.Session()
+            flow_session.headers.update({"Connection": "keep-alive"})
+            if http_client.proxy:
+                flow_session.proxies = {"http": http_client.proxy, "https": http_client.proxy}
+            print(f"[RUN_DEVICE_FLOW] 已直接创建新Session: {id(flow_session)}")
+            sys.stdout.flush()
+        except Exception as e:
+            print(f"[RUN_DEVICE_FLOW] 获取流程Session失败: {e}")
+            import traceback
+            print(f"[RUN_DEVICE_FLOW] 异常堆栈: {traceback.format_exc()}")
+            sys.stdout.flush()
+            # 失败时也尝试直接创建新 session
+            # 使用 curl_cffi.requests 而不是标准 requests，以支持 impersonate 参数
+            from curl_cffi import requests as curl_requests
+            flow_session = curl_requests.Session()
+            flow_session.headers.update({"Connection": "keep-alive"})
+            if http_client.proxy:
+                flow_session.proxies = {"http": http_client.proxy, "https": http_client.proxy}
+            print(f"[RUN_DEVICE_FLOW] 已直接创建新Session: {id(flow_session)}")
+            sys.stdout.flush()
         
         # 1) new device（同步操作，在线程池中执行）
         step = "new_device"
@@ -151,7 +198,11 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
             except RuntimeError:
                 # 事件循环已关闭，无法执行
                 if flow_session:
-                    http_client.release_flow_session(flow_session)
+                    try:
+                        # 事件循环已关闭，直接同步执行
+                        http_client.release_flow_session(flow_session)
+                    except Exception:
+                        pass
                 return False, "事件循环已关闭，无法执行任务", {"step": step}
         
         try:
@@ -159,7 +210,10 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
         except RuntimeError as e:
             if "cannot schedule new futures" in str(e):
                 if flow_session:
-                    http_client.release_flow_session(flow_session)
+                    try:
+                        await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                    except Exception:
+                        pass
                 return False, f"事件循环已关闭: {e}", {"step": step}
             raise
 
@@ -172,12 +226,18 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
         except Exception as ex:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: make_did_iid_async 出错: {ex}")
             if flow_session:
-                http_client.release_flow_session(flow_session)
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
             return False, f"did/iid error: {ex}", {"step": step}
         if not device_id:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: device_id 为空")
             if flow_session:
-                http_client.release_flow_session(flow_session)
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
             return False, "did/iid empty device_id", {"step": step}
 
         # 3) alert_check - 使用 TikTokAPI（通过 HttpClient，异步执行，使用流程Session）
@@ -189,79 +249,165 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
         except Exception as ex:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check_async 出错: {ex}")
             if flow_session:
-                http_client.release_flow_session(flow_session)
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
             return False, f"alert_check error: {ex}", {"step": step, "device_id": device_id}
         if str(chk).lower() != "success":
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check 失败, chk={chk}")
             if flow_session:
-                http_client.release_flow_session(flow_session)
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
             return False, f"alert_check fail ({chk})", {"step": step, "device_id": device_id}
 
-        # 4) seed - 使用 TikTokAPI（异步执行，使用流程Session）
+        # 4) seed - 跳过执行，默认为空
         step = "seed"
-        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_seed_async")
-        try:
-            seed, seed_type = await api.get_seed_async(dev1, session=flow_session)
-            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 完成, seed={seed[:20] if seed else None}..., seed_type={seed_type}")
-        except Exception as ex:
-            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 出错: {ex}")
-            if flow_session:
-                http_client.release_flow_session(flow_session)
-            return False, f"seed error: {ex}", {"step": step, "device_id": device_id}
-        if not seed:
-            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: seed 为空")
-            if flow_session:
-                http_client.release_flow_session(flow_session)
-            return False, "seed empty", {"step": step, "device_id": device_id}
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 跳过 get_seed_async，使用默认空值")
+        seed = ""
+        seed_type = None
 
-        # 5) token - 使用 TikTokAPI（异步执行，使用流程Session）
+        # 5) token - 跳过执行，默认为空
         step = "token"
-        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_token_async")
-        try:
-            token = await api.get_token_async(dev1, session=flow_session)
-            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 完成, token={token[:20] if token else None}...")
-        except Exception as ex:
-            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 出错: {ex}")
-            if flow_session:
-                http_client.release_flow_session(flow_session)
-            return False, f"token error: {ex}", {"step": step, "device_id": device_id, "seed_type": seed_type}
-        if not token:
-            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: token 为空")
-            if flow_session:
-                http_client.release_flow_session(flow_session)
-            return False, "token empty", {"step": step, "device_id": device_id, "seed_type": seed_type}
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 跳过 get_token_async，使用默认空值")
+        token = ""
 
         # 6) 回填 & 落盘（文件写入在线程池中执行）
+        print(f"[RUN_DEVICE_FLOW] 步骤 6: 开始回填和落盘, device_id={device_id}")
+        sys.stdout.flush()
         dev1["seed"] = seed
         dev1["seed_type"] = seed_type
         dev1["token"] = token
         try:
+            print(f"[RUN_DEVICE_FLOW] 步骤 6: 准备写入文件...")
+            sys.stdout.flush()
             await loop.run_in_executor(None, append_device_jsonl, dev1)
+            print(f"[RUN_DEVICE_FLOW] 步骤 6: 文件写入完成")
+            sys.stdout.flush()
         except RuntimeError as e:
             if "cannot schedule new futures" in str(e):
                 # 事件循环已关闭，直接同步写入（作为后备方案）
+                print(f"[RUN_DEVICE_FLOW] 步骤 6: 事件循环已关闭，使用同步写入")
+                sys.stdout.flush()
                 try:
                     append_device_jsonl(dev1)
-                except Exception:
+                    print(f"[RUN_DEVICE_FLOW] 步骤 6: 同步写入完成")
+                    sys.stdout.flush()
+                except Exception as write_error:
+                    print(f"[RUN_DEVICE_FLOW] 步骤 6: 同步写入失败: {write_error}")
+                    sys.stdout.flush()
                     pass  # 忽略写入错误
             else:
+                print(f"[RUN_DEVICE_FLOW] 步骤 6: 写入文件异常: {e}")
+                sys.stdout.flush()
                 raise
+        except Exception as e:
+            print(f"[RUN_DEVICE_FLOW] 步骤 6: 写入文件异常: {e}")
+            import traceback
+            print(f"[RUN_DEVICE_FLOW] 步骤 6: 异常堆栈: {traceback.format_exc()}")
+            sys.stdout.flush()
+            # 写入失败不影响流程完成，继续执行
         
         # 流程成功完成，释放流程Session（流程结束后重建Session）
+        # 在线程池中执行，避免阻塞事件循环，并添加超时保护
+        print(f"[RUN_DEVICE_FLOW] 步骤 7: 准备释放流程Session, flow_session={id(flow_session) if flow_session else None}")
+        sys.stdout.flush()
         if flow_session:
-            http_client.release_flow_session(flow_session)
-            print(f"[RUN_DEVICE_FLOW] 流程Session已释放: {id(flow_session)}")
+            try:
+                print(f"[RUN_DEVICE_FLOW] 步骤 7: 开始释放流程Session（带超时保护，最多等待2秒）...")
+                sys.stdout.flush()
+                # 使用 asyncio.wait_for 添加超时保护，避免阻塞
+                await asyncio.wait_for(
+                    loop.run_in_executor(None, http_client.release_flow_session, flow_session),
+                    timeout=2.0
+                )
+                print(f"[RUN_DEVICE_FLOW] 步骤 7: 流程Session已释放: {id(flow_session)}")
+                sys.stdout.flush()
+            except asyncio.TimeoutError:
+                print(f"[RUN_DEVICE_FLOW] 步骤 7: 释放流程Session超时（2秒），跳过释放，继续执行")
+                sys.stdout.flush()
+                # 超时时直接关闭 session，不等待连接池操作
+                try:
+                    flow_session.close()
+                    print(f"[RUN_DEVICE_FLOW] 步骤 7: 已直接关闭Session: {id(flow_session)}")
+                    sys.stdout.flush()
+                except Exception as close_error:
+                    print(f"[RUN_DEVICE_FLOW] 步骤 7: 直接关闭Session失败: {close_error}")
+                    sys.stdout.flush()
+            except Exception as e:
+                print(f"[RUN_DEVICE_FLOW] 步骤 7: 释放流程Session失败: {e}")
+                import traceback
+                print(f"[RUN_DEVICE_FLOW] 步骤 7: 异常堆栈: {traceback.format_exc()}")
+                sys.stdout.flush()
+                # 释放失败时也尝试直接关闭 session
+                try:
+                    flow_session.close()
+                    print(f"[RUN_DEVICE_FLOW] 步骤 7: 已直接关闭Session: {id(flow_session)}")
+                    sys.stdout.flush()
+                except Exception as close_error:
+                    print(f"[RUN_DEVICE_FLOW] 步骤 7: 直接关闭Session失败: {close_error}")
+                    sys.stdout.flush()
+                # 释放失败不影响流程完成，继续执行
         
-        return True, "ok", {"device_id": device_id, "seed_type": seed_type}
+        # 打印队列状态
+        print(f"[RUN_DEVICE_FLOW] 步骤 8: 准备获取队列状态...")
+        sys.stdout.flush()
+        try:
+            if _queue_instance:
+                queue_stats = _queue_instance.get_stats()
+                queue_size = queue_stats.get("queue_size", 0)
+                running_tasks = queue_stats.get("running_tasks", 0)
+                completed_tasks = queue_stats.get("completed_tasks", 0)
+                failed_tasks = queue_stats.get("failed_tasks", 0)
+                print(f"[RUN_DEVICE_FLOW] 步骤 8: 流程完成 - 队列状态: 队列大小={queue_size}, 正在执行={running_tasks}, 已完成={completed_tasks}, 失败={failed_tasks}")
+                sys.stdout.flush()
+            else:
+                print(f"[RUN_DEVICE_FLOW] 步骤 8: _queue_instance 为空，无法获取队列状态")
+                sys.stdout.flush()
+        except Exception as e:
+            print(f"[RUN_DEVICE_FLOW] 步骤 8: 获取队列状态失败: {e}")
+            import traceback
+            print(f"[RUN_DEVICE_FLOW] 步骤 8: 异常堆栈: {traceback.format_exc()}")
+            sys.stdout.flush()
+        
+        print(f"[RUN_DEVICE_FLOW] [流程完成] 设备流程执行成功，准备返回结果, device_id={device_id}, seed_type={seed_type}")
+        sys.stdout.flush()
+        result = (True, "ok", {"device_id": device_id, "seed_type": seed_type})
+        print(f"[RUN_DEVICE_FLOW] [流程完成] 返回值: {result}")
+        sys.stdout.flush()
+        return result
 
     except Exception as ex:
-        # 发生异常时也要释放Session
+        print(f"[RUN_DEVICE_FLOW] [流程异常] 设备流程执行异常: {type(ex).__name__}: {ex}, step={step}")
+        # 发生异常时也要释放Session（在线程池中执行，避免阻塞）
         if flow_session:
             try:
                 http_client = _api_instance.http_client if _api_instance else None
                 if http_client:
-                    http_client.release_flow_session(flow_session)
-                    print(f"[RUN_DEVICE_FLOW] 异常时释放流程Session: {id(flow_session)}")
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        try:
+                            loop = asyncio.get_event_loop()
+                        except RuntimeError:
+                            loop = None
+                    
+                    if loop:
+                        # 在线程池中执行，避免阻塞
+                        try:
+                            await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                            print(f"[RUN_DEVICE_FLOW] 异常时释放流程Session: {id(flow_session)}")
+                        except Exception:
+                            pass
+                    else:
+                        # 如果没有事件循环，直接同步执行
+                        try:
+                            http_client.release_flow_session(flow_session)
+                            print(f"[RUN_DEVICE_FLOW] 异常时释放流程Session: {id(flow_session)}")
+                        except Exception:
+                            pass
             except Exception:
                 pass
         return False, f"EX:{type(ex).__name__}:{ex}", {"step": step, "device_id": device_id, "seed_type": seed_type}
@@ -276,10 +422,10 @@ async def execute_device_flow_task(task_data: Dict[str, Any]):
     """
     global _proxy, _logger, _stats
     
-    print(f"[EXECUTE_TASK] 开始执行设备流程任务: {task_data}")
+    print(f"[EXECUTE_TASK] [开始] 开始执行设备流程任务: {task_data}")
     
     if _proxy is None or _logger is None or _stats is None:
-        print(f"[EXECUTE_TASK] 全局变量未初始化: _proxy={_proxy}, _logger={_logger}, _stats={_stats}")
+        print(f"[EXECUTE_TASK] [错误] 全局变量未初始化: _proxy={_proxy}, _logger={_logger}, _stats={_stats}")
         return
     
     try:
@@ -291,20 +437,61 @@ async def execute_device_flow_task(task_data: Dict[str, Any]):
         
         try:
             # 执行业务逻辑（现在是异步函数，直接 await）
-            print(f"[EXECUTE_TASK] 开始调用 run_device_flow: {task_data}")
+            print(f"[EXECUTE_TASK] [执行] 开始调用 run_device_flow: {task_data}")
             ok, msg, meta = await run_device_flow(task_data, _proxy)
-            print(f"[EXECUTE_TASK] run_device_flow 完成: {task_data}, ok={ok}, msg={msg}")
+            print(f"[EXECUTE_TASK] [完成] run_device_flow 完成: {task_data}, ok={ok}, msg={msg}")
+            
+            # 如果任务失败（ok=False），抛出异常，让 message_queue 正确标记为失败
+            if not ok:
+                elapsed = time.time() - t0
+                _stats.add_fail()
+                _logger.log(f"[proxy={_proxy}] job={task_data} -> {msg} {meta} elapsed={elapsed:.3f}s")
+                print(f"[EXECUTE_TASK] [失败] 任务失败: {task_data}, elapsed={elapsed:.3f}s, msg={msg}")
+                sys.stdout.flush()
+                # 抛出异常，让 message_queue 的 _worker 能够捕获并标记为失败
+                raise RuntimeError(f"任务执行失败: {msg}")
         except Exception as ex:
+            # 如果是我们主动抛出的异常（任务失败），重新抛出
+            if isinstance(ex, RuntimeError) and "任务执行失败:" in str(ex):
+                raise
+            # 其他异常（网络错误、超时等）也抛出，让 message_queue 标记为失败
             ok = False
             msg = f"EX:{type(ex).__name__}:{ex}\n{traceback.format_exc(limit=1)}"
-            print(f"[EXECUTE_TASK] run_device_flow 出错: {task_data}, 错误: {ex}")
+            print(f"[EXECUTE_TASK] [异常] run_device_flow 出错: {task_data}, 错误: {ex}")
+            elapsed = time.time() - t0
+            _stats.add_fail()
+            _logger.log(f"[proxy={_proxy}] job={task_data} -> {msg} {meta} elapsed={elapsed:.3f}s")
+            print(f"[EXECUTE_TASK] [异常] 任务异常: {task_data}, elapsed={elapsed:.3f}s, 错误: {ex}")
+            sys.stdout.flush()
+            # 抛出异常，让 message_queue 的 _worker 能够捕获并标记为失败
+            raise
         
+        # 任务成功
         elapsed = time.time() - t0
-        (_stats.add_ok() if ok else _stats.add_fail())
+        _stats.add_ok()
         _logger.log(f"[proxy={_proxy}] job={task_data} -> {msg} {meta} elapsed={elapsed:.3f}s")
-        print(f"[EXECUTE_TASK] 任务完成: {task_data}, elapsed={elapsed:.3f}s")
+        print(f"[EXECUTE_TASK] [成功] 任务成功: {task_data}, elapsed={elapsed:.3f}s, ok={ok}")
+        sys.stdout.flush()
+        
+        # 打印队列状态，确认任务是否被统计
+        try:
+            if _queue_instance:
+                queue_stats = _queue_instance.get_stats()
+                queue_size = queue_stats.get("queue_size", 0)
+                running_tasks = queue_stats.get("running_tasks", 0)
+                completed_tasks = queue_stats.get("completed_tasks", 0)
+                failed_tasks = queue_stats.get("failed_tasks", 0)
+                print(f"[EXECUTE_TASK] [任务完成] 队列状态: 队列大小={queue_size}, 正在执行={running_tasks}, 已完成={completed_tasks}, 失败={failed_tasks}")
+                sys.stdout.flush()
+        except Exception as e:
+            print(f"[EXECUTE_TASK] [任务完成] 获取队列状态失败: {e}")
+            sys.stdout.flush()
         
     except Exception as ex:
+        print(f"[EXECUTE_TASK] [异常] 任务执行异常: {type(ex).__name__}: {ex}")
+        import traceback
+        print(f"[EXECUTE_TASK] [异常] 异常堆栈: {traceback.format_exc()}")
+        sys.stdout.flush()
         if _logger:
             _logger.log(f"[proxy={_proxy}] TASK-EX:{type(ex).__name__}:{ex}")
 
@@ -316,24 +503,26 @@ _stats: Optional[Stats] = None
 _task_counter = 0
 _task_counter_lock = threading.Lock()
 _max_tasks = 0  # 0 表示无限制
+_queue_instance: Optional[MessageQueue] = None  # 队列实例，用于获取队列状态
 
 def threshold_callback():
     """阈值补给回调（同步函数，应该快速执行）"""
     global _task_counter, _max_tasks, CONFIG
     
     try:
+        print(f"[threshold_callback] 开始执行，当前计数: {_task_counter}, 最大任务数: {_max_tasks}")
         with _task_counter_lock:
             # 检查是否超过最大任务数
             if _max_tasks > 0 and _task_counter >= _max_tasks:
                 print(f"[threshold_callback] 已达到最大任务数: {_task_counter}/{_max_tasks}")
                 return []  # 没有更多任务
             
-            # 每次补给一批任务（减少批次大小，避免一次性生成太多任务）
+            # 每次补给一批任务
+            # 为了确保队列中始终有足够的任务，每次补充 max_concurrent 个任务
             max_concurrent = CONFIG.get("max_concurrent", 1000)
-            # 每次只补给 max_concurrent 的一半，避免一次性生成太多
-            batch_size = min(max_concurrent // 2, 500)  # 最多500个任务
-            if batch_size < 100:
-                batch_size = 100  # 最少100个任务
+            # 每次补充 max_concurrent 个任务，确保队列中始终有足够任务
+            batch_size = max_concurrent
+            print(f"[threshold_callback] 计算批次大小: {batch_size} (max_concurrent={max_concurrent})")
             
             # 确保不超过最大任务数
             if _max_tasks > 0:
@@ -342,15 +531,17 @@ def threshold_callback():
                     print(f"[threshold_callback] 已达到最大任务数: {_task_counter}/{_max_tasks}")
                     return []
                 batch_size = min(batch_size, remaining)
+                print(f"[threshold_callback] 限制批次大小: {batch_size} (剩余: {remaining})")
             
             if batch_size <= 0:
+                print(f"[threshold_callback] 批次大小 <= 0，返回空列表")
                 return []
             
             # 快速生成任务列表
             tasks = [{"i": _task_counter + i} for i in range(batch_size)]
             _task_counter += batch_size
             
-            print(f"[threshold_callback] 补充 {len(tasks)} 个任务，当前计数: {_task_counter}" + (f"/{_max_tasks}" if _max_tasks > 0 else ""))
+            print(f"[threshold_callback] 补充 {len(tasks)} 个任务，当前计数: {_task_counter}" + (f"/{_max_tasks}" if _max_tasks > 0 else "（无限制）"))
             return tasks
     except Exception as e:
         print(f"[ERROR] threshold_callback 执行失败: {e}")
@@ -364,16 +555,55 @@ async def task_callback(task_data: Dict[str, Any]):
     try:
         # 任务回调被调用，说明已经获取到信号量，可以执行
         print(f"[TASK_CALLBACK] 开始执行任务: {task_data}")
+        sys.stdout.flush()
         await execute_device_flow_task(task_data)
         print(f"[TASK_CALLBACK] 任务执行完成: {task_data}")
+        sys.stdout.flush()
+        
+        # 打印队列状态，确认任务是否被统计
+        try:
+            if _queue_instance:
+                queue_stats = _queue_instance.get_stats()
+                queue_size = queue_stats.get("queue_size", 0)
+                running_tasks = queue_stats.get("running_tasks", 0)
+                completed_tasks = queue_stats.get("completed_tasks", 0)
+                failed_tasks = queue_stats.get("failed_tasks", 0)
+                print(f"[TASK_CALLBACK] [任务完成] 队列状态: 队列大小={queue_size}, 正在执行={running_tasks}, 已完成={completed_tasks}, 失败={failed_tasks}")
+                sys.stdout.flush()
+        except Exception as e:
+            print(f"[TASK_CALLBACK] [任务完成] 获取队列状态失败: {e}")
+            sys.stdout.flush()
     except Exception as e:
-        # 错误会被 _execute_task 捕获并记录，这里不需要重复处理
+        # 打印错误信息，但必须重新抛出异常，让 message_queue 的 _worker 能够捕获并标记为失败
         print(f"[TASK_CALLBACK] 任务执行出错: {task_data}, 错误: {e}")
+        import traceback
+        print(f"[TASK_CALLBACK] 异常堆栈: {traceback.format_exc()}")
+        sys.stdout.flush()
+        
+        # 即使出错，也打印队列状态
+        try:
+            if _queue_instance:
+                queue_stats = _queue_instance.get_stats()
+                queue_size = queue_stats.get("queue_size", 0)
+                running_tasks = queue_stats.get("running_tasks", 0)
+                completed_tasks = queue_stats.get("completed_tasks", 0)
+                failed_tasks = queue_stats.get("failed_tasks", 0)
+                print(f"[TASK_CALLBACK] [任务出错] 队列状态: 队列大小={queue_size}, 正在执行={running_tasks}, 已完成={completed_tasks}, 失败={failed_tasks}")
+                sys.stdout.flush()
+        except Exception as e2:
+            print(f"[TASK_CALLBACK] [任务出错] 获取队列状态失败: {e2}")
+            sys.stdout.flush()
+        
+        # 重新抛出异常，让 message_queue 的 _worker 能够捕获并标记为失败
         raise
 
 def main():
     """主函数"""
-    global _proxy, _api_instance, _logger, _stats, _max_tasks
+    global _proxy, _api_instance, _logger, _stats, _max_tasks, _queue_instance
+    
+    print("="*80)
+    print("设备流程队列程序启动")
+    print("="*80)
     
     # 从配置文件读取代理
     _proxy = CONFIG.get("proxy", "")
@@ -381,17 +611,24 @@ def main():
         raise SystemExit("配置文件中未设置代理 (message_queue.proxy)")
     
     print(f"使用代理: {_proxy}")
+    sys.stdout.flush()  # 确保输出立即显示
     
     # 创建 TikTokAPI 实例（全局单例，使用全局 HttpClient）
     # 增加重试次数和延迟，以应对代理连接不稳定的情况
+    # 对于100并发，需要更大的连接池和更快的扩容速度
+    max_concurrent = CONFIG.get("max_concurrent", 1000)
+    pool_initial_size = CONFIG.get("pool_initial_size", max(max_concurrent, 100))
+    pool_max_size = CONFIG.get("pool_max_size", max(max_concurrent * 2, 2000))
+    pool_grow_step = CONFIG.get("pool_grow_step", max(max_concurrent // 5, 20))
+    
     _api_instance = TikTokAPI(
         proxy=_proxy,
-        timeout=30,
-        max_retries=1,  # 增加重试次数到 5 次
-        retry_delay=2.0,  # 重试延迟 2 秒
-        pool_initial_size=CONFIG.get("pool_initial_size", 100),
-        pool_max_size=CONFIG.get("pool_max_size", 2000),
-        pool_grow_step=CONFIG.get("pool_grow_step", 10),
+        timeout=60,  # 增加超时时间到60秒，应对代理连接慢的情况
+        max_retries=3,  # 增加重试次数到 3 次，提高代理连接成功率
+        retry_delay=1.0,  # 重试延迟 1 秒，不要等待太久
+        pool_initial_size=pool_initial_size,
+        pool_max_size=pool_max_size,
+        pool_grow_step=pool_grow_step,
         use_global_client=True
     )
     
@@ -403,25 +640,66 @@ def main():
     _max_tasks = int(os.getenv("MAX_TASKS", "0"))
     
     # 创建消息队列
-    queue = MessageQueue(
+    _queue_instance = MessageQueue(
         max_concurrent=CONFIG.get("max_concurrent", 1000),
         threshold_callback=threshold_callback,
         task_callback=task_callback
     )
+    queue = _queue_instance
     
     print(f"启动消息队列: 并发数={CONFIG.get('max_concurrent', 1000)}, 最大任务数={_max_tasks if _max_tasks > 0 else '无限制'}")
+    sys.stdout.flush()
     
     # 启动队列
     queue.start()
+    
+    # 等待队列真正启动（等待 is_running 被设置）
+    print("等待队列启动...")
+    sys.stdout.flush()
+    max_wait = 10  # 最多等待10秒
+    wait_count = 0
+    while not queue.is_running and wait_count < max_wait * 10:
+        time.sleep(0.1)
+        wait_count += 1
+        if wait_count % 10 == 0:  # 每秒打印一次
+            print(f"等待队列启动... ({wait_count/10:.1f}秒)")
+            sys.stdout.flush()
+    if not queue.is_running:
+        print("警告: 队列启动超时，但继续运行...")
+        sys.stdout.flush()
+    else:
+        print("队列已启动")
+        sys.stdout.flush()
     
     # 定期打印统计信息
     stats_every = CONFIG.get("stats_every", 5)
     last_ok, last_fail = 0, 0
     
+    # 立即打印一次初始统计
+    print(f"\n{'='*80}")
+    print(f"[初始状态] 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  队列状态: {'运行中' if queue.is_running else '未运行'}")
+    print(f"{'='*80}\n")
+    
     try:
+        loop_count = 0
         while queue.is_running:
+            loop_count += 1
+            print(f"[MAIN_LOOP] 主循环第 {loop_count} 次，准备等待 {stats_every} 秒...")
+            sys.stdout.flush()
             time.sleep(stats_every)
-            queue_stats = queue.get_stats()
+            print(f"[MAIN_LOOP] 主循环第 {loop_count} 次，等待完成，准备获取统计信息...")
+            sys.stdout.flush()
+            try:
+                queue_stats = queue.get_stats()
+                print(f"[MAIN_LOOP] 主循环第 {loop_count} 次，获取统计信息成功: {queue_stats}")
+                sys.stdout.flush()
+            except Exception as e:
+                print(f"[MAIN_LOOP] 主循环第 {loop_count} 次，获取统计信息失败: {e}")
+                import traceback
+                print(f"[MAIN_LOOP] 异常堆栈: {traceback.format_exc()}")
+                sys.stdout.flush()
+                continue
             ok, fail = _stats.snapshot()
             d_ok, d_fail = ok - last_ok, fail - last_fail
             last_ok, last_fail = ok, fail
@@ -432,16 +710,24 @@ def main():
             queue_size = queue_stats.get("queue_size", 0)
             completed = queue_stats.get("completed_tasks", 0)
             failed = queue_stats.get("failed_tasks", 0)
+            total_tasks = queue_stats.get("total_tasks", 0)
             
             # 计算并发率
             concurrency_rate = (current_running / max_concurrent * 100) if max_concurrent > 0 else 0
+            
+            # 如果 max_concurrent 为 0，从配置中获取
+            if max_concurrent == 0:
+                max_concurrent = CONFIG.get("max_concurrent", 1000)
+                concurrency_rate = (current_running / max_concurrent * 100) if max_concurrent > 0 else 0
             
             print(f"\n{'='*80}")
             print(f"[并发监控] 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
             print(f"  当前并发数: {current_running}/{max_concurrent} ({concurrency_rate:.1f}%)")
             print(f"  队列大小: {queue_size}")
-            print(f"  已完成: {completed}, 失败: {failed}")
+            print(f"  已完成任务总数: {completed} (成功: {ok}, 失败: {fail})")
+            print(f"  队列失败数: {failed}")
             print(f"  成功/失败: {d_ok}/{d_fail} (最近{stats_every}秒)")
+            print(f"  总任务数: {queue_stats.get('total_tasks', 0)}")
             print(f"{'='*80}")
             
             # 如果并发数明显低于配置值，发出警告
@@ -449,11 +735,12 @@ def main():
                 print(f"⚠️  警告: 当前并发数({current_running})低于配置值({max_concurrent})的80%")
                 print(f"   可能原因: 任务执行过快、队列任务不足、或任务被阻塞")
             
-            print(f"[stats] ok={ok} (+{d_ok}) fail={fail} (+{d_fail}) "
-                  f"queue_total={queue_stats['total_tasks']} "
-                  f"queue_completed={queue_stats['completed_tasks']} "
-                  f"queue_running={queue_stats['running_tasks']} "
-                  f"queue_size={queue_stats['queue_size']}")
+            print(f"[stats] 完成总数={completed} | 成功={ok} (+{d_ok}) | 失败={fail} (+{d_fail}) | "
+                  f"队列总任务={queue_stats['total_tasks']} | "
+                  f"队列完成={queue_stats['completed_tasks']} | "
+                  f"队列失败={queue_stats['failed_tasks']} | "
+                  f"正在执行={queue_stats['running_tasks']} | "
+                  f"队列大小={queue_stats['queue_size']}")
             
             # 检查是否完成
             if _max_tasks > 0 and queue_stats['completed_tasks'] >= _max_tasks:
@@ -473,12 +760,16 @@ def main():
     # 打印最终统计
     final_stats = queue.get_stats()
     ok, fail = _stats.snapshot()
-    print(f"\n最终统计:")
+    total_completed = final_stats.get('completed_tasks', 0)
+    print(f"\n{'='*80}")
+    print(f"最终统计:")
+    print(f"  完成的任务总数: {total_completed}")
     print(f"  成功: {ok}")
     print(f"  失败: {fail}")
-    print(f"  队列总任务: {final_stats['total_tasks']}")
-    print(f"  队列完成: {final_stats['completed_tasks']}")
-    print(f"  队列失败: {final_stats['failed_tasks']}")
+    print(f"  队列总任务数: {final_stats['total_tasks']}")
+    print(f"  队列完成数: {final_stats['completed_tasks']}")
+    print(f"  队列失败数: {final_stats['failed_tasks']}")
+    print(f"{'='*80}")
 
 if __name__ == "__main__":
     t0 = time.time()
