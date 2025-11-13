@@ -5,17 +5,11 @@ import urllib
 
 import requests
 from curl_cffi import requests
-import urllib3
 from tt_protobuf import  make_seed_pb,tk_pb2
 from mssdk.endecode import mssdk_endecode
 from headers import make_headers
 # 1. Define the URL and query parameters
 import hashlib, time, datetime, base64, os, random
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
-
-# 禁用 HTTPS 警告
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 import jpype
 from Crypto.Cipher import AES
@@ -90,7 +84,8 @@ class tt_zlib:
         # # return "78010190026ffde2a33328472bd648e4a5e9a1fe13c2b6f057fafe2a027c37ceb865566fa8fa767a3cfe49ff7eabb196870f11a25de809f520d46c9bcd3af32f1208224866fb48b9734e33dd84645357eef1430b8329a26e043f0276de009b9c91e1fe6c84a408747b9a8cde1b9392cc6a8cce5b6e56afa633833ff304aae5b24f86a2eb846f43efa7220619ae772777dc2024fe5a546945a44009178f8329a0cbb5f656fcf22f0458f6fe43bf201ac5581bd6a07c5c0fefd4476de0cb05394c3b518882f1af61e5adbf24f145cfee48489379c30e5d602d6c6d27e5abb3fdf7686c245b360b06cd6d0f69659ff14e47442b7df51df88c09348f4ac80ee6f7270a09228cc966a581c955597120a3ac57ff0c35af0f4278d667e60fb533e6bc3754b93965e1b8c0c86457cd9be1f1fce00678373d4b27d7b5d4ab9f59f9605b616456162c862af860f59783e36fbd574f4001626af58e37dce2a93e3218107603c50966065e4eb2e862a8c0f9b411a47942cf7f21df73c4c2c7c7013ddbc43ef29a2531000f2ee5829dc8130a2a592df3f7a134ac547a59b0b8859dae51d27c2862398538f90c0f1feed1d5e0d350a991ac209951114738b58147e433ad4c48abd897290280744fa5ee8fc19a81bd723fa02e2946af48b73603e3c5ae891b1987629de563e17cca5ee8742d937852f67222befc7d7480041b497a59294a1836b2f19f70bd97a723f0d066559618e0d28a9162a5aad24886e2775aa9d90468dafae14eb015fdc9d77374bf75cff7b79de37c98610a4f60fa024a0dd5483b031ddeb3ee4a08f4dd87274cb20b923d5b13dac0c6b8131ca4b78c53fcd6e51a1ce89c893ed1390e162ab9ef05038c111b8db0b9c55197d6c58f267970e45ca1e3bc52215d368501964a3ddbd936a26d04cd252de91fc278d1609b054332"
         # return res
 
-        return zlib.compress(self.hex_str1, level=1).hex()
+        res = zlib.compress(self.hex_str1, level=1).hex()
+        return res+"0"*(154-len(res))
         # return "78010540b10d8020102c8d96da59190730f7073c308ef090d86862e1fc66dad44a704291a6e23d593476a7b5364847329b9718484d60ce8e502f88791dcedbdee7b27dfc100ef0007ea3e511d9"
     def uncompressed(self):
         return zlib.decompress(self.hex_str1).hex()
@@ -417,69 +412,23 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None, session=None):
 
 
 
-    # session = "a930300ef0f5bad045b1d824bcb6a98e"   # 这个session的逻辑需要再确定一下，其他的都没什么问题的
-    # session= str(uuid.uuid4()).replace("-", "")
-    # print("session id is:",session)
-    # session = "b20320890bb549a4843896818a1089aa"
-    # 并行计算：使用多线程来加速查找满足条件的 session_id
-    def check_session_id(_):
-        """检查单个 session_id 是否满足条件"""
+    # session_id = "a930300ef0f5bad045b1d824bcb6a98e"   # 这个session的逻辑需要再确定一下，其他的都没什么问题的
+    # session_id= str(uuid.uuid4()).replace("-", "")
+    # print("session id is:",session_id)
+    # session_id = "b20320890bb549a4843896818a1089aa"
+    biaozhi = False
+    # 使用 session_id 变量名，避免覆盖函数参数 session（Session 对象）
+    session_id = None
+    for i in range(1000000):
         session_id = str(uuid.uuid4()).replace("-", "")
-        tem = make_seed_pb.make_seed_encrypt(session_id, device_id, sdk_version="v05.02.02")
+        tem = make_seed_pb.make_seed_encrypt(session_id, device_id,sdk_version="v05.02.02")
+        # print(tem)
         zlib1 = tt_zlib(tem)
         zlib_res = zlib1.compressed()
+        # print(len(zlib_res))
         if len(zlib_res) == 154:
-            return session_id, tem
-        return None, None
-    
-    # 使用线程池并行计算
-    biaozhi = False
-    session_id = None
-    tem = None
-    max_workers = min(8, os.cpu_count() or 1)  # 使用 CPU 核心数，最多8个线程
-    batch_size = max_workers * 10  # 每批提交的任务数
-    max_iterations = 1000000
-    
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        found = threading.Event()  # 用于通知其他线程停止
-        
-        def check_with_stop(_):
-            """带停止标志的检查函数"""
-            if found.is_set():
-                return None, None
-            return check_session_id(_)
-        
-        # 分批提交任务，避免一次性创建太多任务
-        for batch_start in range(0, max_iterations, batch_size):
-            if found.is_set():
-                break
-            
-            batch_end = min(batch_start + batch_size, max_iterations)
-            futures = [executor.submit(check_with_stop, i) for i in range(batch_start, batch_end)]
-            
-            # 使用 as_completed 获取第一个成功的结果
-            for future in as_completed(futures):
-                if found.is_set():
-                    break
-                    
-                try:
-                    result_session_id, result_tem = future.result()
-                    if result_session_id is not None:
-                        session_id = result_session_id
-                        tem = result_tem
-                        biaozhi = True
-                        found.set()  # 通知其他线程停止
-                        # 取消当前批次剩余的任务
-                        for f in futures:
-                            f.cancel()
-                        break
-                except Exception as e:
-                    # 忽略任务取消异常
-                    pass
-            
-            if found.is_set():
-                break
-    
+            biaozhi = True
+            break
     if not biaozhi:
         print("get seed failed")
         return ["",""]
@@ -556,38 +505,25 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None, session=None):
 
     # 5. Make the request and print the response
     res = ""
-    max_retries = 3
-    retry_count = 0
-    
-    while retry_count < max_retries:
-        try:
-            if use_http_client:
-                # 使用 HttpClient（已包含重试和超时机制）
-                response = http_client.post(url, headers=dict(headers), data=data, session=session)
-                break  # 成功则跳出循环
-            else:
-                # 统一请求参数
-                request_kwargs = {
-                    'url': url,
-                    'headers': dict(headers),
-                    'data': data,
-                    'verify': False,
-                    'timeout': 30,
-                    'impersonate': "okhttp4_android"  # 使用 impersonate 可能有助于解决 SSL 问题
-                }
-                
-                # 如果有代理，添加代理配置
-                if proxies:
-                    request_kwargs['proxies'] = proxies
-                
-                response = requests.post(**request_kwargs)
-                break  # 成功则跳出循环
-        except Exception as e:
-            retry_count += 1
-            if retry_count >= max_retries:
-                raise  # 重试次数用完，抛出异常
-            print(f"请求失败，正在重试 ({retry_count}/{max_retries}): {e}")
-            time.sleep(2)  # 等待2秒后重试
+    if use_http_client:
+        # 使用 HttpClient（已包含重试和超时机制）
+        response = http_client.post(url, headers=dict(headers), data=data, session=session)
+    else:
+        # 统一请求参数
+        request_kwargs = {
+            'url': url,
+            'headers': dict(headers),
+            'data': data,
+            'verify': False,
+            'timeout': 30,
+            'impersonate': "okhttp4_android"  # 使用 impersonate 可能有助于解决 SSL 问题
+        }
+        
+        # 如果有代理，添加代理配置
+        if proxies:
+            request_kwargs['proxies'] = proxies
+        
+        response = requests.post(**request_kwargs)
 
     # print(f"Status Code: {response.status_code}")
     res = response.content.hex()
@@ -617,4 +553,6 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None, session=None):
         # print("seed type ====>",seed_type)
         return [seed,seed_type]
     return ["",""]
-# get_get_seed({"install_id":"7560648754732271373","ttreq":"1$084e38a4169433286a4d5b3624876b9a081fdb26","passport_csrf_token":"b1271b9e8b3200cc84af7068542ed385","passport_csrf_token_default":"b1271b9e8b3200cc84af7068542ed385","cmpl_token":"AgQQAPNSF-RPsLjSPIU4_p0O8o1I8YdL_4_ZYNw2xQ","d_ticket":"fd4617f2988fd35a13be0470ee38138f75ff0","multi_sids":"7560648920885118007%3Aa1787f5786d0d68bba95c02478ad08a7","sessionid":"a1787f5786d0d68bba95c02478ad08a7","sessionid_ss":"a1787f5786d0d68bba95c02478ad08a7","sid_guard":"a1787f5786d0d68bba95c02478ad08a7%7C1760351110%7C15552000%7CSat%2C+11-Apr-2026+10%3A25%3A10+GMT","sid_tt":"a1787f5786d0d68bba95c02478ad08a7","uid_tt":"868053b1a8bbc871eababd16bdac646cab192f7db7ef051d32b98af91ec80312","uid_tt_ss":"868053b1a8bbc871eababd16bdac646cab192f7db7ef051d32b98af91ec80312","msToken":"3_GH6YKViUaCI47ca0jK3JRcVHkxXiPfLElY8SBRz00SsdYcxmJMBmtAZtprvXwz0eQXgx6C5VdheQe3iuLNTt2mdkirkaMVpEB0dhRaa0Ua0_MMqwry0r2sVbGY","odin_tt":"bd4e6506b3c04fbeaacbaa258910260595b22fb8279109200481a0a6bf5d7967c75094734ea42322d45a13a2c1accde39a13fb9c487d6a4cd9ddb5e7fc68d024f2a1c438997c8b62aa91af62094cbaf6","store-country-code":"us","store-country-code-src":"uid","store-country-sign":"MEIEDHcKMd5AY9nmmyG-AgQgu4rvy4TjCuUrFIJp9gRls14g-YBiHF33hFihFd61Ys0EEHQAqhMHWqkeGVjMJbWEVtc","store-idc":"useast5","tt-target-idc":"useast8","s_v_web_id":"","username":"user3457778153976","password":"BDHlA2598@","X-Tt-Token":"04a1787f5786d0d68bba95c02478ad08a702bbe3f8d53c9b17000d05c94157772ebd1a7dd970394451dae4765b1b94548ccf0c0f36affb66d05de2df00bd336047d3115e4e79c653799ec66ae57516f601d4af84b3368445dc2093ae078d7b35e8551--0a4e0a200facb2b79eb92e14c95430de6a7c536d5d4f700a8f87fe6e7af40a85115d3cd81220dc99b4e6dc81c575c88ff18e6d6913cf36ceda5d7e229f576cd4efb115f903861801220674696b746f6b-3.0.1","phone":"9432409396","url":"https://a.62-us.com/api/get_sms?key=62sms_b965cb70222fc5ca31134d4a5c270936","ts_sign_ree":"ts.1.35c626f3611a9d7634bc8eb72936bd2d7cb83e463de0ce265a6c3427727d61937a50e8a417df069df9a555bd16c66ef8b3639a56b642d7d8f9c881f42b9329ec","User-Agent":"Mozilla/5.0 (Linux; Android 12; SM-S9010 Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36","uid":"7560648920885118007","device_id":"7560648506287113741","twofa":"CRKCXBPBSPCICREBFUZ22J5VVMM5FLGY"})
+# proxy = "socks5h://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000"
+# # get_get_seed({"install_id":"7560648754732271373","ttreq":"1$084e38a4169433286a4d5b3624876b9a081fdb26","passport_csrf_token":"b1271b9e8b3200cc84af7068542ed385","passport_csrf_token_default":"b1271b9e8b3200cc84af7068542ed385","cmpl_token":"AgQQAPNSF-RPsLjSPIU4_p0O8o1I8YdL_4_ZYNw2xQ","d_ticket":"fd4617f2988fd35a13be0470ee38138f75ff0","multi_sids":"7560648920885118007%3Aa1787f5786d0d68bba95c02478ad08a7","sessionid":"a1787f5786d0d68bba95c02478ad08a7","sessionid_ss":"a1787f5786d0d68bba95c02478ad08a7","sid_guard":"a1787f5786d0d68bba95c02478ad08a7%7C1760351110%7C15552000%7CSat%2C+11-Apr-2026+10%3A25%3A10+GMT","sid_tt":"a1787f5786d0d68bba95c02478ad08a7","uid_tt":"868053b1a8bbc871eababd16bdac646cab192f7db7ef051d32b98af91ec80312","uid_tt_ss":"868053b1a8bbc871eababd16bdac646cab192f7db7ef051d32b98af91ec80312","msToken":"3_GH6YKViUaCI47ca0jK3JRcVHkxXiPfLElY8SBRz00SsdYcxmJMBmtAZtprvXwz0eQXgx6C5VdheQe3iuLNTt2mdkirkaMVpEB0dhRaa0Ua0_MMqwry0r2sVbGY","odin_tt":"bd4e6506b3c04fbeaacbaa258910260595b22fb8279109200481a0a6bf5d7967c75094734ea42322d45a13a2c1accde39a13fb9c487d6a4cd9ddb5e7fc68d024f2a1c438997c8b62aa91af62094cbaf6","store-country-code":"us","store-country-code-src":"uid","store-country-sign":"MEIEDHcKMd5AY9nmmyG-AgQgu4rvy4TjCuUrFIJp9gRls14g-YBiHF33hFihFd61Ys0EEHQAqhMHWqkeGVjMJbWEVtc","store-idc":"useast5","tt-target-idc":"useast8","s_v_web_id":"","username":"user3457778153976","password":"BDHlA2598@","X-Tt-Token":"04a1787f5786d0d68bba95c02478ad08a702bbe3f8d53c9b17000d05c94157772ebd1a7dd970394451dae4765b1b94548ccf0c0f36affb66d05de2df00bd336047d3115e4e79c653799ec66ae57516f601d4af84b3368445dc2093ae078d7b35e8551--0a4e0a200facb2b79eb92e14c95430de6a7c536d5d4f700a8f87fe6e7af40a85115d3cd81220dc99b4e6dc81c575c88ff18e6d6913cf36ceda5d7e229f576cd4efb115f903861801220674696b746f6b-3.0.1","phone":"9432409396","url":"https://a.62-us.com/api/get_sms?key=62sms_b965cb70222fc5ca31134d4a5c270936","ts_sign_ree":"ts.1.35c626f3611a9d7634bc8eb72936bd2d7cb83e463de0ce265a6c3427727d61937a50e8a417df069df9a555bd16c66ef8b3639a56b642d7d8f9c881f42b9329ec","User-Agent":"Mozilla/5.0 (Linux; Android 12; SM-S9010 Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36","uid":"7560648920885118007","device_id":"7560648506287113741","twofa":"CRKCXBPBSPCICREBFUZ22J5VVMM5FLGY","ua":"1231","device_type":"Pixel "})
+# get_get_seed({'create_time': '2025-11-12 02:14:58', 'device_id': '7571532544412780045', 'install_id': '7571532958810572557', 'ua': 'com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; Xperia 1; Build/SP1A.211575.789.B1; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)', 'web_ua': 'Dalvik/2.1.0 (Linux; U; Android 15; Xperia 1 Build/SP1A.211575.789.B1)', 'resolution': '1794*1080', 'dpi': 420, 'device_type': 'Xperia 1', 'device_brand': 'Sony', 'device_manufacturer': 'Sony', 'os_api': 35, 'os_version': 15, 'resolution_v2': '1080*1794', 'rom': 'MIUI', 'rom_version': 'SP1A.211575.789.B1', 'clientudid': '84b96aeb-143e-4fdd-9eed-bccc0296da06', 'google_aid': 'f5e00463-072e-4ff1-95ea-2ed0c7ac8315', 'release_build': 'SP1A.211575.789.B1', 'display_density_v2': 'xxhdpi', 'ram_size': '8GB', 'dark_mode_setting_value': 0, 'is_foldable': 0, 'screen_height_dp': 683, 'screen_width_dp': 411, 'apk_last_update_time': 1760299020874, 'apk_first_install_time': 1760298986818, 'filter_warn': 0, 'priority_region': 'US', 'user_period': 9, 'is_kids_mode': 0, 'user_mode': 1, 'cdid': 'fe9101f9-b21c-4c2a-802c-b9f25c11a8f1', 'openudid': 'cc593ce51332c5f8', 'version_name': '42.4.3', 'update_version_code': '2024204030', 'version_code': '420403', 'sdk_version_code': 2051090, 'sdk_target_version': 30, 'sdk_version': '2.5.10', '_tt_ok_quic_version': 'Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30', 'mssdk_version_str': 'v05.02.02-ov-android', 'gorgon_sdk_version': '0000000020020205', 'mssdk_version': 84017696, 'seed': 'MDGiGJzbpXIDJDx0yTwylongzL18TncmUTcr86wHG0zWLB+HE2ZrFgV+Eh29NQSm2ekBJAjOxhuatw7OUKOgWAWfl2fdVrIDedBnmhIW5DQx+MBBFr3i9CxHZn+P74fOX/E=', 'seed_type': 5, 'token': 'ATweHgK7X3ASn1vRwyQLmJfo3'},proxy )
