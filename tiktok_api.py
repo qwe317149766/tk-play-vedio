@@ -98,7 +98,8 @@ class TikTokAPI:
     
     def get_seed(
         self,
-        device: Dict[str, Any]
+        device: Dict[str, Any],
+        session=None
     ) -> Tuple[str, int]:
         """
         获取 seed
@@ -106,6 +107,7 @@ class TikTokAPI:
         
         Args:
             device: 设备信息字典，包含 device_id, install_id, ua, device_type 等字段
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
             
         Returns:
             Tuple[seed, seed_type]: seed 字符串和 seed_type 整数
@@ -114,11 +116,12 @@ class TikTokAPI:
         http_client = get_global_http_client() or self.http_client
         if http_client is None:
             raise RuntimeError("HttpClient 未初始化")
-        return _get_get_seed(device, proxy=self.proxy or "", http_client=http_client)
+        return _get_get_seed(device, proxy=self.proxy or "", http_client=http_client, session=session)
     
     def get_token(
         self,
-        device: Dict[str, Any]
+        device: Dict[str, Any],
+        session=None
     ) -> str:
         """
         获取 token
@@ -126,6 +129,7 @@ class TikTokAPI:
         
         Args:
             device: 设备信息字典，包含 device_id, install_id, ua 等字段
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
             
         Returns:
             token 字符串
@@ -134,7 +138,7 @@ class TikTokAPI:
         http_client = get_global_http_client() or self.http_client
         if http_client is None:
             raise RuntimeError("HttpClient 未初始化")
-        return _get_get_token(device, proxy=self.proxy or "", http_client=http_client)
+        return _get_get_token(device, proxy=self.proxy or "", http_client=http_client, session=session)
     
     def stats(
         self,
@@ -143,7 +147,8 @@ class TikTokAPI:
         seed_type: int,
         token: str,
         device: Dict[str, Any],
-        signcount: int
+        signcount: int,
+        session=None
     ) -> str:
         """
         统计数据接口
@@ -156,6 +161,7 @@ class TikTokAPI:
             token: token 字符串
             device: 设备信息字典
             signcount: 签名计数
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
             
         Returns:
             响应文本
@@ -172,7 +178,8 @@ class TikTokAPI:
             device=device,
             signcount=signcount,
             proxy=self.proxy or "",
-            http_client=http_client
+            http_client=http_client,
+            session=session
         )
     
     def update_proxy(self, proxy: Optional[str]):
@@ -185,13 +192,14 @@ class TikTokAPI:
         self.proxy = proxy
         self.http_client.update_proxy(proxy)
     
-    def make_did_iid(self, device: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    def make_did_iid(self, device: Dict[str, Any], session=None) -> Tuple[Dict[str, Any], str]:
         """
         注册设备并获取 device_id 和 install_id
         使用 HttpClient 发送请求（必须使用 http_client，不使用 requests）
         
         Args:
             device: 设备信息字典
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
         
         Returns:
             Tuple[device, device_id]: 更新后的设备字典和 device_id
@@ -200,16 +208,17 @@ class TikTokAPI:
         http_client = get_global_http_client() or self.http_client
         if http_client is None:
             raise RuntimeError("HttpClient 未初始化")
-        # 调用 test_10_24.py 中的函数，传入 HttpClient 实例
-        return _make_did_iid(device, proxy=self.proxy or "", http_client=http_client)
+        # 调用 test_10_24.py 中的函数，传入 HttpClient 实例和 Session
+        return _make_did_iid(device, proxy=self.proxy or "", http_client=http_client, session=session)
     
-    async def make_did_iid_async(self, device: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    async def make_did_iid_async(self, device: Dict[str, Any], session=None) -> Tuple[Dict[str, Any], str]:
         """
         注册设备并获取 device_id 和 install_id（异步版本）
         使用全局 HttpClient 发送请求（在线程池中执行，不阻塞）
         
         Args:
             device: 设备信息字典
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
         
         Returns:
             Tuple[device, device_id]: 更新后的设备字典和 device_id
@@ -226,7 +235,7 @@ class TikTokAPI:
             except RuntimeError:
                 # 事件循环已关闭，直接调用同步方法
                 print(f"[make_did_iid_async] 事件循环已关闭，使用同步方法")
-                return self.make_did_iid(device)
+                return self.make_did_iid(device, session=session)
         
         try:
             # 使用全局线程池，确保高并发
@@ -235,7 +244,7 @@ class TikTokAPI:
             
             # 添加超时保护（最多等待20秒）
             result = await asyncio.wait_for(
-                loop.run_in_executor(executor, self.make_did_iid, device),
+                loop.run_in_executor(executor, self.make_did_iid, device, session),
                 timeout=20.0
             )
             
@@ -250,16 +259,17 @@ class TikTokAPI:
             if "cannot schedule new futures" in str(e):
                 # 事件循环已关闭，直接调用同步方法
                 print(f"[make_did_iid_async] 事件循环已关闭，使用同步方法")
-                return self.make_did_iid(device)
+                return self.make_did_iid(device, session=session)
             raise
     
-    def alert_check(self, device: Dict[str, Any]) -> str:
+    def alert_check(self, device: Dict[str, Any], session=None) -> str:
         """
         检查设备告警
         使用 HttpClient 发送请求（必须使用 http_client，不使用 requests）
         
         Args:
             device: 设备信息字典
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
         
         Returns:
             "success" 或错误信息
@@ -268,16 +278,17 @@ class TikTokAPI:
         http_client = get_global_http_client() or self.http_client
         if http_client is None:
             raise RuntimeError("HttpClient 未初始化")
-        # 调用 test_10_24.py 中的函数，传入 HttpClient 实例
-        return _alert_check(device, proxy=self.proxy or "", http_client=http_client)
+        # 调用 test_10_24.py 中的函数，传入 HttpClient 实例和 Session
+        return _alert_check(device, proxy=self.proxy or "", http_client=http_client, session=session)
     
-    async def alert_check_async(self, device: Dict[str, Any]) -> str:
+    async def alert_check_async(self, device: Dict[str, Any], session=None) -> str:
         """
         检查设备告警（异步版本）
         使用全局 HttpClient 发送请求（在线程池中执行，不阻塞）
         
         Args:
             device: 设备信息字典
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
         
         Returns:
             "success" 或错误信息
@@ -289,25 +300,26 @@ class TikTokAPI:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 # 事件循环已关闭，直接调用同步方法
-                return self.alert_check(device)
+                return self.alert_check(device, session=session)
         
         try:
             # 使用全局线程池，确保高并发
             executor = get_global_executor()
-            return await loop.run_in_executor(executor, self.alert_check, device)
+            return await loop.run_in_executor(executor, self.alert_check, device, session)
         except RuntimeError as e:
             if "cannot schedule new futures" in str(e):
                 # 事件循环已关闭，直接调用同步方法
-                return self.alert_check(device)
+                return self.alert_check(device, session=session)
             raise
     
-    async def get_seed_async(self, device: Dict[str, Any]) -> Tuple[str, int]:
+    async def get_seed_async(self, device: Dict[str, Any], session=None) -> Tuple[str, int]:
         """
         获取 seed（异步版本）
         使用全局 HttpClient 发送请求（在线程池中执行，不阻塞）
         
         Args:
             device: 设备信息字典，包含 device_id, install_id, ua, device_type 等字段
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
             
         Returns:
             Tuple[seed, seed_type]: seed 字符串和 seed_type 整数
@@ -319,25 +331,26 @@ class TikTokAPI:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 # 事件循环已关闭，直接调用同步方法
-                return self.get_seed(device)
+                return self.get_seed(device, session=session)
         
         try:
             # 使用全局线程池，确保高并发
             executor = get_global_executor()
-            return await loop.run_in_executor(executor, self.get_seed, device)
+            return await loop.run_in_executor(executor, self.get_seed, device, session)
         except RuntimeError as e:
             if "cannot schedule new futures" in str(e):
                 # 事件循环已关闭，直接调用同步方法
-                return self.get_seed(device)
+                return self.get_seed(device, session=session)
             raise
     
-    async def get_token_async(self, device: Dict[str, Any]) -> str:
+    async def get_token_async(self, device: Dict[str, Any], session=None) -> str:
         """
         获取 token（异步版本）
         使用全局 HttpClient 发送请求（在线程池中执行，不阻塞）
         
         Args:
             device: 设备信息字典，包含 device_id, install_id, ua 等字段
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
             
         Returns:
             token 字符串
@@ -349,15 +362,15 @@ class TikTokAPI:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 # 事件循环已关闭，直接调用同步方法
-                return self.get_token(device)
+                return self.get_token(device, session=session)
         
         try:
             # 使用全局线程池，确保高并发
             executor = get_global_executor()
-            return await loop.run_in_executor(executor, self.get_token, device)
+            return await loop.run_in_executor(executor, self.get_token, device, session)
         except RuntimeError as e:
             if "cannot schedule new futures" in str(e):
                 # 事件循环已关闭，直接调用同步方法
-                return self.get_token(device)
+                return self.get_token(device, session=session)
             raise
 

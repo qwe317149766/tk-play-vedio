@@ -24,30 +24,46 @@ device = {'ua': 'com.zhiliaoapp.musically/2024204030 (Linux; U; Android 14; en_U
 
 aweme_id = "7569608169052212501"
 
-# 使用统一的 API 接口
-seed, seed_type = api.get_seed(device)
-print(seed, seed_type)
-token = api.get_token(device)
-print(token)
-signCount = 200
-success = 0
-total = 0
-# with open(r"D:\vscode\reverse\app\shizhan\tt\code_11_9\device_register\deive1.txt","r",encoding="utf-8") as f:
-#     devices = f.readlines()
-for i in range(20000):
-# for i in range(len(devices)):
-#     device = ast.literal_eval(devices[i])
-#     seed, seed_type = api.get_seed(device)
-#     print(seed, seed_type)
-#     token = api.get_token(device)
-#     print(token)
-    res = api.stats(aweme_id, seed, seed_type, token, device, 212)
-    if res != "":
-        success += 1
-    total += 1
-    print("success===>", success, "total===>", total)
-    st = random.randint(3, 5)
-    time.sleep(st)
-    print("sleep", st)
+# 获取流程专用Session（同一流程复用同一个Session）
+http_client = api.http_client
+flow_session = http_client.get_flow_session()
+print(f"[main_3] 获取流程Session: {id(flow_session)}")
+
+try:
+    # 使用统一的 API 接口，传入流程Session
+    seed, seed_type = api.get_seed(device, session=flow_session)
+    print(seed, seed_type)
+    token = api.get_token(device, session=flow_session)
+    print(token)
+    
+    signCount = 200
+    success = 0
+    total = 0
+    # with open(r"D:\vscode\reverse\app\shizhan\tt\code_11_9\device_register\deive1.txt","r",encoding="utf-8") as f:
+    #     devices = f.readlines()
+    for i in range(20000):
+    # for i in range(len(devices)):
+    #     device = ast.literal_eval(devices[i])
+    #     # 每个设备流程使用新的Session
+    #     flow_session = http_client.get_flow_session()
+    #     try:
+    #         seed, seed_type = api.get_seed(device, session=flow_session)
+    #         print(seed, seed_type)
+    #         token = api.get_token(device, session=flow_session)
+    #         print(token)
+    #     finally:
+    #         http_client.release_flow_session(flow_session)
+        res = api.stats(aweme_id, seed, seed_type, token, device, 212, session=flow_session)
+        if res != "":
+            success += 1
+        total += 1
+        print("success===>", success, "total===>", total)
+        st = random.randint(3, 5)
+        time.sleep(st)
+        print("sleep", st)
+finally:
+    # 流程结束，释放流程Session
+    http_client.release_flow_session(flow_session)
+    print(f"[main_3] 流程Session已释放: {id(flow_session)}")
 
 # 26

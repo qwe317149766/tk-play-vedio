@@ -10,7 +10,7 @@ from headers.device_ticket_data import make_device_ticket_data
 from mssdk.get_seed.seed_test import get_get_seed
 from mssdk.get_token.token_test import get_get_token
 
-def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000', http_client=None):
+def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000', http_client=None, session=None):
     """
     统计数据接口
     
@@ -23,6 +23,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         signcount: 签名计数
         proxy: 代理地址（如果 http_client 为 None 时使用）
         http_client: HttpClient 实例（优先使用）
+        session: 可选的Session对象（如果提供，使用此Session）
     """
     use_http_client = http_client is not None
     # 禁用 HTTPS 警告
@@ -169,7 +170,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
     try:
         if use_http_client:
             # 使用 HttpClient（已包含重试和超时机制）
-            resp = http_client.post(url, headers=headers, data=data)
+            resp = http_client.post(url, headers=headers, data=data, session=session)
         else:
             resp = requests.post(
                 url,

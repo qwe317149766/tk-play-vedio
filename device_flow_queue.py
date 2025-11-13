@@ -113,6 +113,7 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
     """
     执行设备流程（业务逻辑）- 异步版本
     使用 TikTokAPI 进行请求（异步执行，不阻塞）
+    同一个流程复用同一个Session，流程结束后重建Session
     
     Args:
         job: 任务数据
@@ -124,6 +125,7 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
     step = "init"
     device_id = None
     seed_type = None
+    flow_session = None
     try:
         print(f"[RUN_DEVICE_FLOW] 开始执行设备流程: job={job}, proxy_url={proxy_url}")
         # 使用全局 TikTokAPI 实例
@@ -131,6 +133,11 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
         if _api_instance is None:
             raise RuntimeError("TikTokAPI 实例未初始化")
         api = _api_instance
+        
+        # 获取流程专用Session（同一流程复用同一个Session）
+        http_client = api.http_client
+        flow_session = http_client.get_flow_session()
+        print(f"[RUN_DEVICE_FLOW] 获取流程Session: {id(flow_session)}")
         
         # 1) new device（同步操作，在线程池中执行）
         step = "new_device"
@@ -143,65 +150,85 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 # 事件循环已关闭，无法执行
+                if flow_session:
+                    http_client.release_flow_session(flow_session)
                 return False, "事件循环已关闭，无法执行任务", {"step": step}
         
         try:
             device = await loop.run_in_executor(None, getANewDevice)
         except RuntimeError as e:
             if "cannot schedule new futures" in str(e):
+                if flow_session:
+                    http_client.release_flow_session(flow_session)
                 return False, f"事件循环已关闭: {e}", {"step": step}
             raise
 
-        # 2) did/iid - 使用 TikTokAPI（通过 HttpClient，异步执行）
+        # 2) did/iid - 使用 TikTokAPI（通过 HttpClient，异步执行，使用流程Session）
         step = "did_iid"
         print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 make_did_iid_async")
         try:
-            dev1, device_id = await api.make_did_iid_async(device)
+            dev1, device_id = await api.make_did_iid_async(device, session=flow_session)
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: make_did_iid_async 完成, device_id={device_id}")
         except Exception as ex:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: make_did_iid_async 出错: {ex}")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, f"did/iid error: {ex}", {"step": step}
         if not device_id:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: device_id 为空")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, "did/iid empty device_id", {"step": step}
 
-        # 3) alert_check - 使用 TikTokAPI（通过 HttpClient，异步执行）
+        # 3) alert_check - 使用 TikTokAPI（通过 HttpClient，异步执行，使用流程Session）
         step = "alert_check"
         print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 alert_check_async")
         try:
-            chk = await api.alert_check_async(dev1)
+            chk = await api.alert_check_async(dev1, session=flow_session)
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check_async 完成, chk={chk}")
         except Exception as ex:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check_async 出错: {ex}")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, f"alert_check error: {ex}", {"step": step, "device_id": device_id}
         if str(chk).lower() != "success":
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: alert_check 失败, chk={chk}")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, f"alert_check fail ({chk})", {"step": step, "device_id": device_id}
 
-        # 4) seed - 使用 TikTokAPI（异步执行）
+        # 4) seed - 使用 TikTokAPI（异步执行，使用流程Session）
         step = "seed"
         print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_seed_async")
         try:
-            seed, seed_type = await api.get_seed_async(dev1)
+            seed, seed_type = await api.get_seed_async(dev1, session=flow_session)
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 完成, seed={seed[:20] if seed else None}..., seed_type={seed_type}")
         except Exception as ex:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 出错: {ex}")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, f"seed error: {ex}", {"step": step, "device_id": device_id}
         if not seed:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: seed 为空")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, "seed empty", {"step": step, "device_id": device_id}
 
-        # 5) token - 使用 TikTokAPI（异步执行）
+        # 5) token - 使用 TikTokAPI（异步执行，使用流程Session）
         step = "token"
         print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_token_async")
         try:
-            token = await api.get_token_async(dev1)
+            token = await api.get_token_async(dev1, session=flow_session)
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 完成, token={token[:20] if token else None}...")
         except Exception as ex:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 出错: {ex}")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, f"token error: {ex}", {"step": step, "device_id": device_id, "seed_type": seed_type}
         if not token:
             print(f"[RUN_DEVICE_FLOW] 步骤 {step}: token 为空")
+            if flow_session:
+                http_client.release_flow_session(flow_session)
             return False, "token empty", {"step": step, "device_id": device_id, "seed_type": seed_type}
 
         # 6) 回填 & 落盘（文件写入在线程池中执行）
@@ -219,9 +246,24 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
                     pass  # 忽略写入错误
             else:
                 raise
+        
+        # 流程成功完成，释放流程Session（流程结束后重建Session）
+        if flow_session:
+            http_client.release_flow_session(flow_session)
+            print(f"[RUN_DEVICE_FLOW] 流程Session已释放: {id(flow_session)}")
+        
         return True, "ok", {"device_id": device_id, "seed_type": seed_type}
 
     except Exception as ex:
+        # 发生异常时也要释放Session
+        if flow_session:
+            try:
+                http_client = _api_instance.http_client if _api_instance else None
+                if http_client:
+                    http_client.release_flow_session(flow_session)
+                    print(f"[RUN_DEVICE_FLOW] 异常时释放流程Session: {id(flow_session)}")
+            except Exception:
+                pass
         return False, f"EX:{type(ex).__name__}:{ex}", {"step": step, "device_id": device_id, "seed_type": seed_type}
 
 # ===================== 任务执行函数 =====================
@@ -281,7 +323,9 @@ def threshold_callback():
     
     try:
         with _task_counter_lock:
+            # 检查是否超过最大任务数
             if _max_tasks > 0 and _task_counter >= _max_tasks:
+                print(f"[threshold_callback] 已达到最大任务数: {_task_counter}/{_max_tasks}")
                 return []  # 没有更多任务
             
             # 每次补给一批任务（减少批次大小，避免一次性生成太多任务）
@@ -291,8 +335,13 @@ def threshold_callback():
             if batch_size < 100:
                 batch_size = 100  # 最少100个任务
             
-            remaining = _max_tasks - _task_counter if _max_tasks > 0 else batch_size
-            batch_size = min(batch_size, remaining) if _max_tasks > 0 else batch_size
+            # 确保不超过最大任务数
+            if _max_tasks > 0:
+                remaining = _max_tasks - _task_counter
+                if remaining <= 0:
+                    print(f"[threshold_callback] 已达到最大任务数: {_task_counter}/{_max_tasks}")
+                    return []
+                batch_size = min(batch_size, remaining)
             
             if batch_size <= 0:
                 return []
@@ -301,6 +350,7 @@ def threshold_callback():
             tasks = [{"i": _task_counter + i} for i in range(batch_size)]
             _task_counter += batch_size
             
+            print(f"[threshold_callback] 补充 {len(tasks)} 个任务，当前计数: {_task_counter}" + (f"/{_max_tasks}" if _max_tasks > 0 else ""))
             return tasks
     except Exception as e:
         print(f"[ERROR] threshold_callback 执行失败: {e}")

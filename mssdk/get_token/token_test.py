@@ -432,7 +432,7 @@ def mssdk_decrypt(encrypted_hex: str, is_report: bool, is_request: bool) -> str:
     return original_pb_hex
 
 
-def get_get_token(cookie_data:dict, proxy="", http_client=None):
+def get_get_token(cookie_data:dict, proxy="", http_client=None, session=None):
     """
     获取 token
     
@@ -440,6 +440,7 @@ def get_get_token(cookie_data:dict, proxy="", http_client=None):
         cookie_data: 设备信息字典
         proxy: 代理地址（如果 http_client 为 None 时使用）
         http_client: HttpClient 实例（优先使用）
+        session: 可选的Session对象（如果提供，使用此Session）
     """
     use_http_client = http_client is not None
     # 1. Define the URL and query parameters
@@ -583,7 +584,7 @@ def get_get_token(cookie_data:dict, proxy="", http_client=None):
     res = ""
     if use_http_client:
         # 使用 HttpClient（已包含重试和超时机制）
-        response = http_client.post(url, headers=dict(headers), data=data)
+        response = http_client.post(url, headers=dict(headers), data=data, session=session)
     elif proxy != "":
         response = requests.post(
             url,

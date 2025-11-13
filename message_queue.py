@@ -74,54 +74,51 @@ class MessageQueue:
         self.loop = None
         self.loop_thread = None
     
-    async def _execute_task(self, task: Any):
+    async def _trigger_replenish_check(self):
         """
-        执行单个任务（完全异步，不阻塞，但受并发控制）
-        
-        Args:
-            task: 要执行的任务
+        触发一次补充检查（任务完成后立即调用，确保及时补充）
+        只要队列大小 < 阈值，就立即补充，不等待所有任务完成
+        但需要避免重复补充（通过检查阈值回调状态）
         """
-        # 获取并发信号量（控制实际并发数）
-        # 如果已达到并发上限，这里会等待直到有任务完成
-        # 注意：在获取信号量之前，running_tasks 可能不准确，因为其他任务可能正在执行
-        async with self.concurrency_semaphore:
-            # 获取到信号量后，更新运行任务数
+        try:
+            logger.info(f"[_trigger_replenish_check] 开始执行补充检查")
             async with self.running_tasks_lock:
-                self.running_tasks += 1
                 current_running = self.running_tasks
-            logger.info(f"任务 {task} 获取到信号量，开始执行（当前并发: {current_running}/{self.max_concurrent}）")
+                queue_size = self.task_queue.qsize()
             
-            try:
-                # 执行任务回调（完全异步，不阻塞其他任务）
-                if self.task_callback:
-                    logger.debug(f"调用任务回调: {task}")
-                    if asyncio.iscoroutinefunction(self.task_callback):
-                        # 异步函数，直接 await（不会阻塞其他任务，因为每个任务都是独立的协程）
-                        await self.task_callback(task)
-                    else:
-                        # 如果是同步函数，在线程池中执行（不阻塞事件循环）
-                        loop = asyncio.get_event_loop()
-                        await loop.run_in_executor(None, self.task_callback, task)
-                    logger.debug(f"任务回调执行完成: {task}")
+            threshold_size = 2 * self.max_concurrent
+            
+            # 只要队列大小小于阈值，就立即触发补充（不检查 running_tasks）
+            # 但需要检查阈值回调是否正在执行，避免重复补充
+            if (queue_size < threshold_size and 
+                not self.threshold_calling and 
+                not self.is_stopped):
+                logger.info(f"任务完成后触发补充检查: 队列大小={queue_size}, 正在执行={current_running}, 阈值={threshold_size}")
+                new_tasks = await self._threshold_replenish()
+                if new_tasks:
+                    logger.info(f"任务完成后补充检查获取到 {len(new_tasks)} 个新任务，开始添加到队列")
+                    # 批量添加任务到队列
+                    # 注意：每个 put 操作都会唤醒一个等待的 get 操作
+                    # 所以如果有多个 worker 在等待，它们会依次被唤醒
+                    for i, task in enumerate(new_tasks):
+                        await self.task_queue.put(task)
+                        async with self.stats_lock:
+                            self.total_tasks += 1
+                        # 每添加一个任务，就记录一次（方便调试，但减少日志频率）
+                        if (i + 1) % 200 == 0 or i == len(new_tasks) - 1:
+                            logger.info(f"任务补充进度: {i + 1}/{len(new_tasks)}")
+                    final_queue_size = self.task_queue.qsize()
+                    logger.info(f"任务完成后立即补充了 {len(new_tasks)} 个任务，补充后队列大小: {final_queue_size}")
+                    # 通知所有等待的 worker，有新任务了
+                    # 由于 asyncio.Queue 是线程安全的，put 操作会自动唤醒等待的 get 操作
                 else:
-                    logger.warning(f"没有任务回调函数，任务 {task} 未执行")
-                
-                # 更新统计
-                async with self.stats_lock:
-                    self.completed_tasks += 1
-                
-                logger.info(f"任务执行完成: {task}")
-                
-            except Exception as e:
-                async with self.stats_lock:
-                    self.failed_tasks += 1
-                logger.error(f"任务执行失败: {task}, 错误: {e}", exc_info=True)
-            finally:
-                async with self.running_tasks_lock:
-                    self.running_tasks -= 1
-                # 标记任务完成（在任务真正执行完成后）
-                self.task_queue.task_done()
-                logger.info(f"任务 {task} 释放信号量（当前并发: {self.running_tasks}/{self.max_concurrent}）")
+                    logger.warning(f"任务完成后补充检查返回空任务列表，队列大小={queue_size}, 正在执行={current_running}, 可能没有更多任务了")
+                    # 不在这里停止队列，让 _maintain_concurrency 统一管理停止逻辑
+            else:
+                logger.info(f"任务完成后不触发补充检查: 队列大小={queue_size}, 阈值={threshold_size}, 阈值回调状态={self.threshold_calling}, 队列状态={self.is_stopped}")
+                # 不在这里停止队列，让 _maintain_concurrency 统一管理停止逻辑
+        except Exception as e:
+            logger.error(f"任务完成后触发补充检查异常: {e}", exc_info=True)
     
     async def _threshold_replenish(self):
         """
@@ -180,39 +177,107 @@ class MessageQueue:
     async def _worker(self, worker_id: int):
         """
         工作协程（不断从队列中取任务执行，完全异步，不阻塞）
-        注意：worker 数量可以大于 max_concurrent，但实际并发由信号量控制
+        注意：worker 会先获取信号量，然后从队列取任务执行，确保实际执行的任务数不超过 max_concurrent
+        这样可以避免队列被快速消耗，但任务都在等待信号量
         
         Args:
             worker_id: 工作协程 ID
         """
-        logger.debug(f"工作协程 {worker_id} 启动")
+        logger.info(f"工作协程 {worker_id} 启动")
         
         while self.is_running:
             try:
-                # 从队列中获取任务（超时 1 秒，避免阻塞）
-                try:
-                    task = await asyncio.wait_for(self.task_queue.get(), timeout=1.0)
-                    logger.debug(f"工作协程 {worker_id} 获取到任务: {task}")
-                except asyncio.TimeoutError:
-                    # 超时，检查是否需要停止
-                    if self.is_stopped and self.task_queue.empty():
-                        logger.debug(f"工作协程 {worker_id} 准备停止（队列为空且已停止）")
-                        break
-                    continue
-                
-                # 创建异步任务执行（完全异步，不阻塞 worker）
-                # 任务完成后会在 _execute_task 中调用 task_done()
-                # 并发控制由 _execute_task 中的信号量实现
-                # 注意：任务会立即创建，但实际执行受信号量控制
-                logger.debug(f"工作协程 {worker_id} 创建任务执行: {task} (等待信号量)")
-                # 创建任务并立即调度（不等待）
-                asyncio.create_task(self._execute_task(task))
-                
-                # 注意：不在这里调用 task_done()，因为任务可能还在执行
-                # task_done() 会在 _execute_task 的 finally 块中调用
+                # 先获取信号量（控制实际并发数）
+                # 如果已达到并发上限，这里会等待直到有任务完成
+                async with self.concurrency_semaphore:
+                    # 获取到信号量后，更新运行任务数
+                    async with self.running_tasks_lock:
+                        self.running_tasks += 1
+                        current_running = self.running_tasks
+                    
+                    # 从队列中获取任务（不设置超时，持续等待，确保能立即获取新任务）
+                    # 当任务完成后，队列中会有新任务，worker 会立即获取
+                    try:
+                        queue_size_before = self.task_queue.qsize()
+                        logger.debug(f"工作协程 {worker_id} 获取到信号量，准备从队列获取任务，当前队列大小: {queue_size_before}, 当前并发: {current_running}/{self.max_concurrent}")
+                        task = await self.task_queue.get()
+                        queue_size_after = self.task_queue.qsize()
+                        logger.info(f"工作协程 {worker_id} 获取到任务: {task}, 获取后队列大小: {queue_size_after}, 当前并发: {current_running}/{self.max_concurrent}")
+                    except Exception as e:
+                        # 队列可能已关闭
+                        async with self.running_tasks_lock:
+                            self.running_tasks -= 1
+                        if self.is_stopped:
+                            logger.debug(f"工作协程 {worker_id} 准备停止（队列已关闭）")
+                            break
+                        logger.debug(f"工作协程 {worker_id} 获取任务异常: {e}")
+                        continue
+                    
+                    # 执行任务回调（完全异步，不阻塞其他任务）
+                    try:
+                        if self.task_callback:
+                            print(f"[WORKER {worker_id}] 开始执行任务: {task}")
+                            logger.info(f"工作协程 {worker_id} 开始执行任务: {task}")
+                            if asyncio.iscoroutinefunction(self.task_callback):
+                                # 异步函数，直接 await（不会阻塞其他任务，因为每个任务都是独立的协程）
+                                await self.task_callback(task)
+                            else:
+                                # 如果是同步函数，在线程池中执行（不阻塞事件循环）
+                                loop = asyncio.get_event_loop()
+                                await loop.run_in_executor(None, self.task_callback, task)
+                            print(f"[WORKER {worker_id}] 任务执行完成: {task}")
+                            logger.info(f"工作协程 {worker_id} 任务执行完成: {task}")
+                        else:
+                            logger.warning(f"工作协程 {worker_id} 没有任务回调函数，任务 {task} 未执行")
+                        
+                        # 更新统计
+                        async with self.stats_lock:
+                            self.completed_tasks += 1
+                        
+                    except Exception as e:
+                        print(f"[WORKER {worker_id}] 任务执行异常: {task}, 错误: {e}")
+                        async with self.stats_lock:
+                            self.failed_tasks += 1
+                        logger.error(f"工作协程 {worker_id} 任务执行失败: {task}, 错误: {e}", exc_info=True)
+                    finally:
+                        print(f"[WORKER {worker_id}] 进入 finally 块，任务: {task}")
+                        # 标记任务完成（在任务真正执行完成后）
+                        self.task_queue.task_done()
+                        async with self.running_tasks_lock:
+                            self.running_tasks -= 1
+                            current_running_after = self.running_tasks
+                        print(f"[WORKER {worker_id}] 任务 {task} 完成，释放信号量（当前并发: {current_running_after}/{self.max_concurrent}）")
+                        logger.info(f"工作协程 {worker_id} 任务 {task} 完成，释放信号量（当前并发: {current_running_after}/{self.max_concurrent}）")
+                    
+                    # 任务完成后，立即检查并补充任务（在 finally 块外，可以使用 break）
+                    queue_size_after = self.task_queue.qsize()
+                    threshold_size = 2 * self.max_concurrent
+                    print(f"[WORKER {worker_id}] 任务 {task} 完成后，队列大小: {queue_size_after}, 阈值: {threshold_size}, 阈值回调状态: {self.threshold_calling}, 队列状态: {self.is_stopped}, 正在执行: {current_running_after}")
+                    logger.info(f"工作协程 {worker_id} 任务 {task} 完成后，队列大小: {queue_size_after}, 阈值: {threshold_size}, 阈值回调状态: {self.threshold_calling}, 队列状态: {self.is_stopped}, 正在执行: {current_running_after}")
+                    
+                    # 如果队列大小小于阈值，立即触发补充（不等待所有任务完成）
+                    if queue_size_after < threshold_size and not self.threshold_calling and not self.is_stopped:
+                        logger.info(f"工作协程 {worker_id} 任务 {task} 完成后触发补充检查，队列大小: {queue_size_after} < 阈值: {threshold_size}")
+                        # 触发一次补充检查（异步执行，不阻塞）
+                        try:
+                            asyncio.create_task(self._trigger_replenish_check())
+                            logger.info(f"工作协程 {worker_id} 任务 {task} 完成后已创建补充检查任务")
+                        except Exception as e:
+                            logger.error(f"工作协程 {worker_id} 任务 {task} 完成后创建补充检查任务失败: {e}", exc_info=True)
+                    else:
+                        logger.info(f"工作协程 {worker_id} 任务 {task} 完成后不触发补充检查: 队列大小={queue_size_after}, 阈值={threshold_size}, 阈值回调状态={self.threshold_calling}, 队列状态={self.is_stopped}")
+                    
+                    # 检查是否可以停止：如果队列为空且没有正在执行的任务，则停止
+                    # 注意：这个检查应该在补充检查之后，因为补充检查可能会添加新任务
+                    # 如果队列为空，我们应该等待补充检查完成，确保不会误判
+                    # 但是，不应该在单个 worker 中停止队列，应该由 _maintain_concurrency 来统一管理停止逻辑
+                    # 这里只负责触发补充检查，不负责停止队列
+                    # 停止队列的逻辑应该在 _maintain_concurrency 中统一处理
                 
             except Exception as e:
                 logger.error(f"工作协程 {worker_id} 出错: {e}", exc_info=True)
+                # 出错后短暂休眠，避免快速重试导致错误循环
+                await asyncio.sleep(0.1)
         
         logger.debug(f"工作协程 {worker_id} 停止")
     
@@ -225,7 +290,7 @@ class MessageQueue:
         
         threshold_size = 2 * self.max_concurrent
         last_replenish_time = 0
-        replenish_cooldown = 2.0  # 阈值补给冷却时间（秒），避免频繁调用（增加到2秒）
+        replenish_cooldown = 1.0  # 阈值补给冷却时间（秒），降低到1秒，更及时地补充任务
         last_queue_size = threshold_size  # 记录上次队列大小，用于判断是否需要补充
         
         while self.is_running:
@@ -237,23 +302,29 @@ class MessageQueue:
                 current_time = time.time()
                 
                 # 阈值回调条件：队列中任务数 < 2 * max_concurrent
-                # 改进逻辑：只有当队列大小明显下降时才补充（避免频繁回调）
+                # 改进逻辑：更积极地补充任务，确保始终有足够的任务在执行
                 # 条件1：队列大小小于阈值
-                # 条件2：队列大小比上次检查时明显减少（至少减少10%或减少100个任务）
-                #        或者队列大小很小（小于 max_concurrent）且没有任务在执行（说明任务执行很快）
+                # 条件2：队列大小比上次检查时减少（至少减少50个任务或减少5%）
+                #        或者队列大小小于 max_concurrent（需要立即补充）
+                #        或者队列大小小于阈值且正在执行的任务数 < max_concurrent（有执行能力但任务不足）
                 # 条件3：冷却时间已过
                 # 条件4：阈值回调不在执行
-                queue_decreased = (last_queue_size - queue_size) >= max(100, last_queue_size * 0.1)
-                # 只有当队列很小且没有任务在执行时，才认为需要立即补充
-                # 如果队列很小但有任务在执行，说明任务执行很快，不需要立即补充
-                queue_too_small = queue_size < self.max_concurrent and current_running == 0
+                queue_decreased = (last_queue_size - queue_size) >= max(10, last_queue_size * 0.02)  # 降低阈值，更敏感
+                # 队列太小，需要立即补充
+                queue_too_small = queue_size < self.max_concurrent
+                # 有执行能力但任务不足（正在执行的任务数小于最大并发数）
+                has_capacity = current_running < self.max_concurrent and queue_size < threshold_size
+                # 队列大小小于阈值的一半，需要补充
+                queue_below_half = queue_size < (threshold_size // 2)
                 
+                # 更积极的补充条件：只要队列小于阈值，就补充（不等待所有条件都满足）
+                # 但需要确保不会过度补充（通过冷却时间和阈值回调状态）
+                # 这样可以确保队列中始终有足够的任务，但不会无限补充
                 should_replenish = (
-                    queue_size < threshold_size and 
-                    (queue_decreased or queue_too_small) and  # 队列明显减少或太小且没有任务在执行
-                    not self.threshold_calling and 
-                    not self.is_stopped and
-                    current_time - last_replenish_time >= replenish_cooldown
+                    queue_size < threshold_size and  # 队列小于阈值
+                    not self.threshold_calling and   # 阈值回调不在执行（避免重复补充）
+                    not self.is_stopped and          # 队列未停止
+                    current_time - last_replenish_time >= replenish_cooldown  # 冷却时间已过（避免频繁补充）
                 )
                 
                 if should_replenish:
@@ -310,7 +381,8 @@ class MessageQueue:
                             self.stop_event.set()
                             break
                 
-                await asyncio.sleep(0.2)  # 增加检查间隔，从0.1秒增加到0.2秒
+                # 降低检查间隔，更及时地补充任务（从0.2秒降低到0.05秒）
+                await asyncio.sleep(0.05)  # 每0.05秒检查一次，更及时地补充任务
                 
             except Exception as e:
                 logger.error(f"维护并发数出错: {e}", exc_info=True)
@@ -323,10 +395,10 @@ class MessageQueue:
         self.is_stopped = False
         
         # 创建工作协程
-        # 注意：worker 数量可以设置为 max_concurrent，但实际并发由信号量控制
-        # 如果 worker 数量少于 max_concurrent，可能无法充分利用并发
-        # 如果 worker 数量大于 max_concurrent，可以更快地从队列获取任务，但实际执行受信号量限制
-        worker_count = self.max_concurrent  # 使用 max_concurrent 个 worker
+        # 注意：worker 数量应该 = max_concurrent，因为每个 worker 会先获取信号量再取任务
+        # 这样可以确保实际执行的任务数不超过 max_concurrent，同时队列不会被快速消耗
+        # 如果 worker 数量 > max_concurrent，多余的 worker 会在等待信号量，没有意义
+        worker_count = self.max_concurrent  # worker 数量 = max_concurrent，确保每个 worker 都能获取到信号量
         logger.info(f"创建 {worker_count} 个工作协程（实际并发数由信号量控制为 {self.max_concurrent}）")
         self.worker_tasks = [
             asyncio.create_task(self._worker(i))

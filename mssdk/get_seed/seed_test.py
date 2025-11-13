@@ -11,6 +11,8 @@ from mssdk.endecode import mssdk_endecode
 from headers import make_headers
 # 1. Define the URL and query parameters
 import hashlib, time, datetime, base64, os, random
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # 禁用 HTTPS 警告
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -368,7 +370,7 @@ def mssdk_encrypt(pb:hex,is_report: bool):
     res = last_aes_encrypt(for_aes)
     # print("res",res)
     return res
-def get_get_seed(cookie_data:dict, proxy="", http_client=None):
+def get_get_seed(cookie_data:dict, proxy="", http_client=None, session=None):
     """
     获取 seed
     
@@ -376,6 +378,7 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None):
         cookie_data: 设备信息字典
         proxy: 代理地址（如果 http_client 为 None 时使用）
         http_client: HttpClient 实例（优先使用）
+        session: 可选的Session对象（如果提供，使用此Session）
     """
     use_http_client = http_client is not None
     # 配置代理
@@ -418,17 +421,65 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None):
     # session= str(uuid.uuid4()).replace("-", "")
     # print("session id is:",session)
     # session = "b20320890bb549a4843896818a1089aa"
-    biaozhi = False
-    for i in range(1000000):
-        session = str(uuid.uuid4()).replace("-", "")
-        tem = make_seed_pb.make_seed_encrypt(session, device_id,sdk_version="v05.02.02")
-        # print(tem)
+    # 并行计算：使用多线程来加速查找满足条件的 session_id
+    def check_session_id(_):
+        """检查单个 session_id 是否满足条件"""
+        session_id = str(uuid.uuid4()).replace("-", "")
+        tem = make_seed_pb.make_seed_encrypt(session_id, device_id, sdk_version="v05.02.02")
         zlib1 = tt_zlib(tem)
         zlib_res = zlib1.compressed()
-        # print(len(zlib_res))
         if len(zlib_res) == 154:
-            biaozhi = True
-            break
+            return session_id, tem
+        return None, None
+    
+    # 使用线程池并行计算
+    biaozhi = False
+    session_id = None
+    tem = None
+    max_workers = min(8, os.cpu_count() or 1)  # 使用 CPU 核心数，最多8个线程
+    batch_size = max_workers * 10  # 每批提交的任务数
+    max_iterations = 1000000
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        found = threading.Event()  # 用于通知其他线程停止
+        
+        def check_with_stop(_):
+            """带停止标志的检查函数"""
+            if found.is_set():
+                return None, None
+            return check_session_id(_)
+        
+        # 分批提交任务，避免一次性创建太多任务
+        for batch_start in range(0, max_iterations, batch_size):
+            if found.is_set():
+                break
+            
+            batch_end = min(batch_start + batch_size, max_iterations)
+            futures = [executor.submit(check_with_stop, i) for i in range(batch_start, batch_end)]
+            
+            # 使用 as_completed 获取第一个成功的结果
+            for future in as_completed(futures):
+                if found.is_set():
+                    break
+                    
+                try:
+                    result_session_id, result_tem = future.result()
+                    if result_session_id is not None:
+                        session_id = result_session_id
+                        tem = result_tem
+                        biaozhi = True
+                        found.set()  # 通知其他线程停止
+                        # 取消当前批次剩余的任务
+                        for f in futures:
+                            f.cancel()
+                        break
+                except Exception as e:
+                    # 忽略任务取消异常
+                    pass
+            
+            if found.is_set():
+                break
+    
     if not biaozhi:
         print("get seed failed")
         return ["",""]
@@ -512,7 +563,7 @@ def get_get_seed(cookie_data:dict, proxy="", http_client=None):
         try:
             if use_http_client:
                 # 使用 HttpClient（已包含重试和超时机制）
-                response = http_client.post(url, headers=dict(headers), data=data)
+                response = http_client.post(url, headers=dict(headers), data=data, session=session)
                 break  # 成功则跳出循环
             else:
                 # 统一请求参数

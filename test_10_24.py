@@ -49,7 +49,7 @@ def url_params_to_json(url):
     return result
 def build_query_string(params):
     return urlencode(params,safe='*').replace('%25', '%').replace('=&', '&').replace('+', '%20')
-def make_did_iid(device, proxy="", http_client=None):
+def make_did_iid(device, proxy="", http_client=None, session=None):
     """
     注册设备并获取 device_id 和 install_id
     
@@ -57,6 +57,7 @@ def make_did_iid(device, proxy="", http_client=None):
         device: 设备信息字典
         proxy: 代理地址（如果 http_client 为 None 时使用）
         http_client: HttpClient 实例（优先使用）
+        session: 可选的Session对象（如果提供，使用此Session）
     """
     use_http_client = http_client is not None
     if not use_http_client:
@@ -284,7 +285,7 @@ def make_did_iid(device, proxy="", http_client=None):
         # 使用 HttpClient
         print(f"[make_did_iid] 开始调用 http_client.post, url={url[:80]}...")
         try:
-            resp = http_client.post(url, headers=headers, data=body_json)
+            resp = http_client.post(url, headers=headers, data=body_json, session=session)
             elapsed = time.time() - request_start
             print(f"[make_did_iid] http_client.post 完成, 耗时: {elapsed:.3f}s, 状态码: {resp.status_code}")
         except Exception as e:
@@ -317,7 +318,7 @@ def make_did_iid(device, proxy="", http_client=None):
     device["install_id"] = str(install_id) if install_id is not None else ""
     # print("device_id:", device_id,"install_id:", install_id)
     return [device,device_id]
-def alert_check(device, proxy="", http_client=None):
+def alert_check(device, proxy="", http_client=None, session=None):
     """
     检查设备告警
     
@@ -325,6 +326,7 @@ def alert_check(device, proxy="", http_client=None):
         device: 设备信息字典
         proxy: 代理地址（如果 http_client 为 None 时使用）
         http_client: HttpClient 实例（优先使用）
+        session: 可选的Session对象（如果提供，使用此Session）
     """
     use_http_client = http_client is not None
     if not use_http_client:
@@ -425,7 +427,7 @@ def alert_check(device, proxy="", http_client=None):
         # Based on 'tt-ok' in the User-Agent, we choose to impersonate an OkHttp client.
         if use_http_client:
             # 使用 HttpClient（已包含重试和超时机制）
-            response = http_client.get(url, headers=dict(headers))
+            response = http_client.get(url, headers=dict(headers), session=session)
             return "success"
         elif proxy != "":
             response = requests.get(
