@@ -182,6 +182,61 @@ class TikTokAPI:
             session=session
         )
     
+    async def stats_async(
+        self,
+        aweme_id: str,
+        seed: str,
+        seed_type: int,
+        token: str,
+        device: Dict[str, Any],
+        signcount: int,
+        session=None
+    ) -> str:
+        """
+        统计数据接口（异步版本）
+        使用全局 HttpClient 发送请求（在线程池中执行，不阻塞事件循环）
+        
+        Args:
+            aweme_id: 视频 ID
+            seed: seed 字符串
+            seed_type: seed 类型
+            token: token 字符串
+            device: 设备信息字典
+            signcount: 签名计数
+            session: 可选的Session对象（如果提供，流程中的所有请求将使用此Session）
+            
+        Returns:
+            响应文本
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                # 事件循环已关闭，直接调用同步方法
+                return self.stats(aweme_id, seed, seed_type, token, device, signcount, session)
+        
+        try:
+            # 使用全局线程池，确保高并发
+            executor = get_global_executor()
+            return await loop.run_in_executor(
+                executor,
+                self.stats,
+                aweme_id,
+                seed,
+                seed_type,
+                token,
+                device,
+                signcount,
+                session
+            )
+        except RuntimeError as e:
+            if "cannot schedule new futures" in str(e):
+                # 事件循环已关闭，直接调用同步方法
+                return self.stats(aweme_id, seed, seed_type, token, device, signcount, session)
+            raise
+    
     def update_proxy(self, proxy: Optional[str]):
         """
         更新代理设置

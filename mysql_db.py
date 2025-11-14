@@ -6,11 +6,17 @@ import pymysql
 from typing import Optional, List, Dict, Any, Tuple
 from contextlib import contextmanager
 import logging
+import threading
 from config_loader import ConfigLoader
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# 全局线程本地存储：为每个线程维护一个数据库连接
+# key: (host, port, user, database) 元组, value: 线程本地存储对象
+_thread_local_pools: Dict[Tuple, threading.local] = {}
+_pools_lock = threading.Lock()
 
 
 class MySQLDB:
@@ -75,18 +81,45 @@ class MySQLDB:
         
         # 连接池（简单实现）
         self._connection_pool = []
-        self._current_connection = None
+        # 注意：不再使用 _current_connection，改用线程本地存储
     
     def _get_connection(self) -> pymysql.Connection:
         """
-        获取数据库连接（从连接池或创建新连接）
+        获取数据库连接（使用线程本地存储，每个线程复用同一个连接）
         
         Returns:
             pymysql.Connection: 数据库连接对象
         """
-        if self._current_connection and self._current_connection.open:
-            return self._current_connection
+        global _thread_local_pools, _pools_lock
         
+        # 使用连接参数作为 key，确保相同配置的连接可以复用
+        connection_key = (self.host, self.port, self.user, self.database)
+        
+        # 获取或创建线程本地存储
+        with _pools_lock:
+            if connection_key not in _thread_local_pools:
+                _thread_local_pools[connection_key] = threading.local()
+            thread_local = _thread_local_pools[connection_key]
+        
+        # 检查当前线程是否已有连接
+        if hasattr(thread_local, 'connection'):
+            conn = thread_local.connection
+            # 检查连接是否仍然有效
+            try:
+                if conn and hasattr(conn, 'open') and conn.open:
+                    # 测试连接是否可用（ping 方法会尝试重新连接如果连接断开）
+                    conn.ping(reconnect=True)
+                    return conn
+            except Exception:
+                # 连接已失效，需要重新创建
+                try:
+                    if conn:
+                        conn.close()
+                except Exception:
+                    pass
+                thread_local.connection = None
+        
+        # 创建新连接
         try:
             connection = pymysql.connect(
                 host=self.host,
@@ -99,19 +132,35 @@ class MySQLDB:
                 cursorclass=pymysql.cursors.DictCursor,
                 **self.kwargs
             )
-            self._current_connection = connection
-            logger.info(f"成功连接到数据库: {self.host}:{self.port}/{self.database}")
+            # 存储到线程本地
+            thread_local.connection = connection
+            logger.debug(f"线程 {threading.current_thread().name} 创建新数据库连接: {self.host}:{self.port}/{self.database}")
             return connection
         except Exception as e:
             logger.error(f"连接数据库失败: {e}")
             raise
     
     def _close_connection(self):
-        """关闭当前连接"""
-        if self._current_connection and self._current_connection.open:
-            self._current_connection.close()
-            self._current_connection = None
-            logger.info("数据库连接已关闭")
+        """
+        关闭当前线程的连接（可选，通常不需要手动关闭）
+        连接会在线程结束时自动清理
+        """
+        global _thread_local_pools, _pools_lock
+        
+        connection_key = (self.host, self.port, self.user, self.database)
+        
+        with _pools_lock:
+            if connection_key in _thread_local_pools:
+                thread_local = _thread_local_pools[connection_key]
+                if hasattr(thread_local, 'connection'):
+                    conn = thread_local.connection
+                    try:
+                        if conn and conn.open:
+                            conn.close()
+                            logger.debug(f"线程 {threading.current_thread().name} 关闭数据库连接")
+                    except Exception:
+                        pass
+                    thread_local.connection = None
     
     @contextmanager
     def get_cursor(self):
@@ -491,16 +540,26 @@ class MySQLDB:
         logger.info("开始事务")
     
     def commit(self):
-        """提交事务"""
-        if self._current_connection:
-            self._current_connection.commit()
-            logger.info("事务提交成功")
+        """提交事务（使用线程本地连接）"""
+        try:
+            conn = self._get_connection()
+            if conn:
+                conn.commit()
+                logger.debug("事务提交成功")
+        except Exception as e:
+            logger.error(f"提交事务失败: {e}")
+            raise
     
     def rollback(self):
-        """回滚事务"""
-        if self._current_connection:
-            self._current_connection.rollback()
-            logger.info("事务回滚")
+        """回滚事务（使用线程本地连接）"""
+        try:
+            conn = self._get_connection()
+            if conn:
+                conn.rollback()
+                logger.debug("事务回滚")
+        except Exception as e:
+            logger.error(f"回滚事务失败: {e}")
+            raise
     
     # ==================== 工具方法 ====================
     
