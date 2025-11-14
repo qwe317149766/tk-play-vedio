@@ -36,7 +36,7 @@
   },
   "order_processor": {
     "page_size": 100,
-    "max_concurrent": 1000,
+    "max_concurrent": 10,
     "device_fail_threshold": 3,
     "proxy": "socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000"
   }
