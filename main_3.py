@@ -20,7 +20,65 @@ api = TikTokAPI(
     pool_grow_step=mq_config.get("pool_grow_step", 1)
 )
 
-device = {'ua': 'com.zhiliaoapp.musically/2024204030 (Linux; U; Android 14; en_US; OPPO A9; Build/SP1A.227394.390; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)', 'web_ua': 'Dalvik/2.1.0 (Linux; U; Android 14; OPPO A9 Build/SP1A.227394.390)', 'resolution': '3200x1440', 'dpi': 560, 'device_type': 'OPPO A9', 'device_brand': 'Oppo', 'device_manufacturer': 'Oppo', 'os_api': 34, 'os_version': '14', 'resolution_v2': '1440x3200', 'rom': 'EMUI', 'rom_version': 'SP1A.227394.390', 'clientudid': '525b90c4-e772-4a71-a58b-16e34feeb477', 'google_aid': '688c32cb-ce5d-4d72-9b26-fd9b935e08c9', 'release_build': 'SP1A.227394.390', 'display_density_v2': 'xxhdpi', 'ram_size': '16GB', 'dark_mode_setting_value': 1, 'is_foldable': 0, 'screen_height_dp': 914, 'screen_width_dp': 411, 'apk_last_update_time': 1761893365721, 'apk_first_install_time': 1761893332521, 'filter_warn': 0, 'priority_region': 'US', 'user_period': 1, 'is_kids_mode': 0, 'user_mode': 1, 'cdid': '175f6ec1-3d83-4f5a-8b69-0d6911711824', 'openudid': 'b7404db06440a59d', 'version_name': '42.4.3', 'update_version_code': '2024204030', 'version_code': '420403', 'sdk_version_code': 2051090, 'sdk_target_version': 30, 'sdk_version': '2.5.10', '_tt_ok_quic_version': 'Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30', 'mssdk_version_str': 'v05.02.02-ov-android', 'gorgon_sdk_version': '0000000020020205', 'mssdk_version': 84017696, 'device_id': '7571450376835139127', 'install_id': '7571450920178435895', 'write_time': '2025-11-11 20:56:40'}
+
+def parse_device_config(device_config: str) -> dict:
+    """
+    解析设备配置 JSON 字符串
+    
+    Args:
+        device_config: JSON 字符串
+    
+    Returns:
+        解析后的设备配置字典
+    """
+    try:
+        if not device_config:
+            return {}
+        return json.loads(device_config)
+    except Exception as e:
+        print(f"[main_3] 解析 device_config 失败: {e}")
+        return {}
+
+
+def get_seed_and_token(device: dict, flow_session=None):
+    """
+    获取 seed 和 token
+    如果 device 中有 seed、seed_type 和 token 字段，则直接使用；否则请求获取
+    
+    Args:
+        device: 设备信息字典（可能包含 seed、seed_type、token 字段）
+        flow_session: 流程Session（可选）
+    
+    Returns:
+        Tuple[seed, seed_type, token]
+    """
+    http_client = api.http_client
+    
+    # 直接从 device 字典中获取 seed 和 seed_type
+    seed = device.get('seed')
+    seed_type = device.get('seed_type')
+    
+    # 如果 device 中没有 seed 或 seed_type，或者为空，则请求获取
+    if not seed or seed_type is None:
+        seed, seed_type = api.get_seed(device, session=flow_session)
+        print(f"[main_3] 获取 seed: {seed[:20] if seed else None}..., seed_type: {seed_type}")
+    else:
+        print(f"[main_3] 从 device 读取 seed: {seed[:20] if seed else None}..., seed_type: {seed_type}")
+    
+    # 直接从 device 字典中获取 token
+    token = device.get('token')
+    
+    # 如果 device 中没有 token 或为空，则请求获取
+    if not token:
+        token = api.get_token(device, session=flow_session)
+        print(f"[main_3] 获取 token: {token[:20] if token else None}...")
+    else:
+        print(f"[main_3] 从 device 读取 token: {token[:20] if token else None}...")
+    
+    return seed, seed_type, token
+
+
+device = {"create_time": "2025-11-13 15:58:29", "device_id": "7572115224145577486", "install_id": "7572115927602726670", "ua": "com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; HUAWEI Mate 30; Build/VP1A.256272.76.A3; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)", "web_ua": "Dalvik/2.1.0 (Linux; U; Android 15; HUAWEI Mate 30 Build/VP1A.256272.76.A3)", "resolution": "1920*1080", "dpi": 420, "device_type": "HUAWEI Mate 30", "device_brand": "Huawei", "device_manufacturer": "Huawei", "os_api": 35, "os_version": 15, "resolution_v2": "1080*1920", "rom": "stock", "rom_version": "VP1A.256272.76.A3", "clientudid": "d1d471c1-0bcd-41a4-a41a-bf8c61d3e9d4", "google_aid": "615ed510-09b4-4c99-b031-ab590c052512", "release_build": "VP1A.256272.76.A3", "display_density_v2": "xxhdpi", "ram_size": "16GB", "dark_mode_setting_value": 0, "is_foldable": 0, "screen_height_dp": 731, "screen_width_dp": 411, "apk_last_update_time": 1761001283498, "apk_first_install_time": 1761001244469, "filter_warn": 0, "priority_region": "US", "user_period": 7, "is_kids_mode": 0, "user_mode": 1, "cdid": "40a4a9a5-57c2-45e2-bfc2-922b33d2fe2c", "openudid": "535e9ae77adf885d", "version_name": "42.4.3", "update_version_code": "2024204030", "version_code": "420403", "sdk_version_code": 2051090, "sdk_target_version": 30, "sdk_version": "2.5.10", "_tt_ok_quic_version": "Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30", "mssdk_version_str": "v05.02.02-ov-android", "gorgon_sdk_version": "0000000020020205", "mssdk_version": 84017696, "seed": "MDGiGJrbpHsAIzl+yT0ylYfszb0qHiQhBDdy8/xdS0/RIE6AQGNsFVQoFR60NQem2ekBJQDEwhWSvg7OUKynVAaWk2GJVrYFLohnmkQS6jRqqZRHFurn8i1BMS2K64fMA/E=", "seed_type": 6, "token": "A18Jp8pBuB0GXQoJxzt8ncvC8"}
 
 aweme_id = "7569608169052212501"
 
@@ -31,9 +89,9 @@ print(f"[main_3] 获取流程Session: {id(flow_session)}")
 
 try:
     # 使用统一的 API 接口，传入流程Session
-    seed, seed_type = api.get_seed(device, session=flow_session)
+    # 注意：seed、seed_type、token 会从 device 字典中直接获取，如果不存在则请求获取
+    seed, seed_type, token = get_seed_and_token(device, flow_session=flow_session)
     print(seed, seed_type)
-    token = api.get_token(device, session=flow_session)
     print(token)
     
     signCount = 200

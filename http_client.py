@@ -106,31 +106,15 @@ class HttpClient:
         # 如果连接池接近耗尽，加快扩容速度
         available_sessions = len(self._pool)
         if available_sessions == 0 and self._session_count < self.pool_max_size:
-            # 紧急扩容：一次创建更多连接，避免高并发时连接池耗尽
-            grow = min(
-                max(self.pool_grow_step * 2, 10),  # 至少创建10个
-                self.pool_max_size - self._session_count,
-                50  # 最多一次创建50个，避免阻塞太久
-            )
+            # 紧急扩容：一次创建更多连接
+            grow = min(max(self.pool_grow_step * 2, 5), self.pool_max_size - self._session_count)
         else:
             grow = min(self.pool_grow_step, self.pool_max_size - self._session_count)
         
-        # 批量创建连接，带错误处理
-        created_count = 0
         for _ in range(grow):
-            try:
-                self._create_session()
-                created_count += 1
-            except Exception as e:
-                # 创建连接失败，记录日志但继续尝试创建其他连接
-                if self.debug:
-                    print(f"[HttpClient] 扩容时创建连接失败: {e}")
-                # 如果连续失败，停止扩容
-                if created_count == 0:
-                    break
-        
+            self._create_session()
         if self.debug:
-            print(f"[HttpClient] 池扩容: 创建了 {created_count}/{grow} 个连接，当前连接={self._session_count}, 可用连接={len(self._pool)}")
+            print(f"[HttpClient] 池扩容: 当前连接={self._session_count}, 可用连接={len(self._pool)}")
 
     def _get_session(self) -> requests.Session:
         """线程安全地获取 Session"""
@@ -177,98 +161,67 @@ class HttpClient:
         """
         获取流程专用 Session（流程级Session）
         每个流程应该使用同一个Session，流程结束后调用 release_flow_session 销毁
-        如果连接池为空，先尝试扩容，再创建新连接，避免高并发时大量同时创建连接
+        如果连接池为空，立即创建新连接，避免等待超时
         
         Returns:
             Session 对象
         """
-        # 优化：先尝试快速从连接池获取，如果池为空，先尝试扩容，避免高并发时大量同时创建连接
+        # 优化：先尝试快速从连接池获取，如果池为空或无法获取锁，直接创建新 session 而不等待
+        # 使用非阻塞方式获取锁，避免死锁和超时
         session = None
-        max_retries = 3  # 创建连接时的重试次数
-        
-        # 第一步：尝试从连接池获取
         try:
-            with self._pool_cond:
-                if self._pool:
-                    # 连接池中有可用 session，直接获取
-                    session = self._pool.pop()
-                    if self.debug:
-                        print(f"[HttpClient] 从连接池获取流程Session，剩余池大小: {len(self._pool)}")
-                    return session
-                
-                # 连接池为空，先尝试扩容（避免高并发时大量同时创建连接）
-                if self._session_count < self.pool_max_size:
-                    # 紧急扩容：一次创建更多连接
-                    grow_count = min(
-                        max(self.pool_grow_step * 2, 10),  # 至少创建10个
-                        self.pool_max_size - self._session_count,
-                        50  # 最多一次创建50个，避免阻塞太久
-                    )
-                    if grow_count > 0:
+            # 尝试非阻塞获取锁（不等待，避免阻塞）
+            if self._pool_cond.acquire(blocking=False):
+                try:
+                    if self._pool:
+                        # 连接池中有可用 session，直接获取
+                        session = self._pool.pop()
                         if self.debug:
-                            print(f"[HttpClient] 连接池为空，紧急扩容 {grow_count} 个连接")
-                        for _ in range(grow_count):
-                            try:
-                                self._create_session()
-                            except Exception as e:
-                                if self.debug:
-                                    print(f"[HttpClient] 紧急扩容时创建连接失败: {e}")
-                                break
-                        # 扩容后再次尝试从池中获取
-                        if self._pool:
-                            session = self._pool.pop()
-                            if self.debug:
-                                print(f"[HttpClient] 扩容后从连接池获取流程Session，剩余池大小: {len(self._pool)}")
-                            return session
+                            print(f"[HttpClient] 从连接池获取流程Session，剩余池大小: {len(self._pool)}")
+                finally:
+                    self._pool_cond.release()
+            else:
+                # 无法获取锁，直接创建新 session（避免阻塞）
+                if self.debug:
+                    print(f"[HttpClient] 无法获取连接池锁，直接创建新Session（避免阻塞）")
         except Exception as e:
             if self.debug:
                 print(f"[HttpClient] 获取流程Session时异常: {e}")
         
-        # 第二步：如果连接池仍然为空，创建新 session（带重试机制）
+        # 如果从连接池获取失败，直接创建新 session（不等待，不阻塞，不调用 _create_session 避免锁竞争）
         if session is None:
-            for attempt in range(max_retries):
+            try:
+                # 直接创建新 session，不经过连接池，避免锁竞争和阻塞
+                session = requests.Session()
+                session.headers.update({"Connection": "keep-alive"})
+                if self.proxy:
+                    session.proxies = {"http": self.proxy, "https": self.proxy}
+                # 更新计数（使用独立的锁，避免与连接池锁竞争）
+                # 注意：这里使用 _lock 而不是 _pool_cond，避免死锁
+                # 使用非阻塞方式获取锁，避免阻塞
                 try:
-                    # 直接创建新 session，不经过连接池，避免锁竞争和阻塞
-                    session = requests.Session()
-                    session.headers.update({"Connection": "keep-alive"})
-                    if self.proxy:
-                        session.proxies = {"http": self.proxy, "https": self.proxy}
-                    
-                    # 更新计数（使用独立的锁，避免与连接池锁竞争）
-                    try:
-                        if self._lock.acquire(blocking=False):
-                            try:
-                                self._session_count += 1
-                                session_id = id(session)
-                                self._session_usage_count[session_id] = 0
-                            finally:
-                                self._lock.release()
-                    except Exception as lock_error:
-                        # 锁操作失败，仍然创建 session，但不更新计数（避免阻塞）
-                        if self.debug:
-                            print(f"[HttpClient] 更新计数时异常: {lock_error}，但继续创建Session")
-                    
-                    if self.debug:
-                        print(f"[HttpClient] 直接创建新流程Session（不经过连接池），总数={self._session_count}, 尝试={attempt+1}/{max_retries}")
-                    return session
-                except (requests.RequestsError, ConnectionError, TimeoutError) as e:
-                    # 代理连接错误，重试
-                    if attempt < max_retries - 1:
-                        wait_time = (attempt + 1) * 0.5  # 递增等待时间：0.5s, 1s, 1.5s
-                        if self.debug:
-                            print(f"[HttpClient] 创建流程Session失败（代理连接错误）: {e}，等待 {wait_time}s 后重试 ({attempt+1}/{max_retries})")
-                        time.sleep(wait_time)
-                        continue
+                    if self._lock.acquire(blocking=False):
+                        try:
+                            self._session_count += 1
+                            session_id = id(session)
+                            self._session_usage_count[session_id] = 0
+                        finally:
+                            self._lock.release()
                     else:
-                        # 最后一次尝试失败，抛出异常
+                        # 如果无法获取锁，仍然创建 session，但不更新计数（避免阻塞）
                         if self.debug:
-                            print(f"[HttpClient] 创建流程Session失败，已达到最大重试次数: {e}")
-                        raise
-                except Exception as e:
-                    # 其他错误，直接抛出
+                            print(f"[HttpClient] 无法获取锁更新计数，但继续创建Session")
+                except Exception as lock_error:
+                    # 锁操作失败，仍然创建 session，但不更新计数（避免阻塞）
                     if self.debug:
-                        print(f"[HttpClient] 直接创建流程Session失败: {e}")
-                    raise
+                        print(f"[HttpClient] 更新计数时异常: {lock_error}，但继续创建Session")
+                
+                if self.debug:
+                    print(f"[HttpClient] 直接创建新流程Session（不经过连接池），总数={self._session_count}")
+            except Exception as e:
+                if self.debug:
+                    print(f"[HttpClient] 直接创建流程Session失败: {e}")
+                raise
         
         return session
     
@@ -579,115 +532,68 @@ class HttpClient:
                 if total_elapsed > 5.0 or self.debug:
                     print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
                 return resp
-            except (requests.RequestsError, ConnectionError, TimeoutError, OSError) as e:
+            except (requests.RequestsError, ConnectionError, TimeoutError) as e:
                 self._stats["failures"] += 1
                 error_str = str(e).lower()
-                error_type = type(e).__name__
                 
-                # 更全面地检查代理连接错误（需要重试）
-                is_proxy_error = (
-                    "proxy" in error_str and (
-                        "connect" in error_str or
-                        "connection" in error_str or
-                        "failed" in error_str or
-                        "aborted" in error_str or
-                        "closed" in error_str or
-                        "timeout" in error_str or
-                        "refused" in error_str
-                    )
-                )
-                
-                is_connection_error = (
-                    "connection" in error_str and (
-                        "closed" in error_str or
-                        "aborted" in error_str or
-                        "reset" in error_str or
-                        "refused" in error_str or
-                        "timeout" in error_str
-                    ) or
+                # 检查是否是网络相关错误（需要重试）
+                is_network_error = (
+                    "proxy connect" in error_str or
+                    "proxy" in error_str and ("aborted" in error_str or "closed" in error_str) or
+                    "connection" in error_str and ("closed" in error_str or "aborted" in error_str) or
                     "session is closed" in error_str or
-                    "broken pipe" in error_str or
-                    "network is unreachable" in error_str
+                    "closed" in error_str
                 )
-                
-                is_network_error = is_proxy_error or is_connection_error
                 
                 if is_network_error:
                     attempt += 1
                     if attempt >= self.max_retries:
-                        print(f"[HttpClient] [请求失败] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}, url={url[:80]}...")
+                        print(f"[HttpClient] [请求失败] 网络连接错误，已达到最大重试次数: {e}, url={url[:80]}...")
                         if self.debug:
-                            print(f"[HttpClient] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}")
+                            print(f"[HttpClient] 网络连接错误，已达到最大重试次数: {e}")
                         raise
-                    
-                    # 使用递增的等待时间，避免频繁重试导致代理服务器压力过大
-                    wait_time = self.retry_delay * (1 + attempt * 0.5)  # 递增：1.0s, 1.5s, 2.0s...
                     self._stats["retries"] += 1
-                    print(f"[HttpClient] [请求重试] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries}), url={url[:80]}...")
+                    print(f"[HttpClient] [请求重试] 网络连接错误({e})，等待 {self.retry_delay} 秒后重试 {attempt}/{self.max_retries}, url={url[:80]}...")
                     if self.debug:
-                        print(f"[HttpClient] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries})")
-                    time.sleep(wait_time)
+                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
+                    time.sleep(self.retry_delay)
                     continue
                 else:
                     # 非网络错误，直接抛出
-                    print(f"[HttpClient] [请求失败] 请求失败（非网络错误，{error_type}）: {e}, url={url[:80]}...")
+                    print(f"[HttpClient] [请求失败] 请求失败（非网络错误）: {e}, url={url[:80]}...")
                     if self.debug:
-                        print(f"[HttpClient] 请求失败（非网络错误，{error_type}）: {e}")
+                        print(f"[HttpClient] 请求失败（非网络错误）: {e}")
                     raise
             except Exception as e:
                 self._stats["failures"] += 1
-                error_str = str(e).lower()
-                error_type = type(e).__name__
-                
                 # 检查是否是网络相关错误（需要重试）
-                is_proxy_error = (
-                    "proxy" in error_str and (
-                        "connect" in error_str or
-                        "connection" in error_str or
-                        "failed" in error_str or
-                        "aborted" in error_str or
-                        "closed" in error_str or
-                        "timeout" in error_str or
-                        "refused" in error_str
-                    )
-                )
-                
-                is_connection_error = (
-                    "connection" in error_str and (
-                        "closed" in error_str or
-                        "aborted" in error_str or
-                        "reset" in error_str or
-                        "refused" in error_str or
-                        "timeout" in error_str
-                    ) or
+                error_str = str(e).lower()
+                is_network_error = (
+                    "proxy connect" in error_str or
+                    "proxy" in error_str and ("aborted" in error_str or "closed" in error_str) or
+                    "connection" in error_str and ("closed" in error_str or "aborted" in error_str) or
                     "session is closed" in error_str or
-                    "broken pipe" in error_str or
-                    "network is unreachable" in error_str
+                    "closed" in error_str
                 )
-                
-                is_network_error = is_proxy_error or is_connection_error
                 
                 if is_network_error:
                     attempt += 1
                     if attempt >= self.max_retries:
-                        print(f"[HttpClient] [请求失败] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}, url={url[:80]}...")
+                        print(f"[HttpClient] [请求失败] 网络连接错误，已达到最大重试次数: {e}, url={url[:80]}...")
                         if self.debug:
-                            print(f"[HttpClient] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}")
+                            print(f"[HttpClient] 网络连接错误，已达到最大重试次数: {e}")
                         raise
-                    
-                    # 使用递增的等待时间
-                    wait_time = self.retry_delay * (1 + attempt * 0.5)
                     self._stats["retries"] += 1
-                    print(f"[HttpClient] [请求重试] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries}), url={url[:80]}...")
+                    print(f"[HttpClient] [请求重试] 网络连接错误({e})，等待 {self.retry_delay} 秒后重试 {attempt}/{self.max_retries}, url={url[:80]}...")
                     if self.debug:
-                        print(f"[HttpClient] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries})")
-                    time.sleep(wait_time)
+                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
+                    time.sleep(self.retry_delay)
                     continue
                 else:
                     # 其他错误，直接抛出
-                    print(f"[HttpClient] [请求失败] 请求失败({error_type}): {e}, url={url[:80]}...")
+                    print(f"[HttpClient] [请求失败] 请求失败: {e}, url={url[:80]}...")
                     if self.debug:
-                        print(f"[HttpClient] 请求失败({error_type}): {e}")
+                        print(f"[HttpClient] 请求失败: {e}")
                     raise
 
     def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
@@ -730,39 +636,9 @@ class HttpClient:
                 if total_elapsed > 5.0 or self.debug:
                     print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
                 return resp
-            except (requests.RequestsError, ConnectionError, TimeoutError, OSError) as e:
+            except (requests.RequestsError, ConnectionError, TimeoutError) as e:
+                print(f"[HttpClient] [请求错误] 网络错误: {e}, url={url[:80]}..., 尝试 {attempt + 1}/{self.max_retries}")
                 self._stats["failures"] += 1
-                error_str = str(e).lower()
-                error_type = type(e).__name__
-                
-                # 更全面地检查代理连接错误（需要重试）
-                is_proxy_error = (
-                    "proxy" in error_str and (
-                        "connect" in error_str or
-                        "connection" in error_str or
-                        "failed" in error_str or
-                        "aborted" in error_str or
-                        "closed" in error_str or
-                        "timeout" in error_str or
-                        "refused" in error_str
-                    )
-                )
-                
-                is_connection_error = (
-                    "connection" in error_str and (
-                        "closed" in error_str or
-                        "aborted" in error_str or
-                        "reset" in error_str or
-                        "refused" in error_str or
-                        "timeout" in error_str
-                    ) or
-                    "session is closed" in error_str or
-                    "broken pipe" in error_str or
-                    "network is unreachable" in error_str
-                )
-                
-                is_network_error = is_proxy_error or is_connection_error
-                
                 # Session 可能已损坏，关闭并移除
                 if session is not None:
                     try:
@@ -773,60 +649,27 @@ class HttpClient:
                         self._session_count -= 1
                     session = None
                 
-                if is_network_error:
-                    attempt += 1
-                    if attempt >= self.max_retries:
-                        print(f"[HttpClient] [请求失败] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}, url={url[:80]}...")
-                        if self.debug:
-                            print(f"[HttpClient] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}")
-                        raise
-                    
-                    # 使用递增的等待时间，避免频繁重试导致代理服务器压力过大
-                    wait_time = self.retry_delay * (1 + attempt * 0.5)  # 递增：1.0s, 1.5s, 2.0s...
-                    self._stats["retries"] += 1
-                    print(f"[HttpClient] [请求重试] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries}), url={url[:80]}...")
-                    if self.debug:
-                        print(f"[HttpClient] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries})")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    # 非网络错误，直接抛出
-                    print(f"[HttpClient] [请求失败] 请求失败（非网络错误，{error_type}）: {e}, url={url[:80]}...")
-                    if self.debug:
-                        print(f"[HttpClient] 请求失败（非网络错误，{error_type}）: {e}")
+                attempt += 1
+                if attempt >= self.max_retries:
+                    print(f"[HttpClient] [请求失败] 达到最大重试次数，抛出异常: {e}, url={url[:80]}...")
                     raise
+                self._stats["retries"] += 1
+                print(f"[HttpClient] [请求重试] 网络错误({e})，等待 {self.retry_delay} 秒后重试 {attempt}/{self.max_retries}")
+                if self.debug:
+                    print(f"[HttpClient] 网络错误({e})，重试 {attempt}/{self.max_retries}")
+                time.sleep(self.retry_delay)
             except Exception as e:
                 self._stats["failures"] += 1
-                error_str = str(e).lower()
-                error_type = type(e).__name__
-                
                 # 检查是否是网络相关错误（需要重试）
-                is_proxy_error = (
-                    "proxy" in error_str and (
-                        "connect" in error_str or
-                        "connection" in error_str or
-                        "failed" in error_str or
-                        "aborted" in error_str or
-                        "closed" in error_str or
-                        "timeout" in error_str or
-                        "refused" in error_str
-                    )
+                error_str = str(e).lower()
+                is_network_error = (
+                    "session is closed" in error_str or 
+                    "closed" in error_str or
+                    "connection to proxy closed" in error_str or
+                    "connection closed" in error_str or
+                    "proxy" in error_str and "closed" in error_str or
+                    "connection" in error_str and "closed" in error_str
                 )
-                
-                is_connection_error = (
-                    "connection" in error_str and (
-                        "closed" in error_str or
-                        "aborted" in error_str or
-                        "reset" in error_str or
-                        "refused" in error_str or
-                        "timeout" in error_str
-                    ) or
-                    "session is closed" in error_str or
-                    "broken pipe" in error_str or
-                    "network is unreachable" in error_str
-                )
-                
-                is_network_error = is_proxy_error or is_connection_error
                 
                 if is_network_error:
                     # 网络错误，移除 Session 并重试
@@ -841,27 +684,19 @@ class HttpClient:
                     
                     attempt += 1
                     if attempt >= self.max_retries:
-                        print(f"[HttpClient] [请求失败] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}, url={url[:80]}...")
-                        if self.debug:
-                            print(f"[HttpClient] 代理/网络连接错误({error_type})，已达到最大重试次数: {e}")
                         raise
-                    
-                    # 使用递增的等待时间
-                    wait_time = self.retry_delay * (1 + attempt * 0.5)
                     self._stats["retries"] += 1
-                    print(f"[HttpClient] [请求重试] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries}), url={url[:80]}...")
                     if self.debug:
-                        print(f"[HttpClient] 代理/网络连接错误({error_type}: {e})，等待 {wait_time:.1f}s 后重试 ({attempt}/{self.max_retries})")
-                    time.sleep(wait_time)
+                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
+                    time.sleep(self.retry_delay)
                     continue
                 
                 # 其他错误，释放 Session 后抛出
                 if session is not None:
                     self._release_session(session)
                     session = None
-                print(f"[HttpClient] [请求失败] 请求失败({error_type}): {e}, url={url[:80]}...")
                 if self.debug:
-                    print(f"[HttpClient] 未知错误({error_type}): {e}")
+                    print(f"[HttpClient] 未知错误: {e}")
                 raise
 
     # ---------------------- 公共接口 ----------------------

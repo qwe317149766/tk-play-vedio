@@ -21,7 +21,7 @@
     "default_ex": null
   },
   "message_queue": {
-    "max_concurrent":50,
+    "max_concurrent":20,
     "proxy": "http://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000",
     "results_log": "state/results.log",
     "device_save_path": "state/devices1.jsonl",
@@ -30,9 +30,9 @@
     "global_qps": 0,
     "log_flush_every": 10,
     "stats_every": 5,
-    "pool_initial_size": 50,
-    "pool_max_size": 1000,
-    "pool_grow_step": 20
+    "pool_initial_size": 20,
+    "pool_max_size": 100,
+    "pool_grow_step": 1
   }
 }
 

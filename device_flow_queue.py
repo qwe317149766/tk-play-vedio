@@ -263,16 +263,77 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
                     pass
             return False, f"alert_check fail ({chk})", {"step": step, "device_id": device_id}
 
-        # 4) seed - 跳过执行，默认为空
+        # 4) seed - 使用 TikTokAPI（异步执行，使用流程Session）
         step = "seed"
-        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 跳过 get_seed_async，使用默认空值")
-        seed = ""
-        seed_type = None
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_seed_async")
+        try:
+            seed, seed_type = await api.get_seed_async(dev1, session=flow_session)
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 完成, seed={seed[:20] if seed else None}..., seed_type={seed_type}")
+        except Exception as ex:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_seed_async 出错: {ex}")
+            import traceback
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 异常堆栈: {traceback.format_exc()}")
+            sys.stdout.flush()
+            # 打印队列状态
+            try:
+                if _queue_instance:
+                    queue_stats = _queue_instance.get_stats()
+                    queue_size = queue_stats.get("queue_size", 0)
+                    running_tasks = queue_stats.get("running_tasks", 0)
+                    completed_tasks = queue_stats.get("completed_tasks", 0)
+                    print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 队列状态 - 队列大小: {queue_size}, 正在执行: {running_tasks}, 已完成: {completed_tasks}")
+            except Exception as e:
+                print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 获取队列状态失败: {e}")
+            if flow_session:
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                    print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 已释放流程Session: {id(flow_session)}")
+                except Exception as e:
+                    print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 释放流程Session失败: {e}")
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 返回失败结果: seed error: {ex}")
+            sys.stdout.flush()
+            return False, f"seed error: {ex}", {"step": step, "device_id": device_id}
+        if not seed:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: seed 为空")
+            if flow_session:
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
+            return False, "seed empty", {"step": step, "device_id": device_id}
 
-        # 5) token - 跳过执行，默认为空
+        # 5) token - 使用 TikTokAPI（异步执行，使用流程Session）
         step = "token"
-        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 跳过 get_token_async，使用默认空值")
-        token = ""
+        print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 开始调用 get_token_async")
+        try:
+            token = await api.get_token_async(dev1, session=flow_session)
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 完成, token={token[:20] if token else None}...")
+            # 打印队列状态
+            try:
+                if _queue_instance:
+                    queue_stats = _queue_instance.get_stats()
+                    queue_size = queue_stats.get("queue_size", 0)
+                    running_tasks = queue_stats.get("running_tasks", 0)
+                    completed_tasks = queue_stats.get("completed_tasks", 0)
+                    print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 队列状态 - 队列大小: {queue_size}, 正在执行: {running_tasks}, 已完成: {completed_tasks}")
+            except Exception as e:
+                print(f"[RUN_DEVICE_FLOW] 步骤 {step}: 获取队列状态失败: {e}")
+        except Exception as ex:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: get_token_async 出错: {ex}")
+            if flow_session:
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
+            return False, f"token error: {ex}", {"step": step, "device_id": device_id, "seed_type": seed_type}
+        if not token:
+            print(f"[RUN_DEVICE_FLOW] 步骤 {step}: token 为空")
+            if flow_session:
+                try:
+                    await loop.run_in_executor(None, http_client.release_flow_session, flow_session)
+                except Exception:
+                    pass
+            return False, "token empty", {"step": step, "device_id": device_id, "seed_type": seed_type}
 
         # 6) 回填 & 落盘（文件写入在线程池中执行）
         print(f"[RUN_DEVICE_FLOW] 步骤 6: 开始回填和落盘, device_id={device_id}")
@@ -488,12 +549,15 @@ async def execute_device_flow_task(task_data: Dict[str, Any]):
             sys.stdout.flush()
         
     except Exception as ex:
+        # 打印错误信息，但必须重新抛出异常，让 message_queue 的 _worker 能够捕获并标记为失败
         print(f"[EXECUTE_TASK] [异常] 任务执行异常: {type(ex).__name__}: {ex}")
         import traceback
         print(f"[EXECUTE_TASK] [异常] 异常堆栈: {traceback.format_exc()}")
         sys.stdout.flush()
         if _logger:
             _logger.log(f"[proxy={_proxy}] TASK-EX:{type(ex).__name__}:{ex}")
+        # 重新抛出异常，让 message_queue 的 _worker 能够捕获并标记为失败
+        raise
 
 # 全局变量
 _proxy: Optional[str] = None
@@ -615,20 +679,14 @@ def main():
     
     # 创建 TikTokAPI 实例（全局单例，使用全局 HttpClient）
     # 增加重试次数和延迟，以应对代理连接不稳定的情况
-    # 对于100并发，需要更大的连接池和更快的扩容速度
-    max_concurrent = CONFIG.get("max_concurrent", 1000)
-    pool_initial_size = CONFIG.get("pool_initial_size", max(max_concurrent, 100))
-    pool_max_size = CONFIG.get("pool_max_size", max(max_concurrent * 2, 2000))
-    pool_grow_step = CONFIG.get("pool_grow_step", max(max_concurrent // 5, 20))
-    
     _api_instance = TikTokAPI(
         proxy=_proxy,
-        timeout=60,  # 增加超时时间到60秒，应对代理连接慢的情况
-        max_retries=3,  # 增加重试次数到 3 次，提高代理连接成功率
-        retry_delay=1.0,  # 重试延迟 1 秒，不要等待太久
-        pool_initial_size=pool_initial_size,
-        pool_max_size=pool_max_size,
-        pool_grow_step=pool_grow_step,
+        timeout=30,
+        max_retries=1,  # 增加重试次数到 5 次
+        retry_delay=2.0,  # 重试延迟 2 秒
+        pool_initial_size=CONFIG.get("pool_initial_size", 100),
+        pool_max_size=CONFIG.get("pool_max_size", 2000),
+        pool_grow_step=CONFIG.get("pool_grow_step", 10),
         use_global_client=True
     )
     
