@@ -33,6 +33,12 @@
     "pool_initial_size": 20,
     "pool_max_size": 100,
     "pool_grow_step": 1
+  },
+  "order_processor": {
+    "page_size": 10,
+    "max_concurrent": 1000,
+    "device_fail_threshold": 5,
+    "proxy": "socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000"
   }
 }
 
