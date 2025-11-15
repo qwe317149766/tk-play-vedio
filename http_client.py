@@ -176,8 +176,18 @@ class HttpClient:
                     if self._pool:
                         # 连接池中有可用 session，直接获取
                         session = self._pool.pop()
+                        # 检查 session 是否可用（尝试发送一个简单的请求测试）
+                        # requests.Session 没有 closed 属性，需要通过其他方式检查
+                        # 简单策略：总是创建新的 session，不从池中复用（避免 session 已关闭的问题）
                         if self.debug:
-                            print(f"[HttpClient] 从连接池获取流程Session，剩余池大小: {len(self._pool)}")
+                            print(f"[HttpClient] 从连接池获取Session，但为避免Session关闭问题，销毁并创建新Session")
+                        try:
+                            session.close()
+                        except:
+                            pass
+                        session = None
+                        # if self.debug:
+                        #     print(f"[HttpClient] 从连接池获取流程Session，剩余池大小: {len(self._pool)}")
                 finally:
                     self._pool_cond.release()
             else:
@@ -188,7 +198,7 @@ class HttpClient:
             if self.debug:
                 print(f"[HttpClient] 获取流程Session时异常: {e}")
         
-        # 如果从连接池获取失败，直接创建新 session（不等待，不阻塞，不调用 _create_session 避免锁竞争）
+        # 如果从连接池获取失败或session已关闭，直接创建新 session（不等待，不阻塞，不调用 _create_session 避免锁竞争）
         if session is None:
             try:
                 # 直接创建新 session，不经过连接池，避免锁竞争和阻塞
