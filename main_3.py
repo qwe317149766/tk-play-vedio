@@ -56,9 +56,9 @@ def get_seed_and_token(device: dict, flow_session=None):
     http_client = api.http_client
     
     # 步骤1：调用 alert_check 检查设备告警
-    print(f"[main_3] 开始检查设备告警...")
-    alert_result = api.alert_check(device, session=flow_session)
-    print(f"[main_3] 设备告警检查结果: {alert_result}")
+    # print(f"[main_3] 开始检查设备告警...")
+    # alert_result = api.alert_check(device, session=flow_session)
+    # print(f"[main_3] 设备告警检查结果: {alert_result}")
     
     # 如果告警检查失败，可以选择抛出异常或返回空值
     # if alert_result != "success":
@@ -88,10 +88,11 @@ def get_seed_and_token(device: dict, flow_session=None):
     return seed, seed_type, token
 
 
-device = {"create_time": "2025-11-14 11:17:16", "device_id": "7571031545047270933", "install_id": "7571032910167213845", "ua": "com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; OPPO A9; Build/RP1A.208887.416; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)", "web_ua": "Dalvik/2.1.0 (Linux; U; Android 15; OPPO A9 Build/RP1A.208887.416)", "resolution": "3200*1440", "dpi": 560, "device_type": "OPPO A9", "device_brand": "Oppo", "device_manufacturer": "Oppo", "os_api": 35, "os_version": 15, "resolution_v2": "1440*3200", "rom": "OxygenOS", "rom_version": "RP1A.208887.416", "clientudid": "cc296e8a-51e0-4cad-887b-b375a959372a", "google_aid": "61453c41-6bdb-49ce-8176-2f9ebd51d7f3", "release_build": "RP1A.208887.416", "display_density_v2": "xxhdpi", "ram_size": "6GB", "dark_mode_setting_value": 1, "is_foldable": 0, "screen_height_dp": 914, "screen_width_dp": 411, "apk_last_update_time": 1761054436416, "apk_first_install_time": 1761054377455, "filter_warn": 0, "priority_region": "US", "user_period": 2, "is_kids_mode": 0, "user_mode": 1, "cdid": "cc7380f6-b7eb-46db-b1c3-c6df2e047b97", "openudid": "361697225c03a3a8", "version_name": "42.4.3", "update_version_code": "2024204030", "version_code": "420403", "sdk_version_code": 2051090, "sdk_target_version": 30, "sdk_version": "2.5.10", "_tt_ok_quic_version": "Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30", "mssdk_version_str": "v05.02.02-ov-android", "gorgon_sdk_version": "0000000020020205", "mssdk_version": 84017696}
+device = {"create_time": "2025-11-16 00:39:24", "device_id": "7572992123600848398", "install_id": "7572992583447185165", "ua": "com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; Pixel 7; Build/TP1A.206170.261.A3; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)", "web_ua": "Dalvik/2.1.0 (Linux; U; Android 15; Pixel 7 Build/TP1A.206170.261.A3)", "resolution": "2209*1080", "dpi": 420, "device_type": "Pixel 7", "device_brand": "Google", "device_manufacturer": "Google", "os_api": 35, "os_version": 15, "resolution_v2": "1080*2209", "rom": "stock", "rom_version": "TP1A.206170.261.A3", "clientudid": "178f0c30-59ab-413c-9626-674ac3705319", "google_aid": "c1c5d5ce-89a2-48bb-98da-91c140ffe17b", "release_build": "TP1A.206170.261.A3", "display_density_v2": "xxhdpi", "ram_size": "2GB", "dark_mode_setting_value": 1, "is_foldable": 0, "screen_height_dp": 841, "screen_width_dp": 411, "apk_last_update_time": 1762294522426, "apk_first_install_time": 1762294482306, "filter_warn": 0, "priority_region": "US", "user_period": 2, "is_kids_mode": 0, "user_mode": 1, "cdid": "5deca172-751f-4a98-88a2-6bf633c74257", "openudid": "285443848d4f05bf", "version_name": "42.4.3", "update_version_code": "2024204030", "version_code": "420403", "sdk_version_code": 2051090, "sdk_target_version": 30, "sdk_version": "2.5.10", "_tt_ok_quic_version": "Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30", "mssdk_version_str": "v05.02.02-ov-android", "gorgon_sdk_version": "0000000020020205", "mssdk_version": 84017696, "device_guard_data0": "{\"device_token\":\"1|{\\\"aid\\\":1233,\\\"av\\\":\\\"42.4.3\\\",\\\"did\\\":\\\"7572992123600848398\\\",\\\"iid\\\":\\\"7572992583447185165\\\",\\\"fit\\\":\\\"1763224767\\\",\\\"s\\\":1,\\\"idc\\\":\\\"useast8\\\",\\\"ts\\\":\\\"1763224770\\\"}\",\"dtoken_sign\":\"ts.1.MEYCIQCErlm+U7GNiJzQsUVIpgXPSOY999yUdNJPDFfNKXc9jgIhAN40/4+e/ewu0f0D+eFTJkJvoR8yEb0rl8MGQgA17oIs\"}", "tt_ticket_guard_public_key": "BAomfPZ5I0so7mZMCgHINIZwiveCBUTXgcGOTsrj7OjIoTMf7j7jL6Tc+70TwAGPHubwrhVAznbWOJHk4bnRYno=", "priv_key": "5c0bd5b8c3249d68dc6bd5c6820e22c78f65562cab20c694873e68ba99ffb08f"}
 
 
-aweme_id = "7572772064793283848"
+
+aweme_id = "7571031981614451975"
 
 # 获取流程专用Session（同一流程复用同一个Session）
 http_client = api.http_client

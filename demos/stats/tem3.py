@@ -45,7 +45,6 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
 
     # seed,seed_type = get_get_seed(device,proxy)
     # token = get_get_token(device,proxy)
-
     if not use_http_client:
         proxies = {
             'http': proxy,
