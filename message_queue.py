@@ -25,7 +25,8 @@ class MessageQueue:
         self,
         max_concurrent: int = 1000,
         threshold_callback: Optional[Callable] = None,
-        task_callback: Optional[Callable] = None
+        task_callback: Optional[Callable] = None,
+        task_timeout: float = 600.0
     ):
         """
         初始化消息队列
@@ -37,10 +38,12 @@ class MessageQueue:
                                 返回任务列表，如果返回空列表或 None 表示没有更多任务
             task_callback: 任务执行回调函数，每个任务会调用此函数
                           函数签名: async def task_callback(task: Any) 或 def task_callback(task: Any)
+            task_timeout: 任务超时时间（秒），超过此时间会警告，默认 600 秒（10 分钟）
         """
         self.max_concurrent = max_concurrent
         self.threshold_callback = threshold_callback
         self.task_callback = task_callback
+        self.task_timeout = task_timeout
         
         # 任务队列
         self.task_queue = asyncio.Queue()
@@ -170,69 +173,47 @@ class MessageQueue:
         Args:
             worker_id: 工作协程 ID
         """
-        logger.info(f"工作协程 {worker_id} 启动")
-        
         while self.is_running:
             try:
                 # 先获取信号量（控制实际并发数）
-                # 如果已达到并发上限，这里会等待直到有任务完成
-                queue_size_before = self.task_queue.qsize()
-                current_running_before = self.running_tasks
-                if queue_size_before > 0 and current_running_before >= self.max_concurrent:
-                    logger.warning(f"工作协程 {worker_id} 等待信号量：队列中有 {queue_size_before} 个任务，但已达到并发上限 {current_running_before}/{self.max_concurrent}，可能任务被阻塞")
                 async with self.concurrency_semaphore:
-                    logger.info(f"工作协程 {worker_id} 已获取信号量，从队列获取任务（队列大小: {self.task_queue.qsize()}，运行中: {self.running_tasks}/{self.max_concurrent}）")
-                    # 从队列中获取任务（不设置超时，持续等待，确保能立即获取新任务）
-                    # 当任务完成后，队列中会有新任务，worker 会立即获取
+                    # 从队列中获取任务
                     try:
                         task = await self.task_queue.get()
-                        queue_size_after = self.task_queue.qsize()
-                        logger.info(f"工作协程 {worker_id} 已从队列获取任务，剩余队列大小: {queue_size_after}")
                     except Exception as e:
-                        # 队列可能已关闭
                         if self.is_stopped:
-                            logger.debug(f"工作协程 {worker_id} 准备停止（队列已关闭）")
                             break
-                        logger.debug(f"工作协程 {worker_id} 获取任务异常: {e}")
+                        logger.debug(f"Worker {worker_id} 获取任务异常: {e}")
                         continue
                     
-                    # 获取到任务后，在开始执行任务前，更新运行任务数（直接更新，不使用锁，避免死锁）
+                    # 更新运行任务数
                     self.running_tasks += 1
-                    current_running = self.running_tasks
-                    logger.info(f"工作协程 {worker_id} 开始执行任务，当前运行中: {current_running}/{self.max_concurrent}")
                     
-                    # 执行任务回调（完全异步，不阻塞其他任务）
+                    # 执行任务回调
                     task_start_time = time.time()
-                    task_timeout = 300.0  # 5分钟超时阈值
                     task_succeeded = False
                     task_failed = False
                     
                     # 记录任务开始时间（用于检测阻塞任务）
-                    # 设置更长的超时阈值（考虑到网络请求可能需要较长时间）
                     async with self.task_execution_times_lock:
-                        self.task_execution_times[worker_id] = (task_start_time, task_timeout)
+                        self.task_execution_times[worker_id] = (task_start_time, self.task_timeout)
                     
                     try:
                         if self.task_callback:
-                            logger.info(f"工作协程 {worker_id} 开始执行任务回调")
                             if asyncio.iscoroutinefunction(self.task_callback):
-                                # 异步函数，直接 await（不会阻塞其他任务，因为每个任务都是独立的协程）
                                 await self.task_callback(task)
                             else:
-                                # 如果是同步函数，在线程池中执行（不阻塞事件循环）
                                 loop = asyncio.get_event_loop()
                                 await loop.run_in_executor(None, self.task_callback, task)
                             task_succeeded = True
-                            task_elapsed = time.time() - task_start_time
-                            logger.info(f"工作协程 {worker_id} 任务执行完成，耗时: {task_elapsed:.3f}秒")
                         else:
-                            logger.warning(f"工作协程 {worker_id} 没有任务回调函数，任务未执行")
-                            task_succeeded = True  # 没有回调也算成功（已处理）
+                            logger.warning(f"Worker {worker_id} 没有任务回调函数")
+                            task_succeeded = True
                         
                     except Exception as e:
                         task_elapsed = time.time() - task_start_time
                         task_failed = True
-                        logger.error(f"工作协程 {worker_id} 任务执行异常: {e}", exc_info=True)
+                        logger.error(f"Worker {worker_id} 任务执行异常: {e}", exc_info=True)
                     finally:
                         # 清除任务执行时间记录
                         async with self.task_execution_times_lock:
@@ -285,11 +266,8 @@ class MessageQueue:
                             logger.error(f"工作协程 {worker_id} 任务完成后创建补充检查任务失败: {e}", exc_info=True)
                 
             except Exception as e:
-                logger.error(f"工作协程 {worker_id} 循环异常: {e}", exc_info=True)
-                # 发生异常时，等待一小段时间后继续循环
+                logger.error(f"Worker {worker_id} 循环异常: {e}", exc_info=True)
                 await asyncio.sleep(0.1)
-        
-        logger.debug(f"工作协程 {worker_id} 停止")
     
     async def _maintain_concurrency(self):
         """
@@ -304,22 +282,22 @@ class MessageQueue:
                     current_running = self.running_tasks
                     queue_size = self.task_queue.qsize()
                 
-                # 检测被阻塞的任务和信号量死锁
+                # 检测被阻塞的任务（只在超过超时阈值时警告，避免噪音）
                 current_time = time.time()
                 async with self.task_execution_times_lock:
                     blocked_tasks = []
                     for worker_id, (start_time, timeout) in list(self.task_execution_times.items()):
                         elapsed = current_time - start_time
+                        # 只在超过超时阈值时才认为是阻塞（不再使用 80% 预警）
                         if elapsed > timeout:
                             blocked_tasks.append((worker_id, elapsed))
                     
-                    if blocked_tasks:
-                        logger.warning(f"检测到 {len(blocked_tasks)} 个可能被阻塞的任务:")
-                        for worker_id, elapsed in blocked_tasks:
-                            logger.warning(f"  工作协程 {worker_id} 任务执行时间: {elapsed:.1f}秒（超过阈值 {timeout}秒），可能被阻塞")
+                    # 只有当超过 50% 的任务都超时时才警告（减少日志噪音）
+                    if blocked_tasks and len(blocked_tasks) >= current_running * 0.5:
+                        logger.warning(f"检测到 {len(blocked_tasks)}/{current_running} 个任务执行超时（超过 {self.task_timeout}秒）")
                         # 如果所有运行中的任务都被阻塞，强制重置 running_tasks（紧急恢复）
                         if len(blocked_tasks) >= current_running and current_running > 0:
-                            logger.error(f"所有 {current_running} 个运行中的任务可能都被阻塞，强制重置 running_tasks 计数")
+                            logger.error(f"所有 {current_running} 个运行中的任务都超时，强制重置 running_tasks 计数")
                             self.running_tasks = 0
                             # 清除所有任务执行时间记录
                             self.task_execution_times.clear()
@@ -339,25 +317,8 @@ class MessageQueue:
                             logger.error(f"强制重置 running_tasks 为 0，释放所有 {current_running} 个信号量")
                             self.running_tasks = 0
                             self.task_execution_times.clear()
-                        # 如果队列中有任务，但 running_tasks 达到上限，且实际执行的任务数也达到上限
-                        # 但队列大小没有减少，说明任务可能被阻塞
-                        elif active_tasks_count == current_running and current_running >= self.max_concurrent:
-                            # 检查是否有任务执行时间过长（超过120秒）
-                            # 注意：正常任务可能需要60-120秒（包含网络请求），所以阈值设置为120秒
-                            long_running_tasks = []
-                            for worker_id, (start_time, timeout) in list(self.task_execution_times.items()):
-                                elapsed = current_time - start_time
-                                if elapsed > 120.0:  # 120秒阈值（2分钟）
-                                    long_running_tasks.append((worker_id, elapsed))
-                            
-                            if long_running_tasks:
-                                logger.warning(f"检测到 {len(long_running_tasks)} 个长时间运行的任务（超过120秒），可能被阻塞:")
-                                for worker_id, elapsed in long_running_tasks:
-                                    logger.warning(f"  工作协程 {worker_id} 任务执行时间: {elapsed:.1f}秒")
-                                # 如果所有任务都长时间运行，可能是系统性问题
-                                if len(long_running_tasks) >= current_running * 0.8:  # 80%的任务都长时间运行
-                                    logger.error(f"超过80%的任务长时间运行，可能是系统性问题，考虑强制重置")
-                                    # 不强制重置，只记录警告，让超时机制处理
+                        # 其他情况：队列正常，任务正在执行
+                        # 不需要额外警告，超时检测已经在上面处理
                 
                 # 只监控队列状态，不触发阈值回调
                 # 阈值回调只在任务完成后通过 _trigger_replenish_check() 触发
@@ -381,18 +342,16 @@ class MessageQueue:
         # 2. 如果 worker 数量 = max_concurrent，当所有 worker 都在执行任务时，队列中的任务无法被获取
         # 3. 如果 worker 数量 = max_concurrent * 2，即使所有信号量都被占用，也有 worker 在等待，一旦任务完成就能立即获取新任务
         # 关键：确保队列中始终有足够的任务（至少 max_concurrent * 1.5），这样所有 worker 都能立即获取任务
-        worker_count = max(self.max_concurrent * 2, 10)  # worker 数量 = max_concurrent * 2，至少10个，确保有足够的 worker 等待获取任务
-        logger.info(f"创建 {worker_count} 个工作协程（实际并发数由信号量控制为 {self.max_concurrent}）")
-        logger.info(f"队列维护策略：确保队列中始终有至少 {self.max_concurrent * 1.5} 个任务，阈值: {self.max_concurrent * 3}")
+        worker_count = max(self.max_concurrent * 2, 10)
+        logger.info(f"✓ 启动消息队列：{worker_count} 个工作协程，实际并发: {self.max_concurrent}")
+        
         self.worker_tasks = [
             asyncio.create_task(self._worker(i))
             for i in range(worker_count)
         ]
-        logger.info(f"已创建 {len(self.worker_tasks)} 个工作协程")
         
         # 创建维护并发数的协程
         maintain_task = asyncio.create_task(self._maintain_concurrency())
-        logger.info("维护并发数协程已创建")
         
         # 立即触发一次初始任务补充
         try:
@@ -408,18 +367,16 @@ class MessageQueue:
         # 等待停止事件
         await self.stop_event.wait()
         
-        logger.info("收到停止信号，开始关闭队列...")
+        logger.info("停止消息队列...")
         
-        # 等待所有工作协程完成（给它们时间处理完当前任务）
-        logger.info("等待所有工作协程完成...")
+        # 等待所有工作协程完成
         try:
-            # 等待最多30秒
             await asyncio.wait_for(
                 asyncio.gather(*self.worker_tasks, return_exceptions=True),
                 timeout=30.0
             )
         except asyncio.TimeoutError:
-            logger.warning("等待工作协程超时，强制取消...")
+            logger.debug("等待超时，强制取消")
             for task in self.worker_tasks:
                 task.cancel()
             await asyncio.gather(*self.worker_tasks, return_exceptions=True)
@@ -431,12 +388,11 @@ class MessageQueue:
         except asyncio.CancelledError:
             pass
         
-        # 等待队列中剩余任务完成（最多等待10秒）
-        logger.info("等待队列中剩余任务完成...")
+        # 等待队列中剩余任务完成
         try:
             await asyncio.wait_for(self.task_queue.join(), timeout=10.0)
         except asyncio.TimeoutError:
-            logger.warning("等待队列任务完成超时，强制停止")
+            logger.debug("队列任务未完成，强制停止")
         
         logger.info("消息队列停止")
     
@@ -486,7 +442,8 @@ class MessageQueue:
             bool: True表示成功添加，False表示失败
         """
         if not self.loop or not self.loop.is_running():
-            logger.error(f"✗ 队列未运行，无法添加任务 (loop存在: {self.loop is not None}, loop运行中: {self.loop.is_running() if self.loop else False})")
+            # 队列停止时不输出错误日志（避免停止时的噪音）
+            logger.debug(f"队列未运行，无法添加任务")
             return False
         
         try:

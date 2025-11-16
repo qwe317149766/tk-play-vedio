@@ -10,7 +10,8 @@ config = ConfigLoader._load_config_file()
 mq_config = config.get("message_queue", {})
 
 # 初始化 API 客户端
-proxy = mq_config.get("proxy", r"socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000")
+proxy = mq_config.get("proxy", r"socks5h://1accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000")
+print("proxy:",proxy)
 api = TikTokAPI(
     proxy=proxy,
     timeout=30,
@@ -54,7 +55,16 @@ def get_seed_and_token(device: dict, flow_session=None):
     """
     http_client = api.http_client
     
-    # 直接从 device 字典中获取 seed 和 seed_type
+    # 步骤1：调用 alert_check 检查设备告警
+    print(f"[main_3] 开始检查设备告警...")
+    alert_result = api.alert_check(device, session=flow_session)
+    print(f"[main_3] 设备告警检查结果: {alert_result}")
+    
+    # 如果告警检查失败，可以选择抛出异常或返回空值
+    # if alert_result != "success":
+    #     raise RuntimeError(f"设备告警检查失败: {alert_result}")
+    
+    # 步骤2：直接从 device 字典中获取 seed 和 seed_type
     seed = device.get('seed')
     seed_type = device.get('seed_type')
     
@@ -65,7 +75,7 @@ def get_seed_and_token(device: dict, flow_session=None):
     else:
         print(f"[main_3] 从 device 读取 seed: {seed[:20] if seed else None}..., seed_type: {seed_type}")
     
-    # 直接从 device 字典中获取 token
+    # 步骤3：直接从 device 字典中获取 token
     token = device.get('token')
     
     # 如果 device 中没有 token 或为空，则请求获取
@@ -78,9 +88,10 @@ def get_seed_and_token(device: dict, flow_session=None):
     return seed, seed_type, token
 
 
-device = {"create_time": "2025-11-13 15:58:29", "device_id": "7572115224145577486", "install_id": "7572115927602726670", "ua": "com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; HUAWEI Mate 30; Build/VP1A.256272.76.A3; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)", "web_ua": "Dalvik/2.1.0 (Linux; U; Android 15; HUAWEI Mate 30 Build/VP1A.256272.76.A3)", "resolution": "1920*1080", "dpi": 420, "device_type": "HUAWEI Mate 30", "device_brand": "Huawei", "device_manufacturer": "Huawei", "os_api": 35, "os_version": 15, "resolution_v2": "1080*1920", "rom": "stock", "rom_version": "VP1A.256272.76.A3", "clientudid": "d1d471c1-0bcd-41a4-a41a-bf8c61d3e9d4", "google_aid": "615ed510-09b4-4c99-b031-ab590c052512", "release_build": "VP1A.256272.76.A3", "display_density_v2": "xxhdpi", "ram_size": "16GB", "dark_mode_setting_value": 0, "is_foldable": 0, "screen_height_dp": 731, "screen_width_dp": 411, "apk_last_update_time": 1761001283498, "apk_first_install_time": 1761001244469, "filter_warn": 0, "priority_region": "US", "user_period": 7, "is_kids_mode": 0, "user_mode": 1, "cdid": "40a4a9a5-57c2-45e2-bfc2-922b33d2fe2c", "openudid": "535e9ae77adf885d", "version_name": "42.4.3", "update_version_code": "2024204030", "version_code": "420403", "sdk_version_code": 2051090, "sdk_target_version": 30, "sdk_version": "2.5.10", "_tt_ok_quic_version": "Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30", "mssdk_version_str": "v05.02.02-ov-android", "gorgon_sdk_version": "0000000020020205", "mssdk_version": 84017696, "seed": "MDGiGJrbpHsAIzl+yT0ylYfszb0qHiQhBDdy8/xdS0/RIE6AQGNsFVQoFR60NQem2ekBJQDEwhWSvg7OUKynVAaWk2GJVrYFLohnmkQS6jRqqZRHFurn8i1BMS2K64fMA/E=", "seed_type": 6, "token": "A18Jp8pBuB0GXQoJxzt8ncvC8"}
+device = {"create_time": "2025-11-14 11:17:16", "device_id": "7571031545047270933", "install_id": "7571032910167213845", "ua": "com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; OPPO A9; Build/RP1A.208887.416; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)", "web_ua": "Dalvik/2.1.0 (Linux; U; Android 15; OPPO A9 Build/RP1A.208887.416)", "resolution": "3200*1440", "dpi": 560, "device_type": "OPPO A9", "device_brand": "Oppo", "device_manufacturer": "Oppo", "os_api": 35, "os_version": 15, "resolution_v2": "1440*3200", "rom": "OxygenOS", "rom_version": "RP1A.208887.416", "clientudid": "cc296e8a-51e0-4cad-887b-b375a959372a", "google_aid": "61453c41-6bdb-49ce-8176-2f9ebd51d7f3", "release_build": "RP1A.208887.416", "display_density_v2": "xxhdpi", "ram_size": "6GB", "dark_mode_setting_value": 1, "is_foldable": 0, "screen_height_dp": 914, "screen_width_dp": 411, "apk_last_update_time": 1761054436416, "apk_first_install_time": 1761054377455, "filter_warn": 0, "priority_region": "US", "user_period": 2, "is_kids_mode": 0, "user_mode": 1, "cdid": "cc7380f6-b7eb-46db-b1c3-c6df2e047b97", "openudid": "361697225c03a3a8", "version_name": "42.4.3", "update_version_code": "2024204030", "version_code": "420403", "sdk_version_code": 2051090, "sdk_target_version": 30, "sdk_version": "2.5.10", "_tt_ok_quic_version": "Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30", "mssdk_version_str": "v05.02.02-ov-android", "gorgon_sdk_version": "0000000020020205", "mssdk_version": 84017696}
 
-aweme_id = "7569608169052212501"
+
+aweme_id = "7572772064793283848"
 
 # 获取流程专用Session（同一流程复用同一个Session）
 http_client = api.http_client

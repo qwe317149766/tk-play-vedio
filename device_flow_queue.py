@@ -701,7 +701,8 @@ def main():
     _queue_instance = MessageQueue(
         max_concurrent=CONFIG.get("max_concurrent", 1000),
         threshold_callback=threshold_callback,
-        task_callback=task_callback
+        task_callback=task_callback,
+        task_timeout=1200.0  # 20 分钟超时（设备流程任务可能较慢）
     )
     queue = _queue_instance
     

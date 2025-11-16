@@ -518,28 +518,22 @@ class HttpClient:
         attempt = 0
         while attempt < self.max_retries:
             try:
-                print(f"[HttpClient] [发起请求] 使用指定Session执行 {method} 请求 (尝试 {attempt + 1}/{self.max_retries}): {url[:80]}...")
-                if self.debug:
-                    print(f"[HttpClient] 使用指定Session执行 {method} 请求 (尝试 {attempt + 1}/{self.max_retries}): {url[:80]}...")
-                
                 # 确保超时参数被正确传递
                 if "timeout" not in kwargs:
                     kwargs["timeout"] = self.timeout
                 
                 func = getattr(session, method.lower())
                 request_elapsed_start = time.time()
-                print(f"[HttpClient] [发起请求] 开始调用 {method.lower()}(), url={url[:80]}..., timeout={kwargs.get('timeout', self.timeout)}")
                 resp = func(url, **kwargs)
                 request_elapsed = time.time() - request_elapsed_start
                 
-                print(f"[HttpClient] [请求完成] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}, url={url[:80]}...")
-                if self.debug or request_elapsed > 5.0:
+                if self.debug:
                     print(f"[HttpClient] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}")
                 
                 self._stats["requests"] += 1
                 
-                total_elapsed = time.time() - request_start
-                if total_elapsed > 5.0 or self.debug:
+                if self.debug:
+                    total_elapsed = time.time() - request_start
                     print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
                 return resp
             except (requests.RequestsError, ConnectionError, TimeoutError) as e:
@@ -558,19 +552,16 @@ class HttpClient:
                 if is_network_error:
                     attempt += 1
                     if attempt >= self.max_retries:
-                        print(f"[HttpClient] [请求失败] 网络连接错误，已达到最大重试次数: {e}, url={url[:80]}...")
                         if self.debug:
                             print(f"[HttpClient] 网络连接错误，已达到最大重试次数: {e}")
                         raise
                     self._stats["retries"] += 1
-                    print(f"[HttpClient] [请求重试] 网络连接错误({e})，等待 {self.retry_delay} 秒后重试 {attempt}/{self.max_retries}, url={url[:80]}...")
                     if self.debug:
                         print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
                     time.sleep(self.retry_delay)
                     continue
                 else:
                     # 非网络错误，直接抛出
-                    print(f"[HttpClient] [请求失败] 请求失败（非网络错误）: {e}, url={url[:80]}...")
                     if self.debug:
                         print(f"[HttpClient] 请求失败（非网络错误）: {e}")
                     raise
@@ -589,19 +580,16 @@ class HttpClient:
                 if is_network_error:
                     attempt += 1
                     if attempt >= self.max_retries:
-                        print(f"[HttpClient] [请求失败] 网络连接错误，已达到最大重试次数: {e}, url={url[:80]}...")
                         if self.debug:
                             print(f"[HttpClient] 网络连接错误，已达到最大重试次数: {e}")
                         raise
                     self._stats["retries"] += 1
-                    print(f"[HttpClient] [请求重试] 网络连接错误({e})，等待 {self.retry_delay} 秒后重试 {attempt}/{self.max_retries}, url={url[:80]}...")
                     if self.debug:
                         print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
                     time.sleep(self.retry_delay)
                     continue
                 else:
                     # 其他错误，直接抛出
-                    print(f"[HttpClient] [请求失败] 请求失败: {e}, url={url[:80]}...")
                     if self.debug:
                         print(f"[HttpClient] 请求失败: {e}")
                     raise
@@ -619,22 +607,18 @@ class HttpClient:
                 session_start = time.time()
                 session = self._get_session()
                 session_elapsed = time.time() - session_start
-                if session_elapsed > 0.1 or self.debug:
+                if session_elapsed > 0.1 and self.debug:
                     print(f"[HttpClient] 获取 Session 耗时: {session_elapsed:.3f}s")
                 
-                print(f"[HttpClient] [发起请求] 开始执行 {method} 请求: {url[:80]}...")
-                if self.debug:
-                    print(f"[HttpClient] 开始执行 {method} 请求: {url[:80]}...")
                 func = getattr(session, method.lower())
                 request_elapsed_start = time.time()
                 # 确保超时参数被正确传递
                 if "timeout" not in kwargs:
                     kwargs["timeout"] = self.timeout
-                print(f"[HttpClient] [发起请求] 开始调用 {method.lower()}(), url={url[:80]}..., timeout={kwargs.get('timeout', self.timeout)}")
                 resp = func(url, **kwargs)
                 request_elapsed = time.time() - request_elapsed_start
-                print(f"[HttpClient] [请求完成] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}, url={url[:80]}...")
-                if self.debug or request_elapsed > 5.0:
+                
+                if self.debug:
                     print(f"[HttpClient] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}")
                 
                 self._stats["requests"] += 1
@@ -642,12 +626,11 @@ class HttpClient:
                 self._release_session(session)
                 session = None
                 
-                total_elapsed = time.time() - request_start
-                if total_elapsed > 5.0 or self.debug:
+                if self.debug:
+                    total_elapsed = time.time() - request_start
                     print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
                 return resp
             except (requests.RequestsError, ConnectionError, TimeoutError) as e:
-                print(f"[HttpClient] [请求错误] 网络错误: {e}, url={url[:80]}..., 尝试 {attempt + 1}/{self.max_retries}")
                 self._stats["failures"] += 1
                 # Session 可能已损坏，关闭并移除
                 if session is not None:
@@ -661,10 +644,8 @@ class HttpClient:
                 
                 attempt += 1
                 if attempt >= self.max_retries:
-                    print(f"[HttpClient] [请求失败] 达到最大重试次数，抛出异常: {e}, url={url[:80]}...")
                     raise
                 self._stats["retries"] += 1
-                print(f"[HttpClient] [请求重试] 网络错误({e})，等待 {self.retry_delay} 秒后重试 {attempt}/{self.max_retries}")
                 if self.debug:
                     print(f"[HttpClient] 网络错误({e})，重试 {attempt}/{self.max_retries}")
                 time.sleep(self.retry_delay)

@@ -270,10 +270,10 @@ def make_did_iid(device, proxy="", http_client=None, session=None):
         "passport-sdk-version": "-1",
         "x-vc-bdturing-sdk-version": "2.3.13.i18n",
         "user-agent": ua,
-        # "x-ladon": x_ladon,
-        # "x-khronos": str(x_khronos),    # ✅ 这里必须是秒级时间戳，不要写成 x_gorgon
-        # "x-argus": x_argus,
-        # "x-gorgon": x_gorgon,
+        "x-ladon": x_ladon,
+        "x-khronos": str(x_khronos),    # ✅ 这里必须是秒级时间戳，不要写成 x_gorgon
+        "x-argus": x_argus,
+        "x-gorgon": x_gorgon,
         "content-type": "application/json; charset=utf-8",
         "accept-encoding": "gzip",
     }

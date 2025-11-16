@@ -4,7 +4,7 @@ import time
 
 from curl_cffi import requests, curl
 import urllib3
-
+from urllib.parse import quote_plus
 from headers import make_headers
 from headers.device_ticket_data import make_device_ticket_data
 from mssdk.get_seed.seed_test import get_get_seed
@@ -53,6 +53,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         }
     else:
         proxies = None
+    print("proxies:",proxies)    
     timee = time.time()
     utime = int(timee * 1000)
     stime = int(timee)
@@ -80,6 +81,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
     #         query_string,
     #         post_data  # 注意：传 bytes，不是 hex
     #     )
+    print("device_type:",device['device_type'])
     x_ss_stub, x_khronos, x_argus, x_ladon, x_gorgon = make_headers.make_headers(
             device_id,  # 依你的实现
             stime,
@@ -88,7 +90,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
             4,
             stime - random.randint(1, 10),
             token,
-            "Pixel 6",  # 用真实 model
+            device['device_type'],  # 用真实 model
             seed,seed_type , '', "", "",
             query_string,
             post_data  # 注意：传 bytes，不是 hex
@@ -122,6 +124,9 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
     )
 
     # 所有的请求头
+    # device['device_type']
+ 
+    encoded_device_type = quote_plus(device['device_type'])
     headers = {
         "authority": "aggr16-normal.tiktokv.us",
         "cookie": cookie_string,
@@ -164,12 +169,15 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         "x-khronos": f"{stime}",
         "x-ladon": f"{x_ladon}",
 
-        "x-common-params-v2": f"ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand=google&device_id={device_id}&device_platform=android&device_type=Pixel%206&dpi=420&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3",
+        "x-common-params-v2": f"ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand={device['device_brand']}&device_id={device_id}&device_platform=android&device_type={encoded_device_type}&dpi={device['dpi']}&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3",
     }
 
     try:
         if use_http_client:
             # 使用 HttpClient（已包含重试和超时机制）
+            # print("data:",data)
+            # print("headers:",headers)
+            # print("headers:",headers)
             resp = http_client.post(url, headers=headers, data=data, session=session)
         else:
             resp = requests.post(
@@ -182,9 +190,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
                 http_version="v2"  # 强制使用 HTTP/2
             )
 
-        print(f"Status Code: {resp.status_code}")
-        print("--- Response Body ---")
-        print(resp.text)
+        print(f"[设备: {device_id}] {resp.text}")
         # 如果返回的是 gzipped 数据，你可能需要解压
         # print(resp.content)
         return resp.text
@@ -204,9 +210,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
                 http_version="v1"  # 强制使用 HTTP/1
             )
 
-            print(f"Status Code: {resp.status_code}")
-            print("--- Response Body ---")
-            print(resp.text)
+            print(f"[设备: {device_id}] {resp.text}")
             # 如果返回的是 gzipped 数据，你可能需要解压
             # print(resp.content)
             return resp.text
