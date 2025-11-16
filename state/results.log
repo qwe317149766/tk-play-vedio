@@ -1,0 +1,1000 @@
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 27} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=6.202s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 30} -> did/iid empty device_id {'step': 'did_iid'} elapsed=8.260s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid empty device_id
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 58} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=14.825s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 88} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=18.244s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 68} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=22.935s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 54} -> ok {'device_id': 7573007156200719927, 'seed_type': 3} elapsed=30.598s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 75} -> ok {'device_id': 7573007237103453710, 'seed_type': 7} elapsed=38.533s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 72} -> ok {'device_id': 7573007237103486478, 'seed_type': 2} elapsed=41.268s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 51} -> ok {'device_id': 7573007237103322638, 'seed_type': 5} elapsed=43.587s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 85} -> ok {'device_id': 7573007156200818231, 'seed_type': 5} elapsed=44.500s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 35} -> ok {'device_id': 7573007156200670775, 'seed_type': 4} elapsed=45.487s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 66} -> ok {'device_id': 7573007187175015991, 'seed_type': 3} elapsed=51.303s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 2} -> ok {'device_id': 7573007147224270391, 'seed_type': 6} elapsed=60.982s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 32} -> ok {'device_id': 7573007237103289870, 'seed_type': 8} elapsed=63.333s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 15} -> ok {'device_id': 7573007067969488398, 'seed_type': 2} elapsed=65.214s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 95} -> ok {'device_id': 7573007237103584782, 'seed_type': 3} elapsed=67.244s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 53} -> ok {'device_id': 7573007147224483383, 'seed_type': 5} elapsed=68.233s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 48} -> ok {'device_id': 7573007127116809741, 'seed_type': 8} elapsed=70.371s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 87} -> ok {'device_id': 7573007243000415758, 'seed_type': 4} elapsed=74.985s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 81} -> ok {'device_id': 7573007147224614455, 'seed_type': 7} elapsed=77.839s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 44} -> ok {'device_id': 7573007156200752695, 'seed_type': 3} elapsed=82.043s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 108} -> alert_check fail (error: Failed to perform, curl: (28) Connection timed out after 30002 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573007379362350606} elapsed=43.146s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (28) Connection timed out after 30002 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 94} -> ok {'device_id': 7573007237103502862, 'seed_type': 1} elapsed=88.739s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 5} -> ok {'device_id': 7573007127116629517, 'seed_type': 3} elapsed=113.840s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 14} -> ok {'device_id': 7573007237103257102, 'seed_type': 5} elapsed=126.001s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 89} -> ok {'device_id': 7573007187175114295, 'seed_type': 1} elapsed=132.169s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 92} -> ok {'device_id': 7573007187175081527, 'seed_type': 5} elapsed=153.344s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 100} -> ok {'device_id': 7573007127117170189, 'seed_type': 6} elapsed=147.525s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 110} -> ok {'device_id': 7573007431932839479, 'seed_type': 4} elapsed=116.363s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 86} -> ok {'device_id': 7573007165746726455, 'seed_type': 7} elapsed=172.899s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 41} -> ok {'device_id': 7573007147224335927, 'seed_type': 4} elapsed=176.247s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 4} -> ok {'device_id': 7573007165746513463, 'seed_type': 5} elapsed=177.097s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 79} -> ok {'device_id': 7573007187175163447, 'seed_type': 7} elapsed=179.030s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 37} -> ok {'device_id': 7573007156200654391, 'seed_type': 7} elapsed=179.808s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 124} -> ok {'device_id': 7573007757478495757, 'seed_type': 8} elapsed=65.538s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 130} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=19.037s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 115} -> ok {'device_id': 7573007463462241805, 'seed_type': 8} elapsed=135.754s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 93} -> ok {'device_id': 7573007127117022733, 'seed_type': 5} elapsed=203.666s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 90} -> ok {'device_id': 7573007127116973581, 'seed_type': 2} elapsed=218.329s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 97} -> ok {'device_id': 7573007165746759223, 'seed_type': 3} elapsed=226.912s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 121} -> ok {'device_id': 7573007537970038286, 'seed_type': 6} elapsed=146.288s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 106} -> ok {'device_id': 7573007296307201550, 'seed_type': 8} elapsed=202.915s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 7} -> ok {'device_id': 7573007187174835767, 'seed_type': 7} elapsed=254.438s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 47} -> ok {'device_id': 7573007127116858893, 'seed_type': 4} elapsed=259.220s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 13} -> ok {'device_id': 7573007067969537550, 'seed_type': 8} elapsed=262.776s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 69} -> ok {'device_id': 7573007237103437326, 'seed_type': 7} elapsed=263.612s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 113} -> ok {'device_id': 7573007513298191885, 'seed_type': 6} elapsed=205.898s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 138} -> ok {'device_id': 7573008109033293326, 'seed_type': 4} elapsed=57.628s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 6} -> ok {'device_id': 7573007156200588855, 'seed_type': 6} elapsed=278.143s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 63} -> ok {'device_id': 7573007165746660919, 'seed_type': 4} elapsed=279.657s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 61} -> ok {'device_id': 7573007147224499767, 'seed_type': 8} elapsed=280.439s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 59} -> ok {'device_id': 7573007237103519246, 'seed_type': 2} elapsed=282.177s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 139} -> ok {'device_id': 7573008155354449422, 'seed_type': 2} elapsed=56.372s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 116} -> ok {'device_id': 7573007463462274573, 'seed_type': 4} elapsed=239.664s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 143} -> ok {'device_id': 7573008400557458999, 'seed_type': 3} elapsed=49.808s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 137} -> ok {'device_id': 7573007984269559309, 'seed_type': 8} elapsed=131.854s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 135} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573007984269231629, 'seed_type': 7} elapsed=140.724s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 104} -> ok {'device_id': 7573007353524798990, 'seed_type': 3} elapsed=319.988s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 105} -> ok {'device_id': 7573007333963171341, 'seed_type': 1} elapsed=319.116s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 64} -> ok {'device_id': 7573007127116891661, 'seed_type': 7} elapsed=350.211s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 141} -> ok {'device_id': 7573008269900940814, 'seed_type': 1} elapsed=108.679s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 57} -> seed error: Error -5 while decompressing data: incomplete or truncated stream {'step': 'seed', 'device_id': 7573007187174983223} elapsed=366.702s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Error -5 while decompressing data: incomplete or truncated stream
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 154} -> ok {'device_id': 7573008637698803214, 'seed_type': 6} elapsed=62.252s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 157} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=32.870s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 25} -> ok {'device_id': 7573007237103273486, 'seed_type': 4} elapsed=378.635s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 162} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=22.876s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 0} -> ok {'device_id': 7573007066593576503, 'seed_type': 1} elapsed=417.668s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 73} -> ok {'device_id': 7573007156200850999, 'seed_type': 5} elapsed=420.653s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 19} -> ok {'device_id': 7573007237103224334, 'seed_type': 1} elapsed=421.439s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 148} -> ok {'device_id': 7573008434087265806, 'seed_type': 8} elapsed=146.173s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 123} -> ok {'device_id': 7573007628461950519, 'seed_type': 5} elapsed=316.649s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 128} -> ok {'device_id': 7573007877678974477, 'seed_type': 1} elapsed=269.710s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 29} -> ok {'device_id': 7573007127116744205, 'seed_type': 7} elapsed=441.341s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 60} -> ok {'device_id': 7573007165746595383, 'seed_type': 8} elapsed=449.370s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 147} -> ok {'device_id': 7573008400558409271, 'seed_type': 6} elapsed=185.893s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 78} -> ok {'device_id': 7573007147224532535, 'seed_type': 3} elapsed=465.236s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 164} -> ok {'device_id': 7573008812048467470, 'seed_type': 8} elapsed=105.260s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 134} -> ok {'device_id': 7573007958168471053, 'seed_type': 4} elapsed=303.099s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 142} -> ok {'device_id': 7573008249269831223, 'seed_type': 8} elapsed=248.190s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 107} -> ok {'device_id': 7573007333963777549, 'seed_type': 2} elapsed=475.565s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 40} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573007066593723959} elapsed=529.904s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 176} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=46.020s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 175} -> alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573009271290807821} elapsed=65.637s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 67} -> ok {'device_id': 7573007147224516151, 'seed_type': 8} elapsed=533.093s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 112} -> ok {'device_id': 7573007392863831566, 'seed_type': 6} elapsed=473.480s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 77} -> ok {'device_id': 7573007243000464910, 'seed_type': 2} elapsed=535.609s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 62} -> ok {'device_id': 7573007156200785463, 'seed_type': 8} elapsed=541.197s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 161} -> ok {'device_id': 7573008774698075662, 'seed_type': 2} elapsed=189.241s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 131} -> ok {'device_id': 7573008045010142733, 'seed_type': 3} elapsed=379.461s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 165} -> ok {'device_id': 7573008911055586830, 'seed_type': 3} elapsed=169.498s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 160} -> ok {'device_id': 7573008613448795703, 'seed_type': 6} elapsed=216.694s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 167} -> ok {'device_id': 7573008964180674103, 'seed_type': 3} elapsed=149.737s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 70} -> ok {'device_id': 7573007147224598071, 'seed_type': 8} elapsed=586.873s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 120} -> ok {'device_id': 7573007592704738830, 'seed_type': 2} elapsed=505.959s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 153} -> ok {'device_id': 7573008472691836430, 'seed_type': 1} elapsed=295.880s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 158} -> ok {'device_id': 7573008774697338382, 'seed_type': 4} elapsed=256.069s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 111} -> ok {'device_id': 7573007353525716494, 'seed_type': 4} elapsed=558.081s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 188} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=57.869s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 56} -> ok {'device_id': 7573007127116924429, 'seed_type': 6} elapsed=623.891s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 126} -> ok {'device_id': 7573007810587133495, 'seed_type': 6} elapsed=478.323s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 8} -> ok {'device_id': 7573007187174786615, 'seed_type': 7} elapsed=632.591s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 151} -> ok {'device_id': 7573008481213974029, 'seed_type': 4} elapsed=350.400s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 117} -> ok {'device_id': 7573007431933806135, 'seed_type': 7} elapsed=572.730s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 144} -> ok {'device_id': 7573008423097239053, 'seed_type': 5} elapsed=380.709s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 21} -> ok {'device_id': 7573007066593674807, 'seed_type': 3} elapsed=644.840s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 179} -> ok {'device_id': 7573009402019661326, 'seed_type': 3} elapsed=128.222s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 174} -> ok {'device_id': 7573009150638523917, 'seed_type': 6} elapsed=187.660s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 20} -> ok {'device_id': 7573007127116793357, 'seed_type': 6} elapsed=658.881s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 1} -> ok {'device_id': 7573007187174770231, 'seed_type': 5} elapsed=663.349s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 49} -> ok {'device_id': 7573007237103404558, 'seed_type': 4} elapsed=664.582s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 74} -> ok {'device_id': 7573007147224581687, 'seed_type': 6} elapsed=664.807s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 98} -> ok {'device_id': 7573007243000448526, 'seed_type': 8} elapsed=678.068s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 45} -> ok {'device_id': 7573007127116940813, 'seed_type': 7} elapsed=679.244s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 99} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573007165746742839, 'seed_type': 1} elapsed=679.374s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 80} -> ok {'device_id': 7573007187175048759, 'seed_type': 1} elapsed=692.662s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 186} -> ok {'device_id': 7573009604663150094, 'seed_type': 2} elapsed=151.620s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 192} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573009771680155191} elapsed=105.555s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 91} -> ok {'device_id': 7573007187175130679, 'seed_type': 4} elapsed=709.041s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 17} -> ok {'device_id': 7573007127116678669, 'seed_type': 3} elapsed=710.330s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 10} -> ok {'device_id': 7573007156200572471, 'seed_type': 5} elapsed=711.417s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 202} -> alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573009993068185101} elapsed=71.025s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 169} -> ok {'device_id': 7573008954554729997, 'seed_type': 1} elapsed=293.336s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 11} -> ok {'device_id': 7573007156200523319, 'seed_type': 7} elapsed=722.610s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 9} -> ok {'device_id': 7573007067969504782, 'seed_type': 2} elapsed=730.274s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 101} -> ok {'device_id': 7573007127117317645, 'seed_type': 5} elapsed=722.591s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 38} -> ok {'device_id': 7573007147224417847, 'seed_type': 7} elapsed=732.052s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 52} -> ok {'device_id': 7573007237103306254, 'seed_type': 3} elapsed=752.392s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 65} -> ok {'device_id': 7573007127116826125, 'seed_type': 5} elapsed=761.046s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 119} -> ok {'device_id': 7573007537969661454, 'seed_type': 7} elapsed=691.262s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 198} -> ok {'device_id': 7573009934364657166, 'seed_type': 3} elapsed=144.762s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 136} -> ok {'device_id': 7573008031728059918, 'seed_type': 4} elapsed=567.454s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 149} -> ok {'device_id': 7573008317137897015, 'seed_type': 1} elapsed=492.107s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 211} -> ok {'device_id': 7573010152489879054, 'seed_type': 4} elapsed=106.568s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 33} -> ok {'device_id': 7573007237103420942, 'seed_type': 2} elapsed=792.267s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 50} -> ok {'device_id': 7573007237103388174, 'seed_type': 3} elapsed=793.345s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 145} -> ok {'device_id': 7573008403652691511, 'seed_type': 7} elapsed=531.528s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 36} -> ok {'device_id': 7573007187174852151, 'seed_type': 2} elapsed=809.761s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 170} -> ok {'device_id': 7573009117346907703, 'seed_type': 4} elapsed=381.275s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 220} -> ok {'device_id': 7573010352259171854, 'seed_type': 4} elapsed=95.444s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 132} -> ok {'device_id': 7573007972180903438, 'seed_type': 5} elapsed=634.819s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 84} -> ok {'device_id': 7573007127117006349, 'seed_type': 2} elapsed=814.718s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 156} -> ok {'device_id': 7573008717953009165, 'seed_type': 4} elapsed=485.351s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 177} -> ok {'device_id': 7573009415348291086, 'seed_type': 1} elapsed=336.273s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 12} -> ok {'device_id': 7573007237103240718, 'seed_type': 5} elapsed=835.747s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 127} -> ok {'device_id': 7573007810726037006, 'seed_type': 2} elapsed=683.224s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 217} -> ok {'device_id': 7573010346664609335, 'seed_type': 6} elapsed=124.801s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 195} -> ok {'device_id': 7573009811014993422, 'seed_type': 5} elapsed=225.531s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 28} -> ok {'device_id': 7573007147224401463, 'seed_type': 5} elapsed=838.683s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 42} -> ok {'device_id': 7573007165746644535, 'seed_type': 1} elapsed=853.480s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 185} -> ok {'device_id': 7573009620718257678, 'seed_type': 4} elapsed=313.491s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 205} -> ok {'device_id': 7573010017462142478, 'seed_type': 2} elapsed=206.248s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 237} -> did/iid empty device_id {'step': 'did_iid'} elapsed=51.947s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid empty device_id
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 238} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=54.016s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 223} -> ok {'device_id': 7573010313110472206, 'seed_type': 5} elapsed=140.164s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 241} -> did/iid empty device_id {'step': 'did_iid'} elapsed=46.821s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid empty device_id
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 102} -> ok {'device_id': 7573007308142560823, 'seed_type': 4} elapsed=859.218s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 219} -> ok {'device_id': 7573010195846546958, 'seed_type': 2} elapsed=162.606s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 224} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573010410984408589, 'seed_type': 3} elapsed=144.575s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 194} -> ok {'device_id': 7573009929012217358, 'seed_type': 5} elapsed=272.604s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 193} -> ok {'device_id': 7573009771680089655, 'seed_type': 6} elapsed=300.792s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 172} -> ok {'device_id': 7573009142819423799, 'seed_type': 3} elapsed=447.509s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 203} -> ok {'device_id': 7573010064494790158, 'seed_type': 5} elapsed=241.942s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 22} -> ok {'device_id': 7573007127116695053, 'seed_type': 5} elapsed=898.181s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 46} -> ok {'device_id': 7573007147224385079, 'seed_type': 7} elapsed=913.421s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 232} -> ok {'device_id': 7573010647308355085, 'seed_type': 2} elapsed=122.596s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 24} -> ok {'device_id': 7573007165746497079, 'seed_type': 4} elapsed=922.816s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 221} -> ok {'device_id': 7573010410984064525, 'seed_type': 5} elapsed=204.237s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 103} -> ok {'device_id': 7573007333962810893, 'seed_type': 4} elapsed=909.598s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 191} -> ok {'device_id': 7573009865652651575, 'seed_type': 2} elapsed=357.292s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 236} -> ok {'device_id': 7573010708293813774, 'seed_type': 8} elapsed=129.298s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 225} -> ok {'device_id': 7573010505934374413, 'seed_type': 2} elapsed=207.171s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 173} -> ok {'device_id': 7573009117347776055, 'seed_type': 8} elapsed=496.214s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 129} -> ok {'device_id': 7573007877682791949, 'seed_type': 6} elapsed=775.874s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 122} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573007576708187703} elapsed=860.500s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 34} -> ok {'device_id': 7573007147224319543, 'seed_type': 1} elapsed=950.784s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 216} -> ok {'device_id': 7573010195846235662, 'seed_type': 7} elapsed=253.667s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 234} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573010589225895479} elapsed=153.514s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 215} -> ok {'device_id': 7573010214649398798, 'seed_type': 1} elapsed=266.326s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 152} -> ok {'device_id': 7573008474355992077, 'seed_type': 5} elapsed=678.866s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 166} -> ok {'device_id': 7573008954554517005, 'seed_type': 5} elapsed=552.239s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 209} -> ok {'device_id': 7573010214648317454, 'seed_type': 6} elapsed=308.468s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 43} -> ok {'device_id': 7573007156200687159, 'seed_type': 4} elapsed=975.918s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 206} -> ok {'device_id': 7573010143168906766, 'seed_type': 8} elapsed=317.973s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 55} -> ok {'device_id': 7573007127116875277, 'seed_type': 6} elapsed=979.862s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 243} -> ok {'device_id': 7573010912173983287, 'seed_type': 8} elapsed=142.281s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 210} -> ok {'device_id': 7573010195845006862, 'seed_type': 2} elapsed=320.728s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 245} -> ok {'device_id': 7573010857488827918, 'seed_type': 3} elapsed=148.321s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 18} -> ok {'device_id': 7573007156200556087, 'seed_type': 1} elapsed=996.019s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 16} -> ok {'device_id': 7573007165746529847, 'seed_type': 2} elapsed=998.633s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 199} -> ok {'device_id': 7573009851808531982, 'seed_type': 3} elapsed=368.671s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 248} -> ok {'device_id': 7573010842226525709, 'seed_type': 6} elapsed=146.707s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 189} -> ok {'device_id': 7573009713040016910, 'seed_type': 4} elapsed=434.506s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 254} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573011078230394381, 'seed_type': 2} elapsed=136.638s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 227} -> seed error: fromhex() arg must contain an even number of hexadecimal digits {'step': 'seed', 'device_id': 7573010589224764983} elapsed=260.411s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: fromhex() arg must contain an even number of hexadecimal digits
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 168} -> ok {'device_id': 7573009014671525390, 'seed_type': 4} elapsed=598.466s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 31} -> ok {'device_id': 7573007147224368695, 'seed_type': 3} elapsed=1040.977s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 26} -> ok {'device_id': 7573007066593658423, 'seed_type': 3} elapsed=1047.237s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 182} -> ok {'device_id': 7573009479023183415, 'seed_type': 1} elapsed=518.127s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 76} -> ok {'device_id': 7573007237103470094, 'seed_type': 2} elapsed=1052.964s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 82} -> ok {'device_id': 7573007156200801847, 'seed_type': 6} elapsed=1060.735s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 201} -> ok {'device_id': 7573009851808548366, 'seed_type': 6} elapsed=426.618s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 212} -> ok {'device_id': 7573010240732857911, 'seed_type': 3} elapsed=392.388s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 114} -> ok {'device_id': 7573007513298273805, 'seed_type': 3} elapsed=1012.200s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 235} -> ok {'device_id': 7573010589226124855, 'seed_type': 7} elapsed=279.094s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 222} -> ok {'device_id': 7573010352259384846, 'seed_type': 8} elapsed=355.758s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 244} -> ok {'device_id': 7573010924400346637, 'seed_type': 5} elapsed=242.964s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 213} -> ok {'device_id': 7573010195845907982, 'seed_type': 2} elapsed=399.329s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 251} -> ok {'device_id': 7573011026149738039, 'seed_type': 7} elapsed=213.481s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 146} -> ok {'device_id': 7573008317137471031, 'seed_type': 1} elapsed=823.683s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 290} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=83.178s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 207} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573010143169119758, 'seed_type': 2} elapsed=435.233s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 291} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=88.554s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 208} -> ok {'device_id': 7573010152488961550, 'seed_type': 4} elapsed=437.709s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 230} -> ok {'device_id': 7573010573182486030, 'seed_type': 1} elapsed=354.922s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 183} -> ok {'device_id': 7573009624413177357, 'seed_type': 7} elapsed=596.228s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 204} -> ok {'device_id': 7573010017462158862, 'seed_type': 7} elapsed=486.483s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 233} -> ok {'device_id': 7573010708293109262, 'seed_type': 2} elapsed=343.060s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 253} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573010984093697550, 'seed_type': 5} elapsed=278.441s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 118} -> token error: fromhex() arg must contain an even number of hexadecimal digits {'step': 'token', 'device_id': 7573007439316174349, 'seed_type': 7} elapsed=1081.332s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: fromhex() arg must contain an even number of hexadecimal digits
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 125} -> ok {'device_id': 7573007810725234190, 'seed_type': 8} elapsed=1032.458s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 271} -> ok {'device_id': 7573011325874685495, 'seed_type': 6} elapsed=216.154s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 180} -> ok {'device_id': 7573009538820458039, 'seed_type': 2} elapsed=652.410s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 214} -> ok {'device_id': 7573010273909573175, 'seed_type': 5} elapsed=490.278s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 240} -> ok {'device_id': 7573010761397437965, 'seed_type': 4} elapsed=369.444s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 196} -> ok {'device_id': 7573009771680581175, 'seed_type': 7} elapsed=579.256s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 256} -> ok {'device_id': 7573011026149983799, 'seed_type': 1} elapsed=308.616s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 71} -> ok {'device_id': 7573007066593805879, 'seed_type': 1} elapsed=1198.987s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 255} -> ok {'device_id': 7573010963533743629, 'seed_type': 1} elapsed=324.069s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 301} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=112.634s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 303} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=112.790s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 302} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=113.502s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 304} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=114.011s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 242} -> ok {'device_id': 7573010857488680462, 'seed_type': 7} elapsed=372.418s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 279} -> ok {'device_id': 7573011523392996878, 'seed_type': 7} elapsed=238.922s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 200} -> ok {'device_id': 7573009957938431501, 'seed_type': 7} elapsed=578.848s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 178} -> ok {'device_id': 7573009402019317262, 'seed_type': 1} elapsed=710.533s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 239} -> ok {'device_id': 7573010770394089015, 'seed_type': 6} elapsed=397.859s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 257} -> ok {'device_id': 7573011004830107191, 'seed_type': 2} elapsed=331.230s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 308} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=112.102s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 266} -> ok {'device_id': 7573011174218106382, 'seed_type': 2} elapsed=281.241s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 310} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=107.572s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 311} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=106.582s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 258} -> ok {'device_id': 7573010941627319822, 'seed_type': 3} elapsed=333.315s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 309} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=113.372s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 140} -> ok {'device_id': 7573008125890201102, 'seed_type': 2} elapsed=985.858s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 231} -> ok {'device_id': 7573010501351081527, 'seed_type': 8} elapsed=444.882s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 229} -> ok {'device_id': 7573010589224830519, 'seed_type': 3} elapsed=448.238s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 287} -> ok {'device_id': 7573011559946700302, 'seed_type': 1} elapsed=216.771s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 275} -> ok {'device_id': 7573011360154846734, 'seed_type': 7} elapsed=271.812s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 197} -> ok {'device_id': 7573009851807598094, 'seed_type': 6} elapsed=605.080s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 247} -> ok {'device_id': 7573010857489368590, 'seed_type': 8} elapsed=393.899s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 262} -> ok {'device_id': 7573011168403670583, 'seed_type': 4} elapsed=346.532s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 250} -> ok {'device_id': 7573010912174900791, 'seed_type': 1} elapsed=394.455s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 187} -> ok {'device_id': 7573009634878293517, 'seed_type': 5} elapsed=708.363s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 280} -> ok {'device_id': 7573011559946241550, 'seed_type': 4} elapsed=287.248s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 96} -> ok {'device_id': 7573007237103617550, 'seed_type': 2} elapsed=1268.789s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 226} -> ok {'device_id': 7573010447054652941, 'seed_type': 8} elapsed=515.227s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 83} -> ok {'device_id': 7573007237103601166, 'seed_type': 4} elapsed=1269.524s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 316} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=120.278s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 317} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=104.315s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 318} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=103.923s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 23} -> ok {'device_id': 7573007127116776973, 'seed_type': 7} elapsed=1273.844s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 270} -> ok {'device_id': 7573011355733919246, 'seed_type': 6} elapsed=329.975s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 274} -> ok {'device_id': 7573011285941831182, 'seed_type': 1} elapsed=321.990s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 133} -> ok {'device_id': 7573007972180887054, 'seed_type': 6} elapsed=1109.344s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 283} -> ok {'device_id': 7573011490321778189, 'seed_type': 5} elapsed=301.078s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 268} -> ok {'device_id': 7573011372317869623, 'seed_type': 5} elapsed=353.371s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 228} -> ok {'device_id': 7573010573182371342, 'seed_type': 1} elapsed=518.200s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 294} -> ok {'device_id': 7573011890188600887, 'seed_type': 6} elapsed=265.086s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 282} -> ok {'device_id': 7573011495765575182, 'seed_type': 8} elapsed=302.326s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 277} -> ok {'device_id': 7573011360155944462, 'seed_type': 2} elapsed=325.584s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 260} -> ok {'device_id': 7573010984094221838, 'seed_type': 6} elapsed=399.375s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 285} -> ok {'device_id': 7573011523393390094, 'seed_type': 5} elapsed=300.280s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 321} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=98.451s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 322} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=98.720s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 163} -> ok {'device_id': 7573008859431781901, 'seed_type': 3} elapsed=926.298s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 261} -> ok {'device_id': 7573011066243581495, 'seed_type': 1} elapsed=413.347s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 269} -> ok {'device_id': 7573011285941503502, 'seed_type': 1} elapsed=360.141s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 298} -> ok {'device_id': 7573012023501424183, 'seed_type': 2} elapsed=241.246s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 159} -> ok {'device_id': 7573008710681134605, 'seed_type': 1} elapsed=956.183s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 286} -> ok {'device_id': 7573011559946585614, 'seed_type': 4} elapsed=311.944s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 300} -> ok {'device_id': 7573012020062062135, 'seed_type': 6} elapsed=239.716s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 3} -> ok {'device_id': 7573007156200539703, 'seed_type': 1} elapsed=1310.513s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 276} -> ok {'device_id': 7573011372318623287, 'seed_type': 1} elapsed=355.812s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 181} -> ok {'device_id': 7573009538820507191, 'seed_type': 7} elapsed=781.355s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 297} -> ok {'device_id': 7573012023500949047, 'seed_type': 8} elapsed=249.481s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 155} -> ok {'device_id': 7573008710680200717, 'seed_type': 7} elapsed=983.243s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 267} -> ok {'device_id': 7573011230882694711, 'seed_type': 8} elapsed=387.292s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 351} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=74.976s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 348} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=84.448s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 347} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=85.359s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 265} -> ok {'device_id': 7573011355733624334, 'seed_type': 1} elapsed=396.034s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 284} -> ok {'device_id': 7573011521036043790, 'seed_type': 7} elapsed=341.536s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 281} -> ok {'device_id': 7573011559946307086, 'seed_type': 7} elapsed=345.740s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 315} -> ok {'device_id': 7573012307094586894, 'seed_type': 8} elapsed=206.413s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 306} -> ok {'device_id': 7573012168334001719, 'seed_type': 8} elapsed=255.550s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 263} -> ok {'device_id': 7573011230710597175, 'seed_type': 5} elapsed=428.279s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 184} -> ok {'device_id': 7573009634877785613, 'seed_type': 7} elapsed=809.194s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 299} -> ok {'device_id': 7573012023501440567, 'seed_type': 4} elapsed=282.676s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 289} -> ok {'device_id': 7573011452656993806, 'seed_type': 7} elapsed=347.736s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 218} -> ok {'device_id': 7573010240733300279, 'seed_type': 7} elapsed=643.494s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 109} -> ok {'device_id': 7573007463461635597, 'seed_type': 1} elapsed=1313.434s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 364} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=74.597s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 374} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=69.467s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 373} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=72.914s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 293} -> ok {'device_id': 7573011713299301902, 'seed_type': 5} elapsed=350.831s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 319} -> ok {'device_id': 7573012417081476663, 'seed_type': 1} elapsed=207.866s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 292} -> ok {'device_id': 7573011701311014413, 'seed_type': 3} elapsed=369.823s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 313} -> ok {'device_id': 7573012374236694071, 'seed_type': 5} elapsed=247.104s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 378} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=79.785s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 150} -> ok {'device_id': 7573008423097992717, 'seed_type': 8} elapsed=1114.318s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 393} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=54.629s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 249} -> ok {'device_id': 7573011078230181389, 'seed_type': 8} elapsed=540.073s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 307} -> ok {'device_id': 7573012178606065165, 'seed_type': 5} elapsed=308.684s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 338} -> ok {'device_id': 7573012616269940279, 'seed_type': 6} elapsed=163.717s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 272} -> ok {'device_id': 7573011355734345230, 'seed_type': 4} elapsed=455.291s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 314} -> ok {'device_id': 7573012332642059790, 'seed_type': 5} elapsed=268.873s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 264} -> ok {'device_id': 7573011230882367031, 'seed_type': 4} elapsed=490.410s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 341} -> ok {'device_id': 7573012673224148535, 'seed_type': 1} elapsed=177.557s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 349} -> ok {'device_id': 7573012788084540942, 'seed_type': 2} elapsed=175.880s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 361} -> ok {'device_id': 7573012745030796855, 'seed_type': 3} elapsed=149.787s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 352} -> ok {'device_id': 7573012822716958221, 'seed_type': 4} elapsed=170.155s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 329} -> ok {'device_id': 7573012673223263799, 'seed_type': 5} elapsed=229.690s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 332} -> ok {'device_id': 7573012644505978423, 'seed_type': 8} elapsed=208.343s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 278} -> ok {'device_id': 7573011373854410295, 'seed_type': 2} elapsed=471.867s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 359} -> ok {'device_id': 7573012884096271927, 'seed_type': 2} elapsed=158.067s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 379} -> ok {'device_id': 7573013014849848887, 'seed_type': 2} elapsed=135.310s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 375} -> ok {'device_id': 7573012987343734285, 'seed_type': 1} elapsed=138.973s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 402} -> alert_check fail (error: Failed to perform, curl: (28) Connection timed out after 30015 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573013142722283021} elapsed=86.942s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (28) Connection timed out after 30015 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 367} -> ok {'device_id': 7573012925061842446, 'seed_type': 2} elapsed=172.129s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 357} -> ok {'device_id': 7573012745030633015, 'seed_type': 1} elapsed=194.805s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 295} -> ok {'device_id': 7573012026957006349, 'seed_type': 3} elapsed=417.831s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 383} -> ok {'device_id': 7573012935729301005, 'seed_type': 5} elapsed=169.381s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 417} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=66.925s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 381} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573012987344242189, 'seed_type': 2} elapsed=176.772s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 323} -> ok {'device_id': 7573012649999631885, 'seed_type': 8} elapsed=323.495s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 420} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=79.095s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 395} -> ok {'device_id': 7573013154285389367, 'seed_type': 1} elapsed=170.707s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 426} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=66.286s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 356} -> ok {'device_id': 7573012788085065230, 'seed_type': 1} elapsed=244.530s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 427} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=66.501s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 353} -> ok {'device_id': 7573012788085016078, 'seed_type': 1} elapsed=247.092s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 190} -> seed error: Failed to perform, curl: (28) Connection timed out after 30007 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573009771679237687} elapsed=953.020s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (28) Connection timed out after 30007 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 391} -> ok {'device_id': 7573012963323774519, 'seed_type': 3} elapsed=195.408s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 384} -> ok {'device_id': 7573012987344487949, 'seed_type': 7} elapsed=210.509s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 385} -> ok {'device_id': 7573012963322857015, 'seed_type': 8} elapsed=209.946s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 408} -> ok {'device_id': 7573013280173016590, 'seed_type': 5} elapsed=141.006s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 345} -> ok {'device_id': 7573012673224263223, 'seed_type': 5} elapsed=287.730s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 346} -> ok {'device_id': 7573012644506224183, 'seed_type': 6} elapsed=294.123s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 324} -> ok {'device_id': 7573012532467861006, 'seed_type': 5} elapsed=340.337s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 335} -> ok {'device_id': 7573012644506043959, 'seed_type': 5} elapsed=311.301s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 337} -> ok {'device_id': 7573012650000942605, 'seed_type': 5} elapsed=313.548s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 331} -> ok {'device_id': 7573012673223329335, 'seed_type': 6} elapsed=346.999s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 414} -> ok {'device_id': 7573013280077596173, 'seed_type': 7} elapsed=148.316s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 350} -> ok {'device_id': 7573012644506404407, 'seed_type': 1} elapsed=306.539s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 432} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=65.563s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 411} -> ok {'device_id': 7573013280077481485, 'seed_type': 8} elapsed=156.948s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 312} -> ok {'device_id': 7573012178607113741, 'seed_type': 1} elapsed=453.191s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 372} -> ok {'device_id': 7573012935396558350, 'seed_type': 8} elapsed=270.252s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 336} -> ok {'device_id': 7573012644506027575, 'seed_type': 8} elapsed=332.072s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 413} -> ok {'device_id': 7573013277216261687, 'seed_type': 4} elapsed=163.955s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 339} -> ok {'device_id': 7573012559110374967, 'seed_type': 5} elapsed=335.451s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 441} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=54.772s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 340} -> ok {'device_id': 7573012612117546509, 'seed_type': 1} elapsed=343.874s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 422} -> ok {'device_id': 7573013493437171214, 'seed_type': 6} elapsed=149.144s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 330} -> ok {'device_id': 7573012740890052109, 'seed_type': 4} elapsed=382.410s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 407} -> ok {'device_id': 7573013255833552439, 'seed_type': 4} elapsed=199.802s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 342} -> ok {'device_id': 7573012788084409870, 'seed_type': 2} elapsed=348.184s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 246} -> ok {'device_id': 7573010842225919501, 'seed_type': 3} elapsed=755.109s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 394} -> ok {'device_id': 7573013089219053069, 'seed_type': 1} elapsed=265.764s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 418} -> ok {'device_id': 7573013408002967054, 'seed_type': 5} elapsed=195.876s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 410} -> ok {'device_id': 7573013280077219341, 'seed_type': 6} elapsed=222.553s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 370} -> ok {'device_id': 7573012935727941133, 'seed_type': 1} elapsed=330.479s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 320} -> ok {'device_id': 7573012450073675277, 'seed_type': 8} elapsed=450.730s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 415} -> ok {'device_id': 7573013493436139022, 'seed_type': 2} elapsed=209.748s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 366} -> ok {'device_id': 7573012884096976439, 'seed_type': 3} elapsed=336.372s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 398} -> ok {'device_id': 7573013126729451021, 'seed_type': 4} elapsed=273.758s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 390} -> ok {'device_id': 7573013097695708727, 'seed_type': 6} elapsed=323.028s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 433} -> ok {'device_id': 7573013722357663246, 'seed_type': 4} elapsed=169.004s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 259} -> ok {'device_id': 7573011081531278903, 'seed_type': 7} elapsed=774.189s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 396} -> ok {'device_id': 7573013154285422135, 'seed_type': 8} elapsed=316.610s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 440} -> ok {'device_id': 7573013722358449678, 'seed_type': 2} elapsed=141.073s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 437} -> ok {'device_id': 7573013870068155917, 'seed_type': 3} elapsed=149.082s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 403} -> ok {'device_id': 7573013154286306871, 'seed_type': 8} elapsed=305.705s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 354} -> ok {'device_id': 7573012810717136397, 'seed_type': 6} elapsed=406.889s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 448} -> ok {'device_id': 7573013722358662670, 'seed_type': 3} elapsed=147.109s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 363} -> ok {'device_id': 7573012778777691662, 'seed_type': 8} elapsed=404.877s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 397} -> ok {'device_id': 7573013126729188877, 'seed_type': 7} elapsed=338.263s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 446} -> ok {'device_id': 7573013836745328142, 'seed_type': 7} elapsed=158.354s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 382} -> ok {'device_id': 7573013014850094647, 'seed_type': 6} elapsed=385.173s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 444} -> ok {'device_id': 7573013861176329742, 'seed_type': 7} elapsed=188.254s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 273} -> ok {'device_id': 7573011355734263310, 'seed_type': 6} elapsed=773.088s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 429} -> ok {'device_id': 7573013714447271479, 'seed_type': 2} elapsed=259.815s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 39} -> seed empty {'step': 'seed', 'device_id': 7573007165746562615} elapsed=1729.388s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed empty
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 404} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573013255833126455} elapsed=357.780s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 343} -> ok {'device_id': 7573012673224197687, 'seed_type': 3} elapsed=500.158s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 371} -> ok {'device_id': 7573012810718021133, 'seed_type': 6} elapsed=451.606s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 479} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=77.449s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 475} -> alert_check fail (error: Failed to perform, curl: (28) Connection timed out after 30011 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573014268058158605} elapsed=117.241s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (28) Connection timed out after 30011 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 328} -> ok {'device_id': 7573012644505421367, 'seed_type': 4} elapsed=547.280s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 438} -> ok {'device_id': 7573013782253241911, 'seed_type': 7} elapsed=227.220s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 358} -> ok {'device_id': 7573012745030747703, 'seed_type': 5} elapsed=475.632s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 428} -> ok {'device_id': 7573013688815453709, 'seed_type': 3} elapsed=309.259s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 480} -> alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573014421796537870} elapsed=102.695s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 485} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=82.160s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 325} -> ok {'device_id': 7573012616268875319, 'seed_type': 1} elapsed=578.299s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 462} -> ok {'device_id': 7573014033118299703, 'seed_type': 8} elapsed=196.729s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 377} -> ok {'device_id': 7573012925062940174, 'seed_type': 8} elapsed=472.521s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 369} -> ok {'device_id': 7573012884097058359, 'seed_type': 1} elapsed=497.725s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 405} -> ok {'device_id': 7573013280172590606, 'seed_type': 7} elapsed=416.046s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 386} -> ok {'device_id': 7573012963323119159, 'seed_type': 2} elapsed=475.350s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 252} -> ok {'device_id': 7573011004829812279, 'seed_type': 2} elapsed=937.225s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 425} -> ok {'device_id': 7573013460096550455, 'seed_type': 4} elapsed=369.510s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 443} -> ok {'device_id': 7573013897775711758, 'seed_type': 1} elapsed=280.307s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 360} -> ok {'device_id': 7573012778777642510, 'seed_type': 5} elapsed=531.953s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 334} -> ok {'device_id': 7573012559110178359, 'seed_type': 7} elapsed=577.743s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 389} -> ok {'device_id': 7573013126728599053, 'seed_type': 8} elapsed=483.960s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 392} -> ok {'device_id': 7573013154285094455, 'seed_type': 7} elapsed=477.225s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 412} -> ok {'device_id': 7573013305423234573, 'seed_type': 8} elapsed=411.292s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 469} -> ok {'device_id': 7573014364639708685, 'seed_type': 1} elapsed=196.903s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 460} -> ok {'device_id': 7573013999752463885, 'seed_type': 3} elapsed=240.364s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 492} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=79.871s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 419} -> ok {'device_id': 7573013537409467918, 'seed_type': 4} elapsed=393.735s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 473} -> ok {'device_id': 7573014364640298509, 'seed_type': 4} elapsed=183.978s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 468} -> ok {'device_id': 7573014052961781262, 'seed_type': 7} elapsed=223.138s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 463} -> ok {'device_id': 7573014054672303671, 'seed_type': 6} elapsed=232.228s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 457} -> ok {'device_id': 7573013980169422349, 'seed_type': 4} elapsed=258.519s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 305} -> ok {'device_id': 7573012020062586423, 'seed_type': 6} elapsed=739.818s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 431} -> ok {'device_id': 7573013754842727949, 'seed_type': 6} elapsed=338.907s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 454} -> ok {'device_id': 7573014033117726263, 'seed_type': 8} elapsed=263.656s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 434} -> ok {'device_id': 7573013754842859021, 'seed_type': 1} elapsed=333.376s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 449} -> ok {'device_id': 7573013920455001614, 'seed_type': 7} elapsed=280.989s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 365} -> ok {'device_id': 7573012823749101070, 'seed_type': 2} elapsed=542.921s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 401} -> ok {'device_id': 7573013126729729549, 'seed_type': 3} elapsed=470.467s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 355} -> ok {'device_id': 7573012884096042551, 'seed_type': 7} elapsed=561.014s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 399} -> ok {'device_id': 7573013154285897271, 'seed_type': 5} elapsed=479.487s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 421} -> ok {'device_id': 7573013438096983607, 'seed_type': 8} elapsed=401.000s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 344} -> ok {'device_id': 7573012616269973047, 'seed_type': 6} elapsed=612.587s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 445} -> ok {'device_id': 7573013920454231566, 'seed_type': 6} elapsed=323.393s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 477} -> ok {'device_id': 7573014324849444365, 'seed_type': 6} elapsed=197.029s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 435} -> ok {'device_id': 7573013782252963383, 'seed_type': 3} elapsed=335.717s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 474} -> ok {'device_id': 7573014371740681742, 'seed_type': 1} elapsed=226.239s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 424} -> ok {'device_id': 7573013493437187598, 'seed_type': 2} elapsed=422.340s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 476} -> ok {'device_id': 7573014364640364045, 'seed_type': 2} elapsed=228.980s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 447} -> ok {'device_id': 7573013897775973902, 'seed_type': 3} elapsed=331.103s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 488} -> ok {'device_id': 7573014725605983758, 'seed_type': 8} elapsed=173.984s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 376} -> ok {'device_id': 7573012823749854734, 'seed_type': 8} elapsed=564.369s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 464} -> ok {'device_id': 7573014033118725687, 'seed_type': 2} elapsed=285.926s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 406} -> ok {'device_id': 7573013200158803469, 'seed_type': 1} elapsed=487.961s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 452} -> ok {'device_id': 7573013861177509390, 'seed_type': 6} elapsed=320.494s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 387} -> ok {'device_id': 7573012936194770446, 'seed_type': 4} elapsed=548.654s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 455} -> ok {'device_id': 7573013951962859063, 'seed_type': 1} elapsed=309.422s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 482} -> ok {'device_id': 7573014517367391799, 'seed_type': 3} elapsed=204.444s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 490} -> ok {'device_id': 7573014775376184845, 'seed_type': 7} elapsed=159.481s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 487} -> ok {'device_id': 7573014723046917646, 'seed_type': 5} elapsed=187.682s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 362} -> ok {'device_id': 7573012788085376526, 'seed_type': 2} elapsed=607.736s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 171} -> seed empty {'step': 'seed', 'device_id': 7573009122460272141} elapsed=1466.342s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed empty
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 486} -> ok {'device_id': 7573014775375021581, 'seed_type': 4} elapsed=209.246s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 496} -> ok {'device_id': 7573014898830231095, 'seed_type': 5} elapsed=155.376s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 461} -> ok {'device_id': 7573013980169700877, 'seed_type': 4} elapsed=330.999s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 527} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=73.062s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 528} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=73.203s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 529} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=73.054s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 530} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=73.218s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 526} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=75.905s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 531} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=75.214s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 532} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=76.551s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 533} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=77.434s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 534} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=79.528s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 535} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=81.182s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 536} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=82.752s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 472} -> seed error: Failed to perform, curl: (28) Connection timed out after 30014 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573014210206320183} elapsed=307.859s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (28) Connection timed out after 30014 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 430} -> ok {'device_id': 7573013782252127799, 'seed_type': 4} elapsed=454.768s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 501} -> token error: Failed to perform, curl: (28) Connection timed out after 30002 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573014804983907895, 'seed_type': 1} elapsed=187.095s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (28) Connection timed out after 30002 milliseconds. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 416} -> ok {'device_id': 7573013407285904951, 'seed_type': 6} elapsed=526.906s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 484} -> ok {'device_id': 7573014566256543287, 'seed_type': 2} elapsed=251.899s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 495} -> ok {'device_id': 7573014880069109261, 'seed_type': 7} elapsed=190.960s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 326} -> ok {'device_id': 7573012644505191991, 'seed_type': 5} elapsed=742.632s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 540} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=85.774s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 542} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=85.464s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 541} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=87.067s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 543} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=87.212s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 544} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=86.111s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 436} -> ok {'device_id': 7573013870068024845, 'seed_type': 5} elapsed=443.383s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 502} -> ok {'device_id': 7573014993265378829, 'seed_type': 7} elapsed=191.236s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 467} -> ok {'device_id': 7573014052961502734, 'seed_type': 8} elapsed=379.734s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 470} -> ok {'device_id': 7573014261401388557, 'seed_type': 5} elapsed=354.393s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 333} -> ok {'device_id': 7573012673224017463, 'seed_type': 6} elapsed=743.839s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 510} -> seed error: Error -5 while decompressing data: incomplete or truncated stream {'step': 'seed', 'device_id': 7573015112798488078} elapsed=176.754s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Error -5 while decompressing data: incomplete or truncated stream
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 489} -> ok {'device_id': 7573014716533081613, 'seed_type': 8} elapsed=282.993s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 494} -> ok {'device_id': 7573014766769653261, 'seed_type': 8} elapsed=243.806s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 499} -> ok {'device_id': 7573014879054087694, 'seed_type': 1} elapsed=232.630s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 507} -> ok {'device_id': 7573015058298586637, 'seed_type': 1} elapsed=195.559s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 503} -> ok {'device_id': 7573014898831476279, 'seed_type': 1} elapsed=209.570s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 497} -> ok {'device_id': 7573014827498620430, 'seed_type': 1} elapsed=237.149s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 511} -> ok {'device_id': 7573015139466528270, 'seed_type': 6} elapsed=174.246s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 515} -> ok {'device_id': 7573015191290988045, 'seed_type': 7} elapsed=173.322s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 288} -> ok {'device_id': 7573011559946765838, 'seed_type': 1} elapsed=992.907s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 523} -> ok {'device_id': 7573015066884736525, 'seed_type': 1} elapsed=176.463s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 522} -> ok {'device_id': 7573015182340212237, 'seed_type': 5} elapsed=177.285s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 491} -> ok {'device_id': 7573014853858690573, 'seed_type': 7} elapsed=271.718s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 520} -> ok {'device_id': 7573015066884670989, 'seed_type': 1} elapsed=178.967s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 423} -> ok {'device_id': 7573013408003819022, 'seed_type': 5} elapsed=565.749s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 500} -> ok {'device_id': 7573014879054120462, 'seed_type': 6} elapsed=251.514s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 518} -> ok {'device_id': 7573015112798963214, 'seed_type': 1} elapsed=185.553s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 521} -> ok {'device_id': 7573015228703589901, 'seed_type': 3} elapsed=186.832s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 504} -> ok {'device_id': 7573015029289715213, 'seed_type': 3} elapsed=228.742s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 439} -> ok {'device_id': 7573013838713587255, 'seed_type': 1} elapsed=499.013s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 459} -> ok {'device_id': 7573014052960503310, 'seed_type': 7} elapsed=463.511s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 400} -> ok {'device_id': 7573013154285913655, 'seed_type': 3} elapsed=680.053s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 579} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=79.644s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 578} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=84.744s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 581} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=85.189s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 582} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=86.480s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 525} -> ok {'device_id': 7573015228703639053, 'seed_type': 6} elapsed=229.755s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 483} -> ok {'device_id': 7573014566256526903, 'seed_type': 2} elapsed=366.457s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 524} -> ok {'device_id': 7573015139466954254, 'seed_type': 7} elapsed=249.492s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 481} -> ok {'device_id': 7573014517367014967, 'seed_type': 8} elapsed=403.277s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 465} -> ok {'device_id': 7573014052961388046, 'seed_type': 4} elapsed=490.308s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 586} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=96.037s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 587} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=94.230s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 590} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=87.283s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 589} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=88.245s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 591} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=88.712s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 592} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=89.333s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 588} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=99.910s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 538} -> ok {'device_id': 7573015263614191159, 'seed_type': 5} elapsed=227.196s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 519} -> ok {'device_id': 7573015105815889463, 'seed_type': 3} elapsed=272.203s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 388} -> ok {'device_id': 7573013059540256311, 'seed_type': 5} elapsed=763.354s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 471} -> seed error: fromhex() arg must contain an even number of hexadecimal digits {'step': 'seed', 'device_id': 7573014210205943351} elapsed=478.531s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: fromhex() arg must contain an even number of hexadecimal digits
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 458} -> ok {'device_id': 7573013980169520653, 'seed_type': 4} elapsed=530.462s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 506} -> ok {'device_id': 7573015058298537485, 'seed_type': 1} elapsed=308.216s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 509} -> ok {'device_id': 7573015139466151438, 'seed_type': 5} elapsed=296.896s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 514} -> ok {'device_id': 7573015029290911245, 'seed_type': 4} elapsed=278.909s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 451} -> ok {'device_id': 7573013870069368333, 'seed_type': 2} elapsed=549.045s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 545} -> ok {'device_id': 7573015446640854542, 'seed_type': 5} elapsed=211.462s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 537} -> ok {'device_id': 7573015319301965367, 'seed_type': 7} elapsed=240.165s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 556} -> ok {'device_id': 7573015478228223501, 'seed_type': 5} elapsed=201.651s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 380} -> ok {'device_id': 7573012925063153166, 'seed_type': 5} elapsed=796.642s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 493} -> ok {'device_id': 7573014766769522189, 'seed_type': 5} elapsed=371.258s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 512} -> ok {'device_id': 7573015029290927629, 'seed_type': 6} elapsed=291.051s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 551} -> ok {'device_id': 7573015478227830285, 'seed_type': 6} elapsed=217.000s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 563} -> ok {'device_id': 7573015592951809550, 'seed_type': 2} elapsed=181.798s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 607} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=89.178s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 478} -> ok {'device_id': 7573014507963532814, 'seed_type': 5} elapsed=460.629s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 548} -> ok {'device_id': 7573015454374970894, 'seed_type': 7} elapsed=239.179s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 570} -> ok {'device_id': 7573015698448959031, 'seed_type': 6} elapsed=197.840s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 547} -> ok {'device_id': 7573015542336996878, 'seed_type': 2} elapsed=249.460s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 546} -> ok {'device_id': 7573015428077192718, 'seed_type': 3} elapsed=254.943s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 573} -> ok {'device_id': 7573015698449139255, 'seed_type': 2} elapsed=199.454s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 553} -> ok {'device_id': 7573015542337488398, 'seed_type': 8} elapsed=252.228s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 575} -> ok {'device_id': 7573015715448849934, 'seed_type': 8} elapsed=201.094s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 572} -> ok {'device_id': 7573015561304868366, 'seed_type': 7} elapsed=205.466s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 516} -> ok {'device_id': 7573015112798914062, 'seed_type': 8} elapsed=333.743s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 409} -> ok {'device_id': 7573013305422906893, 'seed_type': 6} elapsed=763.812s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 613} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=98.826s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 615} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=95.729s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 612} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=101.114s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 327} -> ok {'device_id': 7573012616268957239, 'seed_type': 1} elapsed=961.633s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 569} -> ok {'device_id': 7573015715448489486, 'seed_type': 2} elapsed=236.001s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 580} -> ok {'device_id': 7573015843005974029, 'seed_type': 3} elapsed=213.396s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 617} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=88.069s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 466} -> ok {'device_id': 7573014109194192398, 'seed_type': 1} elapsed=590.672s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 618} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=87.616s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 539} -> ok {'device_id': 7573015263614223927, 'seed_type': 5} elapsed=315.167s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 550} -> ok {'device_id': 7573015454375069198, 'seed_type': 1} elapsed=287.234s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 450} -> ok {'device_id': 7573013838714488375, 'seed_type': 2} elapsed=633.518s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 505} -> ok {'device_id': 7573015105814660663, 'seed_type': 1} elapsed=394.458s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 598} -> ok {'device_id': 7573016103560365623, 'seed_type': 3} elapsed=172.063s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 583} -> ok {'device_id': 7573015781048829495, 'seed_type': 2} elapsed=223.086s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 600} -> ok {'device_id': 7573016024619763214, 'seed_type': 8} elapsed=176.049s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 555} -> ok {'device_id': 7573015469273351693, 'seed_type': 5} elapsed=297.334s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 498} -> ok {'device_id': 7573014879053989390, 'seed_type': 1} elapsed=446.830s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 560} -> ok {'device_id': 7573015618539554317, 'seed_type': 8} elapsed=270.139s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 574} -> ok {'device_id': 7573015628535137806, 'seed_type': 1} elapsed=255.687s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 577} -> ok {'device_id': 7573015698449286711, 'seed_type': 4} elapsed=255.656s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 517} -> ok {'device_id': 7573015191291135501, 'seed_type': 6} elapsed=388.894s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 606} -> ok {'device_id': 7573016097524942350, 'seed_type': 7} elapsed=191.987s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 595} -> ok {'device_id': 7573016073227126285, 'seed_type': 6} elapsed=204.987s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 456} -> ok {'device_id': 7573013980169455117, 'seed_type': 1} elapsed=655.698s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 567} -> ok {'device_id': 7573015579227162125, 'seed_type': 1} elapsed=288.235s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 596} -> ok {'device_id': 7573016103560234551, 'seed_type': 4} elapsed=209.760s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 552} -> ok {'device_id': 7573015541594801677, 'seed_type': 5} elapsed=328.776s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 594} -> ok {'device_id': 7573015930881590798, 'seed_type': 1} elapsed=226.820s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 549} -> ok {'device_id': 7573015542337209870, 'seed_type': 1} elapsed=333.798s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 603} -> ok {'device_id': 7573016003401090573, 'seed_type': 1} elapsed=210.609s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 608} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573016125111436814, 'seed_type': 5} elapsed=195.678s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 513} -> ok {'device_id': 7573015139466561038, 'seed_type': 8} elapsed=416.712s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 576} -> ok {'device_id': 7573015628535236110, 'seed_type': 3} elapsed=288.164s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 453} -> ok {'device_id': 7573013951962613303, 'seed_type': 1} elapsed=681.807s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 554} -> ok {'device_id': 7573015561303737870, 'seed_type': 4} elapsed=343.150s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 558} -> ok {'device_id': 7573015541595620877, 'seed_type': 3} elapsed=329.381s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 564} -> ok {'device_id': 7573015628534711822, 'seed_type': 2} elapsed=311.083s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 593} -> ok {'device_id': 7573015993158518327, 'seed_type': 4} elapsed=267.442s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 671} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=75.487s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 670} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=77.009s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 669} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=78.570s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 624} -> ok {'device_id': 7573016405105608247, 'seed_type': 4} elapsed=190.155s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 673} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=77.114s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 296} -> seed empty {'step': 'seed', 'device_id': 7573012020061390391} elapsed=1228.022s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed empty
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 585} -> ok {'device_id': 7573015893178779191, 'seed_type': 4} elapsed=320.520s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 637} -> ok {'device_id': 7573016545153451533, 'seed_type': 4} elapsed=182.018s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 638} -> ok {'device_id': 7573016535988930103, 'seed_type': 6} elapsed=179.326s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 674} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=82.531s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 601} -> ok {'device_id': 7573016097524532750, 'seed_type': 2} elapsed=280.327s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 508} -> ok {'device_id': 7573015139465610766, 'seed_type': 4} elapsed=507.592s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 566} -> ok {'device_id': 7573015618539669005, 'seed_type': 5} elapsed=365.802s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 584} -> ok {'device_id': 7573015993157584439, 'seed_type': 7} elapsed=332.333s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 640} -> ok {'device_id': 7573016507976222221, 'seed_type': 7} elapsed=182.885s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 678} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=91.653s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 645} -> ok {'device_id': 7573016545154221581, 'seed_type': 8} elapsed=167.945s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 646} -> ok {'device_id': 7573016535989438007, 'seed_type': 3} elapsed=167.476s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 559} -> ok {'device_id': 7573015618539390477, 'seed_type': 1} elapsed=394.763s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 562} -> ok {'device_id': 7573015592951793166, 'seed_type': 1} elapsed=393.958s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 609} -> ok {'device_id': 7573016178320410125, 'seed_type': 1} elapsed=270.555s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 630} -> ok {'device_id': 7573016524404557325, 'seed_type': 3} elapsed=219.940s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 568} -> ok {'device_id': 7573015592951973390, 'seed_type': 8} elapsed=393.970s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 633} -> ok {'device_id': 7573016507975747085, 'seed_type': 8} elapsed=222.255s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 602} -> ok {'device_id': 7573016103560611383, 'seed_type': 4} elapsed=315.305s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 632} -> ok {'device_id': 7573016482042021390, 'seed_type': 7} elapsed=233.052s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 614} -> ok {'device_id': 7573016159663998478, 'seed_type': 7} elapsed=278.976s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 597} -> ok {'device_id': 7573016024619648526, 'seed_type': 6} elapsed=333.687s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 658} -> ok {'device_id': 7573016549583275534, 'seed_type': 2} elapsed=175.950s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 368} -> ok {'device_id': 7573012822718105101, 'seed_type': 1} elapsed=1061.487s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 622} -> ok {'device_id': 7573016320620807693, 'seed_type': 7} elapsed=257.936s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 636} -> ok {'device_id': 7573016524404639245, 'seed_type': 5} elapsed=243.708s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 628} -> ok {'device_id': 7573016398047544846, 'seed_type': 3} elapsed=257.954s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 643} -> ok {'device_id': 7573016652258788919, 'seed_type': 8} elapsed=220.400s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 664} -> ok {'device_id': 7573016750623557133, 'seed_type': 2} elapsed=172.869s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 651} -> ok {'device_id': 7573016537168430605, 'seed_type': 4} elapsed=198.324s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 663} -> ok {'device_id': 7573016652259722807, 'seed_type': 8} elapsed=181.680s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 561} -> ok {'device_id': 7573015715448374798, 'seed_type': 4} elapsed=441.290s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 635} -> ok {'device_id': 7573016545153353229, 'seed_type': 3} elapsed=264.765s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 650} -> ok {'device_id': 7573016537168348685, 'seed_type': 1} elapsed=218.051s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 571} -> ok {'device_id': 7573015628535105038, 'seed_type': 1} elapsed=433.492s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 666} -> ok {'device_id': 7573016624178578958, 'seed_type': 4} elapsed=195.016s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 641} -> ok {'device_id': 7573016482042496526, 'seed_type': 2} elapsed=257.155s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 639} -> ok {'device_id': 7573016545153811981, 'seed_type': 6} elapsed=266.570s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 629} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573016535988454967, 'seed_type': 1} elapsed=283.739s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 654} -> ok {'device_id': 7573016482042873358, 'seed_type': 6} elapsed=229.713s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 679} -> ok {'device_id': 7573016958670800439, 'seed_type': 1} elapsed=179.657s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 652} -> ok {'device_id': 7573016545154418189, 'seed_type': 7} elapsed=246.779s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 684} -> ok {'device_id': 7573016959530583607, 'seed_type': 6} elapsed=168.547s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 682} -> ok {'device_id': 7573017014744483341, 'seed_type': 8} elapsed=182.163s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 667} -> ok {'device_id': 7573016655443002894, 'seed_type': 8} elapsed=233.251s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 726} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=59.367s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 728} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=59.599s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 725} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=61.602s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 727} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=60.475s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 688} -> ok {'device_id': 7573017095827965453, 'seed_type': 1} elapsed=188.970s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 442} -> ok {'device_id': 7573013861176296974, 'seed_type': 2} elapsed=912.021s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 649} -> ok {'device_id': 7573016652258919991, 'seed_type': 5} elapsed=283.222s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 599} -> ok {'device_id': 7573015993158911543, 'seed_type': 6} elapsed=428.100s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 665} -> ok {'device_id': 7573016549583783438, 'seed_type': 4} elapsed=260.611s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 660} -> ok {'device_id': 7573016694596077069, 'seed_type': 5} elapsed=265.422s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 681} -> ok {'device_id': 7573016959529797175, 'seed_type': 1} elapsed=218.441s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 610} -> ok {'device_id': 7573016178320360973, 'seed_type': 1} elapsed=393.266s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 644} -> ok {'device_id': 7573016652258821687, 'seed_type': 5} elapsed=311.423s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 700} -> ok {'device_id': 7573017191290684983, 'seed_type': 8} elapsed=173.687s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 686} -> ok {'device_id': 7573017059647866382, 'seed_type': 1} elapsed=230.794s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 616} -> ok {'device_id': 7573016308279821838, 'seed_type': 1} elapsed=400.970s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 625} -> ok {'device_id': 7573016482041382414, 'seed_type': 7} elapsed=382.413s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 627} -> ok {'device_id': 7573016524404082189, 'seed_type': 7} elapsed=381.981s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 683} -> ok {'device_id': 7573017082896483853, 'seed_type': 5} elapsed=235.538s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 656} -> ok {'device_id': 7573016654305953293, 'seed_type': 2} elapsed=309.704s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 657} -> ok {'device_id': 7573016537168479757, 'seed_type': 6} elapsed=308.805s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 702} -> ok {'device_id': 7573017288555939342, 'seed_type': 5} elapsed=198.329s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 662} -> ok {'device_id': 7573016549583750670, 'seed_type': 7} elapsed=321.634s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 742} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=91.225s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 676} -> ok {'device_id': 7573016806916326926, 'seed_type': 3} elapsed=301.718s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 557} -> ok {'device_id': 7573015618539030029, 'seed_type': 2} elapsed=612.846s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 685} -> ok {'device_id': 7573017059647817230, 'seed_type': 4} elapsed=276.066s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 623} -> ok {'device_id': 7573016406364472887, 'seed_type': 6} elapsed=429.170s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 750} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=69.803s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 655} -> ok {'device_id': 7573016549583209998, 'seed_type': 2} elapsed=353.547s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 749} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=70.780s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 565} -> ok {'device_id': 7573015592951858702, 'seed_type': 3} elapsed=592.993s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 721} -> ok {'device_id': 7573017462908995127, 'seed_type': 1} elapsed=180.997s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 690} -> ok {'device_id': 7573017082896631309, 'seed_type': 8} elapsed=286.184s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 729} -> ok {'device_id': 7573017538373076493, 'seed_type': 1} elapsed=175.902s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 642} -> ok {'device_id': 7573016535989208631, 'seed_type': 2} elapsed=413.847s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 659} -> ok {'device_id': 7573016652259264055, 'seed_type': 6} elapsed=366.663s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 653} -> ok {'device_id': 7573016535989618231, 'seed_type': 5} elapsed=380.444s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 687} -> ok {'device_id': 7573017095827949069, 'seed_type': 4} elapsed=298.262s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 647} -> ok {'device_id': 7573016545154369037, 'seed_type': 7} elapsed=389.637s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 717} -> ok {'device_id': 7573017422174012983, 'seed_type': 8} elapsed=216.860s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 731} -> ok {'device_id': 7573017585735009806, 'seed_type': 8} elapsed=181.308s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 722} -> ok {'device_id': 7573017344085247501, 'seed_type': 7} elapsed=205.001s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 715} -> ok {'device_id': 7573017422173799991, 'seed_type': 1} elapsed=230.542s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 706} -> ok {'device_id': 7573017191290947127, 'seed_type': 8} elapsed=254.374s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 735} -> ok {'device_id': 7573017498800506382, 'seed_type': 6} elapsed=171.891s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 732} -> ok {'device_id': 7573017653632124429, 'seed_type': 7} elapsed=187.224s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 707} -> ok {'device_id': 7573017290221782542, 'seed_type': 5} elapsed=254.242s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 699} -> ok {'device_id': 7573017187075671565, 'seed_type': 4} elapsed=268.439s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 634} -> ok {'device_id': 7573016535988766263, 'seed_type': 6} elapsed=460.325s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 692} -> ok {'device_id': 7573017059648062990, 'seed_type': 3} elapsed=321.535s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 710} -> ok {'device_id': 7573017370160416269, 'seed_type': 3} elapsed=260.615s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 696} -> ok {'device_id': 7573017187075261965, 'seed_type': 2} elapsed=320.182s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 697} -> ok {'device_id': 7573017142519858743, 'seed_type': 2} elapsed=318.662s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 716} -> ok {'device_id': 7573017422173963831, 'seed_type': 5} elapsed=271.399s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 709} -> ok {'device_id': 7573017320067778061, 'seed_type': 4} elapsed=293.177s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 771} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=84.957s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 776} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=87.298s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 718} -> ok {'device_id': 7573017344084788749, 'seed_type': 6} elapsed=290.773s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 620} -> ok {'device_id': 7573016320302056973, 'seed_type': 7} elapsed=541.384s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 777} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=92.232s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 605} -> ok {'device_id': 7573016103560676919, 'seed_type': 6} elapsed=616.844s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 744} -> ok {'device_id': 7573017631089214989, 'seed_type': 2} elapsed=215.282s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 773} -> alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.) {'step': 'alert_check', 'device_id': 7573018238603429390} elapsed=114.875s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: alert_check fail (error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.)
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 668} -> ok {'device_id': 7573016665069241911, 'seed_type': 1} elapsed=461.485s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 703} -> ok {'device_id': 7573017187076015629, 'seed_type': 1} elapsed=345.336s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 738} -> ok {'device_id': 7573017505171834423, 'seed_type': 7} elapsed=254.932s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 791} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=73.311s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 764} -> ok {'device_id': 7573018117573051918, 'seed_type': 3} elapsed=174.483s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 762} -> ok {'device_id': 7573018093220464142, 'seed_type': 7} elapsed=186.410s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 693} -> ok {'device_id': 7573017161012151863, 'seed_type': 4} elapsed=395.155s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 695} -> ok {'device_id': 7573017290220766734, 'seed_type': 1} elapsed=382.814s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 743} -> ok {'device_id': 7573017631089083917, 'seed_type': 1} elapsed=246.107s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 724} -> ok {'device_id': 7573017422174619191, 'seed_type': 5} elapsed=315.430s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 767} -> ok {'device_id': 7573018191312520759, 'seed_type': 8} elapsed=171.396s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 765} -> ok {'device_id': 7573017996379244045, 'seed_type': 4} elapsed=186.652s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 747} -> ok {'device_id': 7573017846167569975, 'seed_type': 4} elapsed=255.813s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 631} -> ok {'device_id': 7573016545153271309, 'seed_type': 8} elapsed=581.901s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 59} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=30.880s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 40} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=34.142s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 20} -> ok {'device_id': 7573019318583232014, 'seed_type': 1} elapsed=82.846s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 47} -> ok {'device_id': 7573019410412996109, 'seed_type': 2} elapsed=84.168s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 29} -> ok {'device_id': 7573019379834439182, 'seed_type': 5} elapsed=96.539s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 100} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=65.860s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 62} -> ok {'device_id': 7573019400178796087, 'seed_type': 7} elapsed=105.808s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 101} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=66.094s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 16} -> ok {'device_id': 7573019318583117326, 'seed_type': 7} elapsed=112.702s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 1} -> ok {'device_id': 7573019400178632247, 'seed_type': 7} elapsed=114.924s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 24} -> ok {'device_id': 7573019419773994510, 'seed_type': 8} elapsed=122.457s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 52} -> ok {'device_id': 7573019429249074701, 'seed_type': 1} elapsed=134.075s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 49} -> ok {'device_id': 7573019410412914189, 'seed_type': 2} elapsed=135.896s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 12} -> ok {'device_id': 7573019419773928974, 'seed_type': 2} elapsed=136.643s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 5} -> ok {'device_id': 7573019379834406414, 'seed_type': 2} elapsed=140.802s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 17} -> ok {'device_id': 7573019410412897805, 'seed_type': 2} elapsed=141.814s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 21} -> ok {'device_id': 7573019410412848653, 'seed_type': 1} elapsed=144.380s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 78} -> ok {'device_id': 7573019410412963341, 'seed_type': 6} elapsed=147.521s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 89} -> ok {'device_id': 7573019318583510542, 'seed_type': 4} elapsed=148.056s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 74} -> ok {'device_id': 7573019318583297550, 'seed_type': 7} elapsed=159.913s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 67} -> ok {'device_id': 7573019400178894391, 'seed_type': 6} elapsed=161.499s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 71} -> ok {'device_id': 7573019410413045261, 'seed_type': 7} elapsed=167.629s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 97} -> ok {'device_id': 7573019391161337357, 'seed_type': 5} elapsed=173.692s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 56} -> ok {'device_id': 7573019391161239053, 'seed_type': 2} elapsed=178.169s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 65} -> ok {'device_id': 7573019410413110797, 'seed_type': 1} elapsed=183.992s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 60} -> ok {'device_id': 7573019419774158350, 'seed_type': 2} elapsed=187.003s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 81} -> ok {'device_id': 7573019379834504718, 'seed_type': 7} elapsed=192.731s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 75} -> ok {'device_id': 7573019318583363086, 'seed_type': 1} elapsed=210.482s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 4} -> ok {'device_id': 7573019400178681399, 'seed_type': 8} elapsed=210.745s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 82} -> ok {'device_id': 7573019391161304589, 'seed_type': 5} elapsed=211.470s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 41} -> ok {'device_id': 7573019429249156621, 'seed_type': 4} elapsed=212.902s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 93} -> ok {'device_id': 7573019379834586638, 'seed_type': 4} elapsed=213.177s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 7} -> ok {'device_id': 7573019391161058829, 'seed_type': 7} elapsed=213.356s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 34} -> ok {'device_id': 7573019400178730551, 'seed_type': 2} elapsed=213.621s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 86} -> ok {'device_id': 7573019379834537486, 'seed_type': 5} elapsed=214.067s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 18} -> ok {'device_id': 7573019429249041933, 'seed_type': 7} elapsed=216.882s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 44} -> ok {'device_id': 7573019410412946957, 'seed_type': 2} elapsed=218.120s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 63} -> ok {'device_id': 7573019410413536781, 'seed_type': 7} elapsed=219.731s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 106} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=95.034s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 108} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=95.794s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 107} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=97.296s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 94} -> ok {'device_id': 7573019410413192717, 'seed_type': 2} elapsed=224.128s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 48} -> ok {'device_id': 7573019429249189389, 'seed_type': 5} elapsed=225.851s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 42} -> ok {'device_id': 7573019318583166478, 'seed_type': 6} elapsed=230.051s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 38} -> ok {'device_id': 7573019429249025549, 'seed_type': 8} elapsed=230.995s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 27} -> ok {'device_id': 7573019410412865037, 'seed_type': 1} elapsed=231.240s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 6} -> ok {'device_id': 7573019419773896206, 'seed_type': 4} elapsed=231.684s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 110} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=94.985s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 79} -> ok {'device_id': 7573019318583412238, 'seed_type': 1} elapsed=233.519s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 68} -> ok {'device_id': 7573019419774273038, 'seed_type': 8} elapsed=233.708s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 15} -> ok {'device_id': 7573019400178648631, 'seed_type': 4} elapsed=234.702s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 72} -> ok {'device_id': 7573019410413078029, 'seed_type': 4} elapsed=240.938s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 37} -> ok {'device_id': 7573019391161222669, 'seed_type': 7} elapsed=243.441s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 64} -> ok {'device_id': 7573019391161255437, 'seed_type': 7} elapsed=243.799s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 92} -> ok {'device_id': 7573019419774174734, 'seed_type': 3} elapsed=247.187s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 80} -> ok {'device_id': 7573019400178927159, 'seed_type': 4} elapsed=247.924s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 11} -> token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'token', 'device_id': 7573019410412799501, 'seed_type': 8} elapsed=250.001s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: token error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 95} -> ok {'device_id': 7573019400178959927, 'seed_type': 1} elapsed=258.288s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 96} -> ok {'device_id': 7573019526980585015, 'seed_type': 2} elapsed=258.667s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 61} -> ok {'device_id': 7573019400178878007, 'seed_type': 5} elapsed=259.063s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 87} -> ok {'device_id': 7573019429249205773, 'seed_type': 7} elapsed=259.295s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 76} -> ok {'device_id': 7573019410413061645, 'seed_type': 5} elapsed=259.860s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 73} -> ok {'device_id': 7573019318583330318, 'seed_type': 8} elapsed=260.037s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 51} -> ok {'device_id': 7573019410413012493, 'seed_type': 1} elapsed=260.418s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 19} -> ok {'device_id': 7573019419774010894, 'seed_type': 3} elapsed=260.582s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 84} -> ok {'device_id': 7573019400178976311, 'seed_type': 2} elapsed=260.836s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 57} -> ok {'device_id': 7573019429249238541, 'seed_type': 4} elapsed=261.136s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 46} -> ok {'device_id': 7573019419774109198, 'seed_type': 3} elapsed=261.529s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 23} -> ok {'device_id': 7573019391161075213, 'seed_type': 8} elapsed=269.008s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 88} -> ok {'device_id': 7573019318583395854, 'seed_type': 2} elapsed=276.171s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 99} -> ok {'device_id': 7573019400178992695, 'seed_type': 3} elapsed=277.970s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 25} -> ok {'device_id': 7573019379834521102, 'seed_type': 4} elapsed=279.447s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 10} -> ok {'device_id': 7573019410412815885, 'seed_type': 5} elapsed=279.986s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 58} -> ok {'device_id': 7573019419774092814, 'seed_type': 4} elapsed=281.035s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 26} -> ok {'device_id': 7573019419774027278, 'seed_type': 6} elapsed=281.646s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 36} -> ok {'device_id': 7573019318583264782, 'seed_type': 3} elapsed=282.717s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 54} -> ok {'device_id': 7573019419774141966, 'seed_type': 3} elapsed=284.262s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 77} -> ok {'device_id': 7573019410413094413, 'seed_type': 4} elapsed=285.347s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 55} -> ok {'device_id': 7573019429249123853, 'seed_type': 2} elapsed=287.009s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 30} -> ok {'device_id': 7573019410412783117, 'seed_type': 3} elapsed=287.320s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 2} -> ok {'device_id': 7573019391161026061, 'seed_type': 3} elapsed=287.587s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 3} -> ok {'device_id': 7573019391161009677, 'seed_type': 4} elapsed=287.832s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 113} -> ok {'device_id': 7573020202822338061, 'seed_type': 2} elapsed=158.403s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 22} -> ok {'device_id': 7573019400178714167, 'seed_type': 4} elapsed=311.358s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 115} -> ok {'device_id': 7573020289656079886, 'seed_type': 1} elapsed=182.283s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 28} -> ok {'device_id': 7573019400178812471, 'seed_type': 2} elapsed=333.800s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 69} -> ok {'device_id': 7573019400178845239, 'seed_type': 8} elapsed=338.775s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 105} -> ok {'device_id': 7573020158454367758, 'seed_type': 7} elapsed=234.853s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 66} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573019318583281166} elapsed=358.505s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 139} -> seed error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'seed', 'device_id': 7573020469214774798} elapsed=146.764s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 67} -> did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details. {'step': 'did_iid'} elapsed=22.311s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: Failed to perform, curl: (97) connection to proxy closed. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 73} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=26.012s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 22} -> ok {'device_id': 7573021043088049677, 'seed_type': 2} elapsed=33.494s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 28} -> ok {'device_id': 7573021134959035959, 'seed_type': 3} elapsed=34.088s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 10} -> ok {'device_id': 7573021066135225869, 'seed_type': 3} elapsed=35.210s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 13} -> ok {'device_id': 7573021051929658893, 'seed_type': 6} elapsed=44.466s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 74} -> ok {'device_id': 7573021106988287543, 'seed_type': 8} elapsed=48.139s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 54} -> ok {'device_id': 7573021105268180493, 'seed_type': 7} elapsed=57.328s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 5} -> ok {'device_id': 7573021043088115213, 'seed_type': 7} elapsed=59.859s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 83} -> ok {'device_id': 7573021066135422477, 'seed_type': 2} elapsed=72.013s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 14} -> ok {'device_id': 7573021106987927095, 'seed_type': 2} elapsed=72.675s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 81} -> ok {'device_id': 7573021106115921463, 'seed_type': 7} elapsed=75.116s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 105} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=35.761s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 56} -> ok {'device_id': 7573021105268114957, 'seed_type': 6} elapsed=85.175s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 84} -> ok {'device_id': 7573021105268246029, 'seed_type': 5} elapsed=123.677s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 79} -> ok {'device_id': 7573021106115855927, 'seed_type': 5} elapsed=132.062s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 58} -> ok {'device_id': 7573021106115823159, 'seed_type': 6} elapsed=135.150s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 109} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=63.282s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 92} -> ok {'device_id': 7573021134959117879, 'seed_type': 1} elapsed=142.620s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 110} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=69.248s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 15} -> ok {'device_id': 7573021051929691661, 'seed_type': 5} elapsed=145.671s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 7} -> ok {'device_id': 7573021134959068727, 'seed_type': 5} elapsed=146.291s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 111} -> did/iid error: make_did_iid_async 执行超时（20秒） {'step': 'did_iid'} elapsed=69.976s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] TASK-EX:RuntimeError:任务执行失败: did/iid error: make_did_iid_async 执行超时（20秒）
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 27} -> ok {'device_id': 7573021106115642935, 'seed_type': 2} elapsed=147.213s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 19} -> ok {'device_id': 7573021043088082445, 'seed_type': 6} elapsed=149.520s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 20} -> ok {'device_id': 7573021106115724855, 'seed_type': 4} elapsed=151.297s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 64} -> ok {'device_id': 7573021105268196877, 'seed_type': 3} elapsed=151.826s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 45} -> ok {'device_id': 7573021106987992631, 'seed_type': 7} elapsed=153.052s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 12} -> ok {'device_id': 7573021106987877943, 'seed_type': 6} elapsed=154.411s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 70} -> ok {'device_id': 7573021051929740813, 'seed_type': 3} elapsed=155.957s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 98} -> ok {'device_id': 7573021066135471629, 'seed_type': 1} elapsed=157.009s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 102} -> ok {'device_id': 7573021262593164855, 'seed_type': 4} elapsed=123.836s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 104} -> ok {'device_id': 7573021235267126798, 'seed_type': 3} elapsed=123.631s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 90} -> ok {'device_id': 7573021134959199799, 'seed_type': 7} elapsed=168.569s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 62} -> ok {'device_id': 7573021106988090935, 'seed_type': 5} elapsed=177.152s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 77} -> ok {'device_id': 7573021051929806349, 'seed_type': 6} elapsed=180.568s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 52} -> ok {'device_id': 7573021106115905079, 'seed_type': 2} elapsed=184.445s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 50} -> ok {'device_id': 7573021043088311821, 'seed_type': 8} elapsed=193.236s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 48} -> ok {'device_id': 7573021043088213517, 'seed_type': 4} elapsed=196.513s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 86} -> ok {'device_id': 7573021043088344589, 'seed_type': 4} elapsed=197.611s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 9} -> ok {'device_id': 7573021066135193101, 'seed_type': 4} elapsed=198.958s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 37} -> ok {'device_id': 7573021105268033037, 'seed_type': 1} elapsed=199.301s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 31} -> ok {'device_id': 7573021106115692087, 'seed_type': 3} elapsed=200.897s
+[proxy=socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000] job={'i': 80} -> ok {'device_id': 7573021051929773581, 'seed_type': 4} elapsed=202.949s

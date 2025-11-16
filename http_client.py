@@ -78,10 +78,15 @@ class HttpClient:
 
     # ---------------------- 连接池管理 ----------------------
 
-    def _create_session(self):
+    def _create_session(self, impersonate=None):
         """创建新 Session（线程安全）"""
         try:
-            s = requests.Session()
+            # 如果指定了 impersonate，使用它；否则使用默认值
+            imp = impersonate or self.default_impersonate
+            if imp:
+                s = requests.Session(impersonate=imp)
+            else:
+                s = requests.Session()
             s.headers.update({"Connection": "keep-alive"})
             if self.proxy:
                 s.proxies = {"http": self.proxy, "https": self.proxy}

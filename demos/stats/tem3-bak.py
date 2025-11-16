@@ -208,7 +208,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
             # 使用 HttpClient（已包含重试和超时机制）
             # 注意：由于 impersonate 和 http_version 在 Session 上可能不生效，
             # stats 接口不使用 session，让 HttpClient 从池中获取新连接
-            print(f"[DEBUG] 使用 HttpClient，session=None, impersonate=okhttp4_android, http_version=v2")
+            print(f"[DEBUG] 使用 HttpClient，session=None, impersonate=chrome131_android, http_version=v2")
             # print("data:",data)
             # print("headers:",headers_copy)
             # print("headers:",headers_copy)
@@ -217,18 +217,18 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
                 headers=headers_copy,
                 data=data,
                 session=None,  # 不使用 session，确保 impersonate 生效
-                impersonate="okhttp4_android",  # 模拟 OkHttp 4 Android 的 TLS 指纹
+                impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
                 http_version="v2"  # 强制使用 HTTP/2
             )
         else:
-            print(f"[DEBUG] 使用 requests.post，proxies={proxies}, impersonate=okhttp4_android, http_version=v2")
+            print(f"[DEBUG] 使用 requests.post，proxies={proxies}, impersonate=chrome131_android, http_version=v2")
             resp = requests.post(
                 url,
                 headers=headers_copy,
                 data=data,
                 verify=False,
                 proxies=proxies,
-                impersonate="okhttp4_android",  # 模拟 OkHttp 4 Android 的 TLS 指纹
+                impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
                 http_version="v2"  # 强制使用 HTTP/2
             )
 

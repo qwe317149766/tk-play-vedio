@@ -4,11 +4,18 @@ TikTok API 接口封装类
 """
 from typing import Dict, Tuple, Optional, Any
 import asyncio
+import importlib.util
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from http_client import HttpClient
 from mssdk.get_seed.seed_test import get_get_seed as _get_get_seed
 from mssdk.get_token.token_test import get_get_token as _get_get_token
-from demos.stats.tem3 import stats_3 as _stats_3
+# 动态导入 tem3-1.py（因为文件名包含连字符）
+_tem3_1_spec = importlib.util.spec_from_file_location("tem3_1", "demos/stats/tem3-1.py")
+_tem3_1_module = importlib.util.module_from_spec(_tem3_1_spec)
+sys.modules["tem3_1"] = _tem3_1_module
+_tem3_1_spec.loader.exec_module(_tem3_1_module)
+_stats_3 = _tem3_1_module.stats_3
 from test_10_24 import make_did_iid as _make_did_iid, alert_check as _alert_check
 
 # 全局 HttpClient 实例
@@ -85,7 +92,7 @@ class TikTokAPI:
                 max_retries=max_retries,
                 retry_delay=retry_delay,
                 verify=False,
-                default_impersonate="okhttp4_android",
+                default_impersonate="okhttp4_android",  # 使用 OkHttp 4 Android 指纹
                 pool_initial_size=pool_initial_size,
                 pool_max_size=pool_max_size,
                 pool_grow_step=pool_grow_step

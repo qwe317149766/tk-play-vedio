@@ -1,14 +1,13 @@
 import gzip
 import json
 import random
-import time
 import secrets
+import time
 
 from curl_cffi import requests, curl
 import urllib3
-from urllib.parse import quote_plus
+
 from headers import make_headers
-from headers.device_ticket_data import make_device_ticket_data
 from headers.device_ticket_data1 import build_guard
 from headers.make_trace_id import make_x_tt_trace_id
 from mssdk.get_seed.seed_test import get_get_seed
@@ -39,9 +38,13 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
     apk_last_update_time = device["apk_last_update_time"]
     last_install_time = apk_last_update_time // 1000
     priv_key = device["priv_key"]
+    # tt_ticket_guard_public_key = device["tt_ticket_guard_public_key"]
     device_guard_data0 = device["device_guard_data0"]
+    # print(device_guard_data0)
     device_guard_data0 = json.loads(device_guard_data0)
-    header1 = build_guard(device_guard_data0, priv_hex=priv_key)
+    # print(type(device_guard_data0))
+    header1 = build_guard(device_guard_data0,priv_hex=priv_key)
+    # print(header1)
     # device = {"device_type":"Pixel 6"
     #           ,"ua":"com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en; Pixel 6; Build/BP1A.250505.005; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)"
     #           ,"device_id":device_id,
@@ -53,15 +56,21 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
 
     # seed,seed_type = get_get_seed(device,proxy)
     # token = get_get_token(device,proxy)
-
+    
     if not use_http_client:
-        proxies = {
-            'http': proxy,
-            'https': proxy,
-        }
+        # 只有在不使用 HttpClient 时才需要设置 proxies
+        if proxy=="":
+            proxies = {
+                'http': 'http://127.0.0.1:7777',
+                'https': 'http://127.0.0.1:7777',
+            }
+        else:
+            proxies = {
+                'http': proxy,
+                'https': proxy,
+            }
     else:
         proxies = None
-    print("proxies:",proxies)    
     timee = time.time()
     utime = int(timee * 1000)
     stime = int(timee)
@@ -89,10 +98,6 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
     #         query_string,
     #         post_data  # 注意：传 bytes，不是 hex
     #     )
-    print("device_type:",device['device_type'])
-    print(f"[DEBUG] signcount={signcount}, seed_type={seed_type}")
-    print(f"[DEBUG] seed={seed[:30]}..., token={token[:20]}...")
-    print(f"[DEBUG] device_id={device_id}, install_id={install_id}")
     x_ss_stub, x_khronos, x_argus, x_ladon, x_gorgon = make_headers.make_headers(
             device_id,  # 依你的实现
             stime,
@@ -106,49 +111,35 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
             query_string,
             post_data  # 注意：传 bytes，不是 hex
         )
-    print(f"[DEBUG] x-argus={x_argus[:30]}..., x-gorgon={x_gorgon[:30]}...")
-    
-    # 检查 device 中是否有 cookie_json 字段
-    if 'cookie_json' in device and device['cookie_json']:
-        # 使用设备中的 cookie
-        cookie_string = device['cookie_json']
-        print(f"[DEBUG] 使用 device 中的 cookie_json")
-    else:
-        # 生成随机 cookie
-        print(f"[DEBUG] 生成随机 cookie")
-        cookie_string = (
-            "store-idc=useast5; "
-            f"passport_csrf_token={secrets.token_bytes(16).hex()}; "
-            f"passport_csrf_token_default={secrets.token_bytes(16).hex()}; "
-            "store-country-code=us; "
-            "tt_ticket_guard_has_set_public_key=1; "
-            "tt-target-idc=useast8; "
-            f"d_ticket={secrets.token_bytes(16).hex()}; "
-            f"multi_sids={secrets.token_bytes(16).hex()}; "
-            f"cmpl_token={secrets.token_bytes(16).hex()}; "
-            f"sid_guard={secrets.token_bytes(16).hex()}; "
-            f"uid_tt={secrets.token_bytes(16).hex()}; "
-            f"uid_tt_ss={secrets.token_bytes(16).hex()}; "
-            f"sid_tt={secrets.token_bytes(16).hex()}; "
-            f"sessionid={secrets.token_bytes(16).hex()}; "
-            f"sessionid_ss={secrets.token_bytes(16).hex()}; "
-            f"tt_session_tlb_tag={secrets.token_bytes(16).hex()}; "
-            "store-country-code-src=uid; "
-            f"install_id={install_id}; "
-            f"ttreq=1${secrets.token_bytes(16).hex()}; "
-            "store-country-sign=MEIEDNmnx6usf2uBOFnKGQQgLJE2zo3vMzsnMd6LC5zuEcdezShTDUeMFn-wLc3i2hIEEJk1fDTjlBFN13gUuf49v5I; "
-            f"odin_tt={secrets.token_bytes(16).hex()}; "
-            f"msToken={secrets.token_bytes(16).hex()}; "
-            # "BUYER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjc1NzA2MzYxMDA1MjQ4ODUwNDcsIk9lY1VpZCI6NzQ5NDI0NTM3OTIyNDAxMjE0MCwiUGlnZW9uVWlkIjo3NTcwNjM2NTA3MzgwMjg3MjQ2LCJleHAiOjE3NjI3NzE1NzQsIm5iZiI6MTc2MjY4NDE3NH0.k6_mWm8VhDQCFEgItvXvVNzgNip-DopHKZse0Aur6ys; "
-            # "user_oec_info=0a538d1b0d819252819936cbd6b421ba70d87c1048e0e6f136e6959b1729975f7b474138ec525072851ca9914bca193941cc574b6974626aef0bb21299f201ff07a5a875af1ba01a614cb331d2f5ffadd15aa03b9b1a490a3c000000000000000000004fb17bfaa1b1b3ff8bada28bc46f05d89b16123a720932414dd2770cadbd7fe1a93826601c5dafd1d4562e9f2e6e3ba3d36e10d88a810e1886d2f6f20d220104a5eec27d"
-        )
-
-    print("cookie_string:",cookie_string)
+    # 合并所有 cookie 到一个字符串中
+    cookie_string = (
+        "store-idc=useast5; "
+        f"passport_csrf_token={secrets.token_bytes(16).hex()}; "
+        f"passport_csrf_token_default={secrets.token_bytes(16).hex()}; "
+        "store-country-code=us; "
+        "tt_ticket_guard_has_set_public_key=1; "
+        "tt-target-idc=useast8; "
+        f"d_ticket={secrets.token_bytes(16).hex()}; "
+        f"multi_sids={secrets.token_bytes(16).hex()}; "
+        f"cmpl_token={secrets.token_bytes(16).hex()}; "
+        f"sid_guard={secrets.token_bytes(16).hex()}; "
+        f"uid_tt={secrets.token_bytes(16).hex()}; "
+        f"uid_tt_ss={secrets.token_bytes(16).hex()}; "
+        f"sid_tt={secrets.token_bytes(16).hex()}; "
+        f"sessionid={secrets.token_bytes(16).hex()}; "
+        f"sessionid_ss={secrets.token_bytes(16).hex()}; "
+        f"tt_session_tlb_tag={secrets.token_bytes(16).hex()}; "
+        "store-country-code-src=uid; "
+        f"install_id={install_id}; "
+        f"ttreq=1${secrets.token_bytes(16).hex()}; "
+        "store-country-sign=MEIEDNmnx6usf2uBOFnKGQQgLJE2zo3vMzsnMd6LC5zuEcdezShTDUeMFn-wLc3i2hIEEJk1fDTjlBFN13gUuf49v5I; "
+        f"odin_tt={secrets.token_bytes(16).hex()}; "
+        f"msToken={secrets.token_bytes(16).hex()}; "
+        # "BUYER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjc1NzA2MzYxMDA1MjQ4ODUwNDcsIk9lY1VpZCI6NzQ5NDI0NTM3OTIyNDAxMjE0MCwiUGlnZW9uVWlkIjo3NTcwNjM2NTA3MzgwMjg3MjQ2LCJleHAiOjE3NjI3NzE1NzQsIm5iZiI6MTc2MjY4NDE3NH0.k6_mWm8VhDQCFEgItvXvVNzgNip-DopHKZse0Aur6ys; "
+        # "user_oec_info=0a538d1b0d819252819936cbd6b421ba70d87c1048e0e6f136e6959b1729975f7b474138ec525072851ca9914bca193941cc574b6974626aef0bb21299f201ff07a5a875af1ba01a614cb331d2f5ffadd15aa03b9b1a490a3c000000000000000000004fb17bfaa1b1b3ff8bada28bc46f05d89b16123a720932414dd2770cadbd7fe1a93826601c5dafd1d4562e9f2e6e3ba3d36e10d88a810e1886d2f6f20d220104a5eec27d"
+    )
 
     # 所有的请求头
-    # device['device_type']
- 
-    encoded_device_type = quote_plus(device['device_type'])
     headers = {
         "authority": "aggr16-normal.tiktokv.us",
         "cookie": cookie_string,
@@ -164,7 +155,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         "rpc-persist-pns-region-2": "US|6252001|5332921",
         "rpc-persist-pns-region-3": "US|6252001|5332921",
         # "tt-device-guard-iteration-version": "1",
-        # "tt-ticket-guard-public-key": "BP+7LYWCqhIfMHQGxYZ2fKaqcZ1kLBf6QkhqUSfjv/5avebLZiLLpXhSNbqIFM9Lh1aWBjKs3KDkTcCktJy9UWY=",
+        # "tt-ticket-guard-public-key": tt_ticket_guard_public_key,
         # "tt-device-guard-client-data": "eyJkZXZpY2VfdG9rZW4iOiIxfHtcImFpZFwiOjEyMzMsXCJhdlwiOlwiNDIuNC4zXCIsXCJkaWRcIjpcIjc1NzA0MTQ0MjQ3ODA4MzQzMThcIixcImlpZFwiOlwiNzU3MDQxNDg4ODkzODgzMzcxOVwiLFwiZml0XCI6XCIxNzYyNjI0NjA0XCIsXCJzXCI6MSxcImlkY1wiOlwidXNlYXN0OFwiLFwidHNcIjpcIjE3NjI2ODUwNTBcIn0iLCJ0aW1lc3RhbXAiOjE3NjI2ODU0MTAsInJlcV9jb250ZW50IjoiZGV2aWNlX3Rva2VuLHBhdGgsdGltZXN0YW1wIiwiZHRva2VuX3NpZ24iOiJ0cy4xLk1FVUNJUUNVUVhZZXV4aHVjeXZjdFI2M29lTEZOSTRzc3k1QkRDRkt0bUorRGZYMHJBSWdhU005UWZSWFNhQW1hSEhCOVwvWWpWQkszVTh0V1Vqa3BFR1FXV2RMVlpVaz0iLCJkcmVxX3NpZ24iOiJNRVVDSURpbmlUeWNBMWZMUGZxK3lIbHlqbHZxNVFGR1dZOXhTXC85VmhWZGtORzJYQWlFQTRjdlwva21LVXZHZVVvaURJemtWbFNcLzEzSFVYK1gzVlhCMmVOK0NsZ3IrRT0ifQ==",
         # "tt-device-guard-client-data": make_device_ticket_data(device,stime,"/aweme/v1/aweme/stats/"),
         "oec-vc-sdk-version": "3.2.1.i18n",
@@ -182,7 +173,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         "x-tt-ttnet-origin-host": "api16-core-useast8.tiktokv.us",
         "x-ss-dp": "1233",
         # "x-tt-trace-id": "00-683ce03b10690f83cf3f8e060e3b04d1-683ce03b10690f83-01",
-        "x-tt-trace-id": make_x_tt_trace_id(1, device_id),
+        "x-tt-trace-id":make_x_tt_trace_id(1,device_id),
         "user-agent": ua,
         "accept-encoding": "gzip, deflate, br",
 
@@ -192,26 +183,19 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         "x-khronos": f"{stime}",
         "x-ladon": f"{x_ladon}",
 
-        "x-common-params-v2": f"ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand={device['device_brand']}&device_id={device_id}&device_platform=android&device_type={encoded_device_type}&dpi={device['dpi']}&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3",
+        "x-common-params-v2": f"ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand=google&device_id={device_id}&device_platform=android&device_type=Pixel%206&dpi=420&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3",
     }
-    
-    # 合并 device guard headers
     headers.update(header1)
-
+    
     # 由于 impersonate 在 Session 上可能不生效，stats 接口始终不使用 session
     # cookie 保留在 headers 中
     headers_copy = headers
     
+    # print(headers)
     try:
-        
         if use_http_client:
             # 使用 HttpClient（已包含重试和超时机制）
-            # 注意：由于 impersonate 和 http_version 在 Session 上可能不生效，
             # stats 接口不使用 session，让 HttpClient 从池中获取新连接
-            print(f"[DEBUG] 使用 HttpClient，session=None, impersonate=okhttp4_android, http_version=v2")
-            # print("data:",data)
-            # print("headers:",headers_copy)
-            # print("headers:",headers_copy)
             resp = http_client.post(
                 url,
                 headers=headers_copy,
@@ -221,7 +205,6 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
                 http_version="v2"  # 强制使用 HTTP/2
             )
         else:
-            print(f"[DEBUG] 使用 requests.post，proxies={proxies}, impersonate=okhttp4_android, http_version=v2")
             resp = requests.post(
                 url,
                 headers=headers_copy,
@@ -232,64 +215,48 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
                 http_version="v2"  # 强制使用 HTTP/2
             )
 
-        print(f"[DEBUG] 状态码: {resp.status_code}")
-        print(f"[DEBUG] 响应头: {dict(resp.headers)}")
-        print(f"[DEBUG] 响应内容长度: {len(resp.content)} bytes")
-        print(f"[DEBUG] 响应文本长度: {len(resp.text)} chars")
-        print(f"[DEBUG] 响应内容（前200字节）: {resp.content[:200]}")
-        
-        # 检查响应内容
-        if not resp.text or len(resp.text) == 0:
-            print(f"[设备: {device_id}] ✗ 响应为空")
-            # 尝试直接解析 content
-            if resp.content:
-                try:
-                    # 尝试 gzip 解压
-                    decompressed = gzip.decompress(resp.content)
-                    resp_text = decompressed.decode('utf-8')
-                    print(f"[DEBUG] Gzip 解压后: {resp_text[:200]}")
-                except Exception as decompress_error:
-                    print(f"[DEBUG] Gzip 解压失败: {decompress_error}")
-                    resp_text = resp.content.decode('utf-8', errors='ignore')
-                    print(f"[DEBUG] 直接解码: {resp_text[:200]}")
-            else:
-                resp_text = ""
+        print(f"[设备: {device_id}] Status Code: {resp.status_code}")
+        if resp.text:
+            try:
+                resp_json = json.loads(resp.text)
+                status_code = resp_json.get("status_code", -1)
+                if status_code == 0:
+                    print(f"[设备: {device_id}] ✓ 播放成功")
+                else:
+                    print(f"[设备: {device_id}] ✗ 播放失败，status_code={status_code}")
+            except:
+                print(f"[设备: {device_id}] 响应: {resp.text[:100]}")
         else:
-            resp_text = resp.text
-        
-        print(f"[DEBUG] 响应内容: {resp_text[:200] if len(resp_text) > 200 else resp_text}")
-        
-        # 检查响应是否成功
-        try:
-            resp_json = json.loads(resp_text) if resp_text else {}
-            status_code = resp_json.get("status_code", -1)
-            if status_code == 0:
-                print(f"[设备: {device_id}] ✓ 播放成功")
-            else:
-                print(f"[设备: {device_id}] ✗ 播放失败，status_code={status_code}")
-                print(f"[DEBUG] 完整响应: {resp_text}")
-        except Exception as e:
-            print(f"[设备: {device_id}] ✗ 响应解析失败: {e}")
-            print(f"[DEBUG] 完整响应: {resp_text}")
-        
-        return resp_text
+            print(f"[设备: {device_id}] ✗ 响应为空")
+        return resp.text
 
     except Exception as e:
         if use_http_client:
             # HttpClient 已包含重试机制，如果失败则抛出异常
             raise
         else:
+            # 使用 requests 时，尝试 HTTP/1 降级
             resp = requests.post(
                 url,
                 headers=headers_copy,
                 data=data,
                 verify=False,
                 proxies=proxies,
-                impersonate="chrome131_android",  # 模拟安卓 Chrome 的 TLS 指纹
+                impersonate="okhttp4_android",  # 模拟 OkHttp 4 Android 的 TLS 指纹
                 http_version="v1"  # 强制使用 HTTP/1
             )
 
-            print(f"[设备: {device_id}] {resp.text}")
-            # 如果返回的是 gzipped 数据，你可能需要解压
-            # print(resp.content)
+            print(f"[设备: {device_id}] Status Code: {resp.status_code} (HTTP/1 fallback)")
+            if resp.text:
+                try:
+                    resp_json = json.loads(resp.text)
+                    status_code = resp_json.get("status_code", -1)
+                    if status_code == 0:
+                        print(f"[设备: {device_id}] ✓ 播放成功")
+                    else:
+                        print(f"[设备: {device_id}] ✗ 播放失败，status_code={status_code}")
+                except:
+                    print(f"[设备: {device_id}] 响应: {resp.text[:100]}")
+            else:
+                print(f"[设备: {device_id}] ✗ 响应为空")
             return resp.text

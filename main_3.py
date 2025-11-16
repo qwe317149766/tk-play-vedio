@@ -56,9 +56,9 @@ def get_seed_and_token(device: dict, flow_session=None):
     http_client = api.http_client
     
     # 步骤1：调用 alert_check 检查设备告警
-    # print(f"[main_3] 开始检查设备告警...")
-    # alert_result = api.alert_check(device, session=flow_session)
-    # print(f"[main_3] 设备告警检查结果: {alert_result}")
+    print(f"[main_3] 开始检查设备告警...")
+    alert_result = api.alert_check(device, session=flow_session)
+    print(f"[main_3] 设备告警检查结果: {alert_result}")
     
     # 如果告警检查失败，可以选择抛出异常或返回空值
     # if alert_result != "success":
@@ -88,8 +88,7 @@ def get_seed_and_token(device: dict, flow_session=None):
     return seed, seed_type, token
 
 
-device = {"create_time": "2025-11-16 00:39:24", "device_id": "7572992123600848398", "install_id": "7572992583447185165", "ua": "com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; Pixel 7; Build/TP1A.206170.261.A3; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)", "web_ua": "Dalvik/2.1.0 (Linux; U; Android 15; Pixel 7 Build/TP1A.206170.261.A3)", "resolution": "2209*1080", "dpi": 420, "device_type": "Pixel 7", "device_brand": "Google", "device_manufacturer": "Google", "os_api": 35, "os_version": 15, "resolution_v2": "1080*2209", "rom": "stock", "rom_version": "TP1A.206170.261.A3", "clientudid": "178f0c30-59ab-413c-9626-674ac3705319", "google_aid": "c1c5d5ce-89a2-48bb-98da-91c140ffe17b", "release_build": "TP1A.206170.261.A3", "display_density_v2": "xxhdpi", "ram_size": "2GB", "dark_mode_setting_value": 1, "is_foldable": 0, "screen_height_dp": 841, "screen_width_dp": 411, "apk_last_update_time": 1762294522426, "apk_first_install_time": 1762294482306, "filter_warn": 0, "priority_region": "US", "user_period": 2, "is_kids_mode": 0, "user_mode": 1, "cdid": "5deca172-751f-4a98-88a2-6bf633c74257", "openudid": "285443848d4f05bf", "version_name": "42.4.3", "update_version_code": "2024204030", "version_code": "420403", "sdk_version_code": 2051090, "sdk_target_version": 30, "sdk_version": "2.5.10", "_tt_ok_quic_version": "Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30", "mssdk_version_str": "v05.02.02-ov-android", "gorgon_sdk_version": "0000000020020205", "mssdk_version": 84017696, "device_guard_data0": "{\"device_token\":\"1|{\\\"aid\\\":1233,\\\"av\\\":\\\"42.4.3\\\",\\\"did\\\":\\\"7572992123600848398\\\",\\\"iid\\\":\\\"7572992583447185165\\\",\\\"fit\\\":\\\"1763224767\\\",\\\"s\\\":1,\\\"idc\\\":\\\"useast8\\\",\\\"ts\\\":\\\"1763224770\\\"}\",\"dtoken_sign\":\"ts.1.MEYCIQCErlm+U7GNiJzQsUVIpgXPSOY999yUdNJPDFfNKXc9jgIhAN40/4+e/ewu0f0D+eFTJkJvoR8yEb0rl8MGQgA17oIs\"}", "tt_ticket_guard_public_key": "BAomfPZ5I0so7mZMCgHINIZwiveCBUTXgcGOTsrj7OjIoTMf7j7jL6Tc+70TwAGPHubwrhVAznbWOJHk4bnRYno=", "priv_key": "5c0bd5b8c3249d68dc6bd5c6820e22c78f65562cab20c694873e68ba99ffb08f"}
-
+device = {'create_time': '2025-11-16 15:50:10', 'device_id': '7573226347225826829', 'install_id': '7573226956382373646', 'ua': 'com.zhiliaoapp.musically/2024204030 (Linux; U; Android 15; en_US; Pixel 3; Build/VP1A.181574.137.B1; Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30)', 'web_ua': 'Dalvik/2.1.0 (Linux; U; Android 15; Pixel 3 Build/VP1A.181574.137.B1)', 'resolution': '1920*1080', 'dpi': 420, 'device_type': 'Pixel 3', 'device_brand': 'Google', 'device_manufacturer': 'Google', 'os_api': 35, 'os_version': 15, 'resolution_v2': '1080*1920', 'rom': 'MIUI', 'rom_version': 'VP1A.181574.137.B1', 'clientudid': '2cf02f20-b3b7-4ce1-a4be-b7e768fc0a97', 'google_aid': 'da3565d7-be68-4f34-b6cb-7fe7fc37b988', 'release_build': 'VP1A.181574.137.B1', 'display_density_v2': 'xxhdpi', 'ram_size': '3GB', 'dark_mode_setting_value': 1, 'is_foldable': 0, 'screen_height_dp': 731, 'screen_width_dp': 411, 'apk_last_update_time': 1762280332243, 'apk_first_install_time': 1762280292647, 'filter_warn': 0, 'priority_region': 'US', 'user_period': 7, 'is_kids_mode': 0, 'user_mode': 1, 'cdid': 'ffbf712e-5947-43d9-84dc-319023062758', 'openudid': 'd5dc389d1e726164', 'version_name': '42.4.3', 'update_version_code': '2024204030', 'version_code': '420403', 'sdk_version_code': 2051090, 'sdk_target_version': 30, 'sdk_version': '2.5.10', '_tt_ok_quic_version': 'Cronet/TTNetVersion:efce646d 2025-10-16 QuicVersion:c785494a 2025-09-30', 'mssdk_version_str': 'v05.02.02-ov-android', 'gorgon_sdk_version': '0000000020020205', 'mssdk_version': 84017696, 'device_guard_data0': '{"device_token":"1|{\\"aid\\":1233,\\"av\\":\\"42.4.3\\",\\"did\\":\\"7573226347225826829\\",\\"iid\\":\\"7573226956382373646\\",\\"fit\\":\\"1763279412\\",\\"s\\":1,\\"idc\\":\\"useast8\\",\\"ts\\":\\"1763279412\\"}","dtoken_sign":"ts.1.MEUCIQDiK5HRpT9M5sVo9VcBwFIGxkMd484989+OjVmsTpreWwIgMThIX/kLfCLAarFyoeuKaeHlC/cC5xZLg8bQUK9Qwt0="}', 'tt_ticket_guard_public_key': 'BOIZqGiN7bsVDVPURRjA7wmXKY2tK4hrfZZNULwFmp4n+/2cg+ARAjHqmFFzCBJ+A/ircykKz/+G0Vq0/bC25g4=', 'priv_key': '935d10543be6f30584fe4b29f5c36803419cbe82d1872773ed02577e3173cda3'}
 
 
 aweme_id = "7571031981614451975"
@@ -103,8 +102,7 @@ try:
     # 使用统一的 API 接口，传入流程Session
     # 注意：seed、seed_type、token 会从 device 字典中直接获取，如果不存在则请求获取
     seed, seed_type, token = get_seed_and_token(device, flow_session=flow_session)
-    print(seed, seed_type)
-    print(token)
+    print(f"[main_3] 获取到的参数: seed={seed[:30]}..., seed_type={seed_type}, token={token[:20]}...")
     
     signCount = 200
     success = 0
@@ -123,6 +121,7 @@ try:
     #         print(token)
     #     finally:
     #         http_client.release_flow_session(flow_session)
+        print(f"[main_3] 第 {i+1} 次调用，传递参数: seed_type={seed_type}, signcount=212")
         res = api.stats(aweme_id, seed, seed_type, token, device, 212, session=flow_session)
         if res != "":
             success += 1
