@@ -200,7 +200,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
                 url,
                 headers=headers_copy,
                 data=data,
-                session=None,  # 不使用 session，确保 impersonate 生效
+                session=session,  # 不使用 session，确保 impersonate 生效
                 impersonate="okhttp4_android",  # 模拟 OkHttp 4 Android 的 TLS 指纹
                 http_version="v2"  # 强制使用 HTTP/2
             )
