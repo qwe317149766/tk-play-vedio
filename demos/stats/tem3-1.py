@@ -9,13 +9,14 @@ import urllib3
 
 from headers import make_headers
 from headers.device_ticket_data1 import build_guard
+from headers.device_ticket_data import make_device_ticket_data
 from headers.make_trace_id import make_x_tt_trace_id
 from mssdk.get_seed.seed_test import get_get_seed
 from mssdk.get_token.token_test import get_get_token
 
-def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000', http_client=None, session=None):
+async def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5://1pjw6067-region-US-sid-rRpeJ8LA-t-6:wmc4qbge@us.novproxy.io:1000', http_client=None, session=None):
     """
-    统计数据接口
+    统计数据接口（异步版本）
     
     Args:
         aweme_id: 视频 ID
@@ -29,6 +30,8 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         session: 可选的Session对象（如果提供，使用此Session）
     """
     use_http_client = http_client is not None
+    timee = time.time()
+    stime = int(timee)
     # 禁用 HTTPS 警告
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     device_id = device["device_id"]
@@ -37,10 +40,13 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
     apk_first_install_time = device["apk_first_install_time"]
     apk_last_update_time = device["apk_last_update_time"]
     last_install_time = apk_last_update_time // 1000
-    priv_key = device["priv_key"]
+    priv_key = device.get('priv_key','')
     # tt_ticket_guard_public_key = device["tt_ticket_guard_public_key"]
-    device_guard_data0 = device["device_guard_data0"]
-    # print(device_guard_data0)
+    device_guard_data0 = device.get('device_guard_data0','')
+    if not device_guard_data0:
+        device_guard = make_device_ticket_data(device,stime,"/aweme/v1/aweme/stats/")
+        device_guard_data_json = {"device_token":device_guard,"dtoken_sign":""} 
+        device_guard_data0 = json.dumps(device_guard_data_json)
     device_guard_data0 = json.loads(device_guard_data0)
     # print(type(device_guard_data0))
     header1 = build_guard(device_guard_data0,priv_hex=priv_key)
@@ -71,9 +77,8 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
             }
     else:
         proxies = None
-    timee = time.time()
     utime = int(timee * 1000)
-    stime = int(timee)
+   
     # 目标 URL
     query_string = f"os=android&_rticket={utime}&is_pad=0&last_install_time={last_install_time}&host_abi=arm64-v8a&ts={stime}&ab_version=42.4.3&ac=wifi&ac2=wifi&aid=1233&app_language=en&app_name=musical_ly&app_type=normal&build_number=42.4.3&carrier_region=US&carrier_region_v2=310&channel=googleplay&current_region=US&device_brand=google&device_id={device_id}&device_platform=android&device_type=Pixel%206&dpi=420&iid={install_id}&language=en&locale=en&manifest_version_code=2024204030&mcc_mnc=310004&op_region=US&os_api=35&os_version=15&region=US&residence=US&resolution=1080*2209&ssmix=a&sys_region=US&timezone_name=America%2FNew_York&timezone_offset=-18000&uoo=0&update_version_code=2024204030&version_code=420403&version_name=42.4.3"
     url = f"https://aggr16-normal.tiktokv.us/aweme/v1/aweme/stats/?os=android&_rticket={utime}&is_pad=0&last_install_time={last_install_time}&host_abi=arm64-v8a&ts={stime}&"
@@ -196,7 +201,7 @@ def stats_3(aweme_id, seed, seed_type, token, device, signcount, proxy='socks5:/
         if use_http_client:
             # 使用 HttpClient（已包含重试和超时机制）
             # stats 接口不使用 session，让 HttpClient 从池中获取新连接
-            resp = http_client.post(
+            resp = await http_client.post(
                 url,
                 headers=headers_copy,
                 data=data,

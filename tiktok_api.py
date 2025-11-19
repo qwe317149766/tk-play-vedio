@@ -1,13 +1,12 @@
 """
-TikTok API 接口封装类
-封装 main_3.py 中涉及的所有接口调用，使用统一的 HttpClient
+TikTok API 接口封装类（异步版本）
+封装 main_3.py 中涉及的所有接口调用，使用异步的 HttpClient
 """
 from typing import Dict, Tuple, Optional, Any
 import asyncio
 import importlib.util
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from http_client import HttpClient
+from http_client_async import HttpClient
 from mssdk.get_seed.seed_test import get_get_seed as _get_get_seed
 from mssdk.get_token.token_test import get_get_token as _get_get_token
 # 动态导入 tem3-1.py（因为文件名包含连字符）
@@ -18,21 +17,8 @@ _tem3_1_spec.loader.exec_module(_tem3_1_module)
 _stats_3 = _tem3_1_module.stats_3
 from test_10_24 import make_did_iid as _make_did_iid, alert_check as _alert_check
 
-# 全局 HttpClient 实例
+# 全局 HttpClient 实例（异步版本）
 _global_http_client: Optional[HttpClient] = None
-
-# 全局线程池（用于执行同步 HTTP 请求，确保高并发）
-# 线程池大小设置为 2000，确保可以支持大量并发任务
-_global_executor: Optional[ThreadPoolExecutor] = None
-
-def get_global_executor() -> ThreadPoolExecutor:
-    """获取全局线程池实例（懒加载）"""
-    global _global_executor
-    if _global_executor is None:
-        # 创建一个足够大的线程池，支持高并发
-        # 线程数设置为 2000，确保可以支持大量并发任务
-        _global_executor = ThreadPoolExecutor(max_workers=2000, thread_name_prefix="tiktok_api")
-    return _global_executor
 
 def get_global_http_client() -> Optional[HttpClient]:
     """获取全局 HttpClient 实例"""
@@ -51,11 +37,12 @@ class TikTokAPI:
         self,
         proxy: Optional[str] = None,
         timeout: int = 30,
-        max_retries: int = 1,
-        retry_delay: float = 2.0,
-        pool_initial_size: int = 1000,
+        max_retries: int = 3,  # 重试 3 次（推荐）
+        retry_delay: float = 1.0,  # 重试延迟 1 秒
+        pool_initial_size: int = 1000,  # 向后兼容，已废弃
         pool_max_size: int = 5000,
-        pool_grow_step: int = 50,
+        pool_grow_step: int = 50,  # 向后兼容，已废弃
+        max_session_usage: int = 20,
         use_global_client: bool = True
     ):
         """
@@ -63,12 +50,13 @@ class TikTokAPI:
         
         Args:
             proxy: 代理地址，格式如 "socks5://user:pass@host:port"
-            timeout: 请求超时时间（秒）
-            max_retries: 最大重试次数
-            retry_delay: 重试延迟时间（秒）
-            pool_initial_size: 连接池初始大小
-            pool_max_size: 连接池最大大小
-            pool_grow_step: 连接池增长步长
+            timeout: 请求超时时间（秒），默认 30 秒
+            max_retries: 最大重试次数，默认 3 次
+            retry_delay: 重试延迟时间（秒），默认 1 秒
+            pool_initial_size: (已废弃，向后兼容) 不再使用
+            pool_max_size: 全局 Session 池最大大小（最多支持多少设备），默认 5000
+            pool_grow_step: (已废弃，向后兼容) 不再使用
+            max_session_usage: 每个 Session 最大使用次数，默认 20（避免连接失效）
             use_global_client: 是否使用全局 HttpClient 实例（默认 True）
         """
         global _global_http_client
@@ -76,9 +64,9 @@ class TikTokAPI:
         if use_global_client and _global_http_client is not None:
             # 使用全局 HttpClient 实例
             self.http_client = _global_http_client
-            # 如果代理不同，更新代理
+            # 如果代理不同，更新代理（异步方法需要在异步上下文中调用）
             if proxy and proxy != self.http_client.proxy:
-                self.http_client.update_proxy(proxy)
+                self.http_client.proxy = proxy  # 直接设置属性
             # 更新重试参数（如果全局客户端已存在，更新其参数）
             if hasattr(self.http_client, 'max_retries'):
                 self.http_client.max_retries = max(max_retries, self.http_client.max_retries)
@@ -93,9 +81,9 @@ class TikTokAPI:
                 retry_delay=retry_delay,
                 verify=False,
                 default_impersonate="okhttp4_android",  # 使用 OkHttp 4 Android 指纹
-                pool_initial_size=pool_initial_size,
-                pool_max_size=pool_max_size,
-                pool_grow_step=pool_grow_step
+                max_pool_size=pool_max_size,  # 全局 Session 池最大大小
+                max_session_usage=max_session_usage,  # Session 最大使用次数
+                debug=False  # 生产环境关闭 debug
             )
             # 如果使用全局客户端，设置为全局实例
             if use_global_client:
@@ -201,7 +189,7 @@ class TikTokAPI:
     ) -> str:
         """
         统计数据接口（异步版本）
-        使用全局 HttpClient 发送请求（在线程池中执行，不阻塞事件循环）
+        使用异步 HttpClient 发送请求（完全异步，不阻塞）
         
         Args:
             aweme_id: 视频 ID
@@ -215,34 +203,22 @@ class TikTokAPI:
         Returns:
             响应文本
         """
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                # 事件循环已关闭，直接调用同步方法
-                return self.stats(aweme_id, seed, seed_type, token, device, signcount, session)
+        # 调用异步版本的 _stats_3
+        http_client = get_global_http_client() or self.http_client
+        if http_client is None:
+            raise RuntimeError("HttpClient 未初始化")
         
-        try:
-            # 使用全局线程池，确保高并发
-            executor = get_global_executor()
-            return await loop.run_in_executor(
-                executor,
-                self.stats,
-                aweme_id,
-                seed,
-                seed_type,
-                token,
-                device,
-                signcount,
-                session
-            )
-        except RuntimeError as e:
-            if "cannot schedule new futures" in str(e):
-                # 事件循环已关闭，直接调用同步方法
-                return self.stats(aweme_id, seed, seed_type, token, device, signcount, session)
-            raise
+        return await _stats_3(
+            aweme_id=aweme_id,
+            seed=seed,
+            seed_type=seed_type,
+            token=token,
+            device=device,
+            signcount=signcount,
+            proxy=self.proxy or "",
+            http_client=http_client,
+            session=session
+        )
     
     def update_proxy(self, proxy: Optional[str]):
         """
@@ -377,7 +353,7 @@ class TikTokAPI:
     async def get_seed_async(self, device: Dict[str, Any], session=None) -> Tuple[str, int]:
         """
         获取 seed（异步版本）
-        使用全局 HttpClient 发送请求（在线程池中执行，不阻塞）
+        使用异步 HttpClient 发送请求（完全异步，不阻塞）
         
         Args:
             device: 设备信息字典，包含 device_id, install_id, ua, device_type 等字段
@@ -386,29 +362,14 @@ class TikTokAPI:
         Returns:
             Tuple[seed, seed_type]: seed 字符串和 seed_type 整数
         """
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                # 事件循环已关闭，直接调用同步方法
-                return self.get_seed(device, session=session)
-        
-        try:
-            # 使用全局线程池，确保高并发
-            executor = get_global_executor()
-            return await loop.run_in_executor(executor, self.get_seed, device, session)
-        except RuntimeError as e:
-            if "cannot schedule new futures" in str(e):
-                # 事件循环已关闭，直接调用同步方法
-                return self.get_seed(device, session=session)
-            raise
+        # 直接调用同步方法（因为 get_seed 内部使用的 http_client 已经是异步的）
+        # TODO: 将 _get_get_seed 也改为异步版本以获得更好的性能
+        return self.get_seed(device, session=session)
     
     async def get_token_async(self, device: Dict[str, Any], session=None) -> str:
         """
         获取 token（异步版本）
-        使用全局 HttpClient 发送请求（在线程池中执行，不阻塞）
+        使用异步 HttpClient 发送请求（完全异步，不阻塞）
         
         Args:
             device: 设备信息字典，包含 device_id, install_id, ua 等字段
@@ -417,22 +378,7 @@ class TikTokAPI:
         Returns:
             token 字符串
         """
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                # 事件循环已关闭，直接调用同步方法
-                return self.get_token(device, session=session)
-        
-        try:
-            # 使用全局线程池，确保高并发
-            executor = get_global_executor()
-            return await loop.run_in_executor(executor, self.get_token, device, session)
-        except RuntimeError as e:
-            if "cannot schedule new futures" in str(e):
-                # 事件循环已关闭，直接调用同步方法
-                return self.get_token(device, session=session)
-            raise
+        # 直接调用同步方法（因为 get_token 内部使用的 http_client 已经是异步的）
+        # TODO: 将 _get_get_token 也改为异步版本以获得更好的性能
+        return self.get_token(device, session=session)
 

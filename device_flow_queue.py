@@ -149,12 +149,12 @@ async def run_device_flow(job: Dict[str, Any], proxy_url: str) -> Tuple[bool, st
             except RuntimeError:
                 return False, "事件循环已关闭，无法执行任务", {"step": "init"}
         
-        # 在线程池中执行 get_flow_session，避免阻塞事件循环，并添加超时保护
-        print(f"[RUN_DEVICE_FLOW] 开始在线程池中获取流程Session（带超时保护，最多等待5秒）...")
+        # 异步获取 flow_session（使用异步方法，不阻塞）
+        print(f"[RUN_DEVICE_FLOW] 开始异步获取流程Session（带超时保护，最多等待5秒）...")
         sys.stdout.flush()
         try:
             flow_session = await asyncio.wait_for(
-                loop.run_in_executor(None, http_client.get_flow_session),
+                http_client.get_flow_session_async(),
                 timeout=5.0
             )
             print(f"[RUN_DEVICE_FLOW] 获取流程Session成功: {id(flow_session)}")

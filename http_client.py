@@ -1,21 +1,86 @@
 """
-高性能统一 HTTP 客户端（优化版）
-支持连接池、自动扩容、代理切换、重试、健康检测、Keep-Alive 等
-线程安全 + 低CPU占用 + 实时统计信息
+基于 user_id 的全局 Session 管理 HTTP 客户端
+特性：
+ - 每个 user_id 对应一个独立的 session
+ - 最多保持 5000 个 session，超过时移除最早的
+ - 异步清理队列，避免阻塞主流程
+ - 可配置每个 user_id 的 session 使用次数
+ - 完整的重试机制和错误处理
 """
-
 import time
 import threading
 import asyncio
-import urllib3
-from typing import Optional, Dict, Any, Union, List
+import queue
+from typing import Optional, Dict, Any
+from collections import OrderedDict
+
 from curl_cffi import requests
+import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+# 全局 Session 池（基于 user_id）
+_client_pool_lock = threading.RLock()
+_client_pool: OrderedDict[str, Dict[str, Any]] = OrderedDict()
+_client_pool_max_size = 5000
+
+# 异步清理队列
+_cleanup_queue = queue.Queue()
+_cleanup_thread = None
+
+
+def _start_cleanup_thread():
+    """启动清理线程（单例）"""
+    global _cleanup_thread
+    if _cleanup_thread is None or not _cleanup_thread.is_alive():
+        _cleanup_thread = threading.Thread(target=_cleanup_worker, daemon=True)
+        _cleanup_thread.start()
+
+
+def _cleanup_worker():
+    """异步清理 session 的工作线程"""
+    while True:
+        try:
+            session_info = _cleanup_queue.get(timeout=1)
+            if session_info is None:  # 退出信号
+                break
+            
+            session = session_info.get("session")
+            user_id = session_info.get("user_id", "unknown")
+            
+            try:
+                if session:
+                    session.close()
+            except Exception as e:
+                pass  # 忽略清理错误
+            
+        except queue.Empty:
+            continue
+        except Exception:
+            continue
+
+
+class _StreamWrapper:
+    """包装流响应，close 时释放 session"""
+    def __init__(self, client: "HttpClient", user_id: str, resp):
+        self._client = client
+        self._user_id = user_id
+        self._resp = resp
+
+    def __getattr__(self, item):
+        return getattr(self._resp, item)
+
+    def close(self):
+        try:
+            self._resp.close()
+        finally:
+            # 流关闭时增加使用次数
+            self._client._increment_usage(self._user_id)
+
+
 class HttpClient:
-    """支持连接池与自动扩容的高性能 HTTP 客户端"""
+    """基于 user_id 的全局 Session 管理 HTTP 客户端"""
 
     def __init__(
         self,
@@ -24,12 +89,10 @@ class HttpClient:
         max_retries: int = 3,
         retry_delay: float = 1.0,
         verify: bool = False,
-        default_impersonate: Optional[str] = "okhttp4_android",
+        default_impersonate: str = "okhttp4_android",
         enable_keep_alive: bool = True,
-        pool_initial_size: int = 1000,
-        pool_max_size: int = 5000,
-        pool_grow_step: int = 50,
-        health_check_interval: int = 15,
+        max_session_usage: int = 100,  # 每个 user_id 的 session 最大使用次数
+        max_pool_size: int = 5000,  # 全局最大 session 数量
         debug: bool = False,
     ):
         self.proxy = proxy
@@ -41,790 +104,624 @@ class HttpClient:
         self.enable_keep_alive = enable_keep_alive
         self.debug = debug
 
-        # 连接池配置
-        self.pool_initial_size = max(1, pool_initial_size)
-        self.pool_max_size = max(self.pool_initial_size, pool_max_size)
-        self.pool_grow_step = max(1, pool_grow_step)
-        self.health_check_interval = max(5, health_check_interval)
+        # Session 管理配置
+        self._max_session_usage = max(10, max_session_usage)
+        self._max_pool_size = max(100, max_pool_size)
+        
+        # 更新全局最大值
+        global _client_pool_max_size
+        _client_pool_max_size = self._max_pool_size
 
-        # 池结构
-        self._pool: List[requests.Session] = []
-        self._lock = threading.Lock()
-        self._pool_cond = threading.Condition(self._lock)
-        self._session_count = 0
+        # 统计信息
+        self._stats = {
+            "requests": 0,
+            "failures": 0,
+            "retries": 0,
+            "proxy_close_errors": 0,
+            "dead_sessions_removed": 0,
+            "sessions_created": 0,
+            "sessions_recycled": 0,
+        }
+
         self._closed = False
-        
-        # Session 使用计数（用于跟踪每个 Session 的使用次数）
-        # key: Session 对象 id, value: 使用次数
-        self._session_usage_count: Dict[int, int] = {}
-        # 每个 Session 最多使用次数：根据连接池大小动态调整
-        # 如果连接池较小，增加使用次数；如果连接池较大，减少使用次数
-        # 公式：max_usage = max(3, pool_max_size // 10)
-        self._max_session_usage = max(3, self.pool_max_size // 10) if self.pool_max_size < 100 else 3
 
-        # 统计数据
-        self._stats = {"requests": 0, "failures": 0, "retries": 0}
-
-        # 初始化连接池
-        for _ in range(self.pool_initial_size):
-            self._create_session()
-
-        # 后台健康检测线程
-        self._health_thread = threading.Thread(target=self._health_check_loop, daemon=True)
-        self._health_thread.start()
+        # 启动清理线程
+        _start_cleanup_thread()
 
         if self.debug:
-            print(f"[HttpClient] 初始化完成，连接数={self._session_count}")
+            print(f"[HttpClient] Init completed, max_pool_size={self._max_pool_size}, "
+                  f"max_session_usage={self._max_session_usage}")
 
-    # ---------------------- 连接池管理 ----------------------
+    def _create_session(self) -> requests.Session:
+        """创建新的 Session"""
+        session = requests.Session(
+            timeout=self.timeout,
+            verify=self.verify,
+            impersonate=self.default_impersonate,
+            proxies={"http": self.proxy, "https": self.proxy} if self.proxy else None,
+        )
 
-    def _create_session(self, impersonate=None):
-        """创建新 Session（线程安全）"""
-        try:
-            # 如果指定了 impersonate，使用它；否则使用默认值
-            imp = impersonate or self.default_impersonate
-            if imp:
-                s = requests.Session(impersonate=imp)
-            else:
-                s = requests.Session()
-            s.headers.update({"Connection": "keep-alive"})
-            if self.proxy:
-                s.proxies = {"http": self.proxy, "https": self.proxy}
-            # 使用 _pool_cond（它内部包含 _lock），避免死锁
-            with self._pool_cond:
-                self._pool.append(s)
-                self._session_count += 1
-                # 初始化 Session 使用计数
-                session_id = id(s)
-                self._session_usage_count[session_id] = 0
-                # 通知等待的线程
-                self._pool_cond.notify()
-            if self.debug:
-                print(f"[HttpClient] 创建新连接，总数={self._session_count}, 池大小={len(self._pool)}")
-        except Exception as e:
-            if self.debug:
-                print(f"[HttpClient] 创建 Session 失败: {e}")
-            raise
-
-    def _grow_pool(self):
-        """扩容连接池"""
-        # 如果连接池接近耗尽，加快扩容速度
-        available_sessions = len(self._pool)
-        if available_sessions == 0 and self._session_count < self.pool_max_size:
-            # 紧急扩容：一次创建更多连接
-            grow = min(max(self.pool_grow_step * 2, 5), self.pool_max_size - self._session_count)
+        # 配置 keep-alive
+        if self.enable_keep_alive:
+            session.headers.update({"Connection": "keep-alive"})
         else:
-            grow = min(self.pool_grow_step, self.pool_max_size - self._session_count)
-        
-        for _ in range(grow):
-            self._create_session()
-        if self.debug:
-            print(f"[HttpClient] 池扩容: 当前连接={self._session_count}, 可用连接={len(self._pool)}")
+            session.headers.update({"Connection": "close"})
 
-    def _get_session(self) -> requests.Session:
-        """线程安全地获取 Session"""
-        import time
-        wait_start = time.time()
-        max_wait_time = 30.0  # 最多等待30秒
-        
-        with self._pool_cond:
-            while not self._closed:
-                if self._pool:
-                    elapsed = time.time() - wait_start
-                    if elapsed > 0.1 and self.debug:
-                        print(f"[HttpClient] 等待 Session 耗时: {elapsed:.3f}s")
-                    return self._pool.pop()
-                
-                elapsed = time.time() - wait_start
-                if elapsed > max_wait_time:
-                    if self.debug:
-                        print(f"[HttpClient] 等待 Session 超时（{max_wait_time}秒），当前池大小: {len(self._pool)}, 总连接数: {self._session_count}, 最大连接数: {self.pool_max_size}")
-                    raise TimeoutError(f"等待 Session 超时（{max_wait_time}秒），连接池可能已耗尽")
-                
-                # 如果连接池为空且未达到上限，立即扩容
-                if self._session_count < self.pool_max_size:
-                    # 紧急扩容：如果池为空，加快扩容
-                    if len(self._pool) == 0:
-                        # 一次创建更多连接
-                        grow_count = min(max(self.pool_grow_step * 3, 10), self.pool_max_size - self._session_count)
-                        for _ in range(grow_count):
-                            try:
-                                self._create_session()
-                            except Exception as e:
-                                if self.debug:
-                                    print(f"[HttpClient] 紧急扩容时创建连接失败: {e}")
-                                break
-                    else:
-                        self._grow_pool()
-                    continue
-                
-                remaining_time = max_wait_time - elapsed
-                self._pool_cond.wait(timeout=min(0.5, remaining_time))
-        raise RuntimeError("HttpClient 已关闭，无法获取连接")
+        self._stats["sessions_created"] += 1
+        return session
 
-    def get_flow_session(self) -> requests.Session:
+    def _is_session_alive(self, session) -> bool:
+        """检查 session 是否存活"""
+        try:
+            if not hasattr(session, "request"):
+                return False
+            
+            if hasattr(session, "_closed") and session._closed:
+                return False
+            
+            if hasattr(session, "curl"):
+                if session.curl is None:
+                    return False
+            
+            if hasattr(session, "cookies"):
+                try:
+                    _ = len(session.cookies)
+                except Exception:
+                    return False
+            
+            return True
+        except Exception:
+            return False
+
+    def _get_or_create_session(self, user_id: str) -> requests.Session:
         """
-        获取流程专用 Session（流程级Session）
-        每个流程应该使用同一个Session，流程结束后调用 release_flow_session 销毁
-        如果连接池为空，立即创建新连接，避免等待超时
+        获取或创建 user_id 对应的 session
+        如果 session 不存在或已失效，则创建新的
+        如果池已满，移除最早的 session
+        """
+        with _client_pool_lock:
+            # 检查是否存在
+            if user_id in _client_pool:
+                session_info = _client_pool[user_id]
+                session = session_info["session"]
+                
+                # 检查是否存活
+                if self._is_session_alive(session):
+                    # 移到末尾（LRU 更新）
+                    _client_pool.move_to_end(user_id)
+                    
+                    # 如果使用次数超限，记录日志但继续使用，交给回收池异步处理
+                    if session_info["usage_count"] >= self._max_session_usage:
+                        if self.debug:
+                            print(f"[HttpClient] Session 使用次数已超限({session_info['usage_count']}/{self._max_session_usage})，"
+                                  f"继续使用，交给回收池处理: user_id={user_id}")
+                    
+                    return session
+                else:
+                    # Session 已失效，移除
+                    if self.debug:
+                        print(f"[HttpClient] Session 已失效，重新创建: user_id={user_id}")
+                    
+                    _cleanup_queue.put({
+                        "session": session,
+                        "user_id": user_id,
+                    })
+                    
+                    del _client_pool[user_id]
+                    self._stats["dead_sessions_removed"] += 1
+            
+            # 检查池是否已满
+            if len(_client_pool) >= _client_pool_max_size:
+                # 移除最早的（FIFO）
+                oldest_user_id, oldest_info = _client_pool.popitem(last=False)
+                
+                if self.debug:
+                    print(f"[HttpClient] Session 池已满({_client_pool_max_size})，"
+                          f"移除最早的: user_id={oldest_user_id}, "
+                          f"使用次数={oldest_info['usage_count']}")
+                
+                # 加入清理队列
+                _cleanup_queue.put({
+                    "session": oldest_info["session"],
+                    "user_id": oldest_user_id,
+                })
+                
+                # 如果被移除的 session 使用次数达到上限，计入回收统计
+                if oldest_info["usage_count"] >= self._max_session_usage:
+                    self._stats["sessions_recycled"] += 1
+            
+            # 创建新的 session
+            new_session = self._create_session()
+            
+            _client_pool[user_id] = {
+                "session": new_session,
+                "usage_count": 0,
+                "created_at": time.time(),
+            }
+            
+            if self.debug:
+                print(f"[HttpClient] 创建新 session: user_id={user_id}, 当前池大小={len(_client_pool)}")
+            
+            return new_session
+
+    def _increment_usage(self, user_id: str):
+        """增加 user_id 的 session 使用次数"""
+        with _client_pool_lock:
+            if user_id in _client_pool:
+                old_count = _client_pool[user_id]["usage_count"]
+                _client_pool[user_id]["usage_count"] = old_count + 1
+                new_count = old_count + 1
+                
+                # 当达到或超过使用上限时记录日志
+                if self.debug and new_count >= self._max_session_usage:
+                    print(f"[HttpClient] Session 使用次数: {new_count}/{self._max_session_usage}, "
+                          f"user_id={user_id}, 继续使用，交给回收池处理")
+
+    def _request_with_retry(
+        self,
+        method: str,
+        url: str,
+        user_id: str = "default",
+        **kwargs
+    ) -> requests.Response:
+        """带重试机制的请求"""
+        self._stats["requests"] += 1
+        
+        last_exception = None
+        
+        for attempt in range(self.max_retries):
+            try:
+                # 获取或创建 session
+                session = self._get_or_create_session(user_id)
+                
+                # 执行请求
+                response = session.request(method, url, **kwargs)
+                
+                # 成功，增加使用次数
+                self._increment_usage(user_id)
+                
+                return response
+                
+            except Exception as e:
+                last_exception = e
+                self._stats["retries"] += 1
+                
+                # 判断错误类型
+                error_str = str(e).lower()
+                is_proxy_closed = "proxy" in error_str and "close" in error_str
+                is_timeout = "timeout" in error_str or "timed out" in error_str
+                is_network_error = "connection" in error_str or "network" in error_str
+                
+                # 统计 proxy close 错误
+                if is_proxy_closed:
+                    self._stats["proxy_close_errors"] += 1
+                
+                if self.debug or is_proxy_closed:
+                    if is_proxy_closed:
+                        error_type = "🔴 代理/连接关闭"
+                        print(f"[HttpClient] ⚠️ PROXY CLOSE 错误！重试 {attempt + 1}/{self.max_retries}")
+                        print(f"  URL: {url[:100]}")
+                        print(f"  user_id: {user_id}")
+                        print(f"  错误: {str(e)[:200]}")
+                        with _client_pool_lock:
+                            print(f"  池状态: 总数={len(_client_pool)}")
+                    elif is_timeout:
+                        error_type = "请求超时"
+                    elif is_network_error:
+                        error_type = "网络错误"
+                    else:
+                        error_type = "请求失败"
+                    
+                    if not is_proxy_closed or self.debug:
+                        print(f"[HttpClient] 重试 {attempt + 1}/{self.max_retries}: {error_type} -> {e}")
+                
+                # 如果是 proxy close 或网络错误，强制重新创建 session
+                if is_proxy_closed or is_network_error:
+                    with _client_pool_lock:
+                        if user_id in _client_pool:
+                            session_info = _client_pool[user_id]
+                            _cleanup_queue.put({
+                                "session": session_info["session"],
+                                "user_id": user_id,
+                            })
+                            del _client_pool[user_id]
+                            self._stats["dead_sessions_removed"] += 1
+                
+                # 最后一次重试失败
+                if attempt == self.max_retries - 1:
+                    self._stats["failures"] += 1
+                    raise last_exception
+                
+                # 延迟后重试
+                if self.retry_delay > 0:
+                    time.sleep(self.retry_delay)
+        
+        # 不应该到达这里
+        self._stats["failures"] += 1
+        raise last_exception
+
+    # ========== 公共 API ==========
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        user_id: str = None,
+        session: Any = None,  # 向后兼容：旧的 session 参数
+        stream: bool = False,
+        **kwargs
+    ) -> Any:
+        """
+        发送 HTTP 请求
+        
+        Args:
+            method: HTTP 方法
+            url: 请求 URL
+            user_id: 用户ID（用于 session 管理）
+            session: 向后兼容的 session 参数（优先级高于 user_id）
+            stream: 是否返回流
+            **kwargs: 其他请求参数
+        """
+        # 向后兼容：如果提供了 session，从中提取 user_id
+        if session is not None:
+            # 如果是 FlowSessionWrapper，提取 user_id
+            if isinstance(session, FlowSessionWrapper):
+                user_id = session._user_id
+            else:
+                # 使用 session 对象的 id 作为 user_id
+                user_id = f"session_{id(session)}"
+        
+        # 如果还没有 user_id，使用默认值
+        if user_id is None:
+            user_id = "default"
+        
+        # 从 kwargs 中移除 session 参数（避免传递给底层）
+        kwargs.pop('session', None)
+        
+        response = self._request_with_retry(method, url, user_id, stream=stream, **kwargs)
+        
+        if stream:
+            return _StreamWrapper(self, user_id, response)
+        else:
+            # 非流式请求，增加使用次数
+            self._increment_usage(user_id)
+            return response
+
+    def get(self, url: str, user_id: str = None, session: Any = None, **kwargs) -> requests.Response:
+        """GET 请求"""
+        return self.request("GET", url, user_id, session, **kwargs)
+
+    def post(self, url: str, user_id: str = None, session: Any = None, **kwargs) -> requests.Response:
+        """POST 请求"""
+        return self.request("POST", url, user_id, session, **kwargs)
+
+    def put(self, url: str, user_id: str = None, session: Any = None, **kwargs) -> requests.Response:
+        """PUT 请求"""
+        return self.request("PUT", url, user_id, session, **kwargs)
+
+    def delete(self, url: str, user_id: str = None, session: Any = None, **kwargs) -> requests.Response:
+        """DELETE 请求"""
+        return self.request("DELETE", url, user_id, session, **kwargs)
+
+    def head(self, url: str, user_id: str = None, session: Any = None, **kwargs) -> requests.Response:
+        """HEAD 请求"""
+        return self.request("HEAD", url, user_id, session, **kwargs)
+
+    def get_stats(self) -> Dict[str, Any]:
+        """获取统计信息"""
+        with _client_pool_lock:
+            pool_size = len(_client_pool)
+            
+            # 计算平均使用次数
+            if pool_size > 0:
+                total_usage = sum(info["usage_count"] for info in _client_pool.values())
+                avg_usage = total_usage / pool_size
+            else:
+                avg_usage = 0
+        
+        return {
+            **self._stats,
+            "pool_size": pool_size,
+            "pool_max_size": _client_pool_max_size,
+            "avg_usage_count": avg_usage,
+        }
+
+    def clear_user_session(self, user_id: str):
+        """清除指定 user_id 的 session"""
+        with _client_pool_lock:
+            if user_id in _client_pool:
+                session_info = _client_pool[user_id]
+                _cleanup_queue.put({
+                    "session": session_info["session"],
+                    "user_id": user_id,
+                })
+                del _client_pool[user_id]
+                
+                if self.debug:
+                    print(f"[HttpClient] 清除 session: user_id={user_id}")
+
+    def update_proxy(self, proxy: str):
+        """更新代理配置"""
+        self.proxy = proxy
+        if self.debug:
+            print(f"[HttpClient] 代理已更新: {proxy}")
+
+    # ========== 向后兼容 API（flow_session 接口）==========
+
+    def get_flow_session(self, device_id: str = None) -> FlowSessionWrapper:
+        """
+        获取 flow session（自动管理版本）
+        
+        如果不传 device_id，则从全局池中自动获取一个可用的 session
+        （使用次数未达到上限的 session）
+        
+        Args:
+            device_id: 可选的设备ID（用作 user_id）
+                      如果提供，则使用该 device_id 绑定的 session
+                      如果不提供，则自动从池中获取可用的 session
+            
+        Returns:
+            FlowSessionWrapper 对象
+        """
+        if device_id:
+            # 传统模式：使用 device_id 绑定的 session
+            user_id = f"device_{device_id}"
+        else:
+            # 自动模式：从池中获取可用的 session
+            user_id = self._get_available_session_id()
+        
+        return FlowSessionWrapper(self, user_id)
+    
+    def _get_available_session_id(self) -> str:
+        """
+        从全局池中获取一个可用的 session ID
+        策略：
+        1. 优先查找 usage_count < max_session_usage 的 session
+        2. 如果没有可用的：
+           - 池未满：创建新的
+           - 池已满：触发后台清理，然后重试
         
         Returns:
-            Session 对象
+            可用的 user_id
         """
-        # 优化：先尝试快速从连接池获取，如果池为空或无法获取锁，直接创建新 session 而不等待
-        # 使用非阻塞方式获取锁，避免死锁和超时
-        session = None
-        try:
-            # 尝试非阻塞获取锁（不等待，避免阻塞）
-            if self._pool_cond.acquire(blocking=False):
-                try:
-                    if self._pool:
-                        # 连接池中有可用 session，直接获取
-                        session = self._pool.pop()
-                        # 检查 session 是否可用（尝试发送一个简单的请求测试）
-                        # requests.Session 没有 closed 属性，需要通过其他方式检查
-                        # 简单策略：总是创建新的 session，不从池中复用（避免 session 已关闭的问题）
-                        if self.debug:
-                            print(f"[HttpClient] 从连接池获取Session，但为避免Session关闭问题，销毁并创建新Session")
-                        try:
-                            session.close()
-                        except:
-                            pass
-                        session = None
-                        # if self.debug:
-                        #     print(f"[HttpClient] 从连接池获取流程Session，剩余池大小: {len(self._pool)}")
-                finally:
-                    self._pool_cond.release()
-            else:
-                # 无法获取锁，直接创建新 session（避免阻塞）
-                if self.debug:
-                    print(f"[HttpClient] 无法获取连接池锁，直接创建新Session（避免阻塞）")
-        except Exception as e:
-            if self.debug:
-                print(f"[HttpClient] 获取流程Session时异常: {e}")
+        retry_count = 0
+        max_retries = 3
         
-        # 如果从连接池获取失败或session已关闭，直接创建新 session（不等待，不阻塞，不调用 _create_session 避免锁竞争）
-        if session is None:
-            try:
-                # 直接创建新 session，不经过连接池，避免锁竞争和阻塞
-                session = requests.Session()
-                session.headers.update({"Connection": "keep-alive"})
-                if self.proxy:
-                    session.proxies = {"http": self.proxy, "https": self.proxy}
-                # 更新计数（使用独立的锁，避免与连接池锁竞争）
-                # 注意：这里使用 _lock 而不是 _pool_cond，避免死锁
-                # 使用非阻塞方式获取锁，避免阻塞
-                try:
-                    if self._lock.acquire(blocking=False):
-                        try:
-                            self._session_count += 1
-                            session_id = id(session)
-                            self._session_usage_count[session_id] = 0
-                        finally:
-                            self._lock.release()
-                    else:
-                        # 如果无法获取锁，仍然创建 session，但不更新计数（避免阻塞）
+        while retry_count < max_retries:
+            with _client_pool_lock:
+                # 第一优先级：查找使用次数未达到上限的 session
+                for user_id, session_info in _client_pool.items():
+                    if session_info["usage_count"] < self._max_session_usage:
+                        # 找到可用的 session
                         if self.debug:
-                            print(f"[HttpClient] 无法获取锁更新计数，但继续创建Session")
-                except Exception as lock_error:
-                    # 锁操作失败，仍然创建 session，但不更新计数（避免阻塞）
-                    if self.debug:
-                        print(f"[HttpClient] 更新计数时异常: {lock_error}，但继续创建Session")
+                            print(f"[HttpClient] 复用现有 session: {user_id}, "
+                                  f"使用次数={session_info['usage_count']}/{self._max_session_usage}")
+                        return user_id
                 
-                if self.debug:
-                    print(f"[HttpClient] 直接创建新流程Session（不经过连接池），总数={self._session_count}")
-            except Exception as e:
-                if self.debug:
-                    print(f"[HttpClient] 直接创建流程Session失败: {e}")
-                raise
-        
-        return session
-    
-    def release_flow_session(self, session: requests.Session):
-        """
-        释放流程专用 Session（流程级Session）
-        流程结束后调用此方法，直接销毁Session，不放入池中
-        释放后立即触发连接池扩容，确保后续流程能及时获取Session
-        
-        Args:
-            session: 要释放的 Session
-        """
-        if session is None:
-            return
-            
-        try:
-            session.close()
-        except Exception:
-            pass
-        
-        # 更新计数（使用非阻塞方式获取锁，避免阻塞）
-        try:
-            if self._lock.acquire(blocking=False):
-                try:
-                    self._session_count -= 1
-                    session_id = id(session)
-                    if session_id in self._session_usage_count:
-                        del self._session_usage_count[session_id]
-                finally:
-                    self._lock.release()
-            else:
-                # 无法获取锁，仍然关闭 session，但不更新计数（避免阻塞）
-                if self.debug:
-                    print(f"[HttpClient] 释放流程Session时无法获取锁更新计数，但继续关闭Session（避免阻塞）")
-        except Exception as e:
-            # 锁操作失败，仍然关闭 session，但不更新计数（避免阻塞）
-            if self.debug:
-                print(f"[HttpClient] 释放流程Session时更新计数异常: {e}，但继续关闭Session（避免阻塞）")
-        
-        # 释放流程Session后，尝试触发连接池扩容，确保后续流程能及时获取Session
-        # 策略：至少保持连接池大小 >= pool_initial_size，以便下一轮流程能立即获取
-        # 使用非阻塞方式，避免死锁和超时
-        # 注意：不调用 _create_session()，而是直接创建 session 并添加到池中，避免锁竞争
-        try:
-            # 尝试快速获取锁，如果获取不到就跳过扩容（避免阻塞）
-            if self._pool_cond.acquire(blocking=False):
-                try:
-                    pool_size = len(self._pool)
-                    # 计算需要补充的连接数：至少保持 pool_initial_size
-                    target_size = max(self.pool_initial_size, pool_size + 1)  # 至少补充1个，确保有可用连接
-                    if pool_size < target_size and self._session_count < self.pool_max_size:
-                        # 连接池不足，立即扩容（但限制扩容数量，避免耗时过长）
-                        # 注意：直接创建 session 并添加到池中，不调用 _create_session() 避免锁竞争
-                        try:
-                            grow_count = min(
-                                target_size - pool_size,
-                                self.pool_max_size - self._session_count,
-                                3  # 最多一次扩容3个，避免阻塞太久
-                            )
-                            if grow_count > 0:
-                                created_count = 0
-                                for _ in range(grow_count):
-                                    try:
-                                        # 直接创建 session，不调用 _create_session() 避免锁竞争
-                                        new_session = requests.Session()
-                                        new_session.headers.update({"Connection": "keep-alive"})
-                                        if self.proxy:
-                                            new_session.proxies = {"http": self.proxy, "https": self.proxy}
-                                        # 直接添加到池中（已经在 _pool_cond 锁内）
-                                        self._pool.append(new_session)
-                                        self._session_count += 1
-                                        session_id = id(new_session)
-                                        self._session_usage_count[session_id] = 0
-                                        created_count += 1
-                                    except Exception as e:
-                                        if self.debug:
-                                            print(f"[HttpClient] 释放流程Session后扩容失败: {e}")
-                                        break
-                                if self.debug and created_count > 0:
-                                    print(f"[HttpClient] 流程Session已销毁，连接池已扩容 {created_count} 个连接，当前池大小: {len(self._pool)}")
-                        except Exception as e:
-                            if self.debug:
-                                print(f"[HttpClient] 释放流程Session后扩容异常: {e}")
-                finally:
-                    self._pool_cond.release()
-            else:
-                # 无法获取锁，跳过扩容（避免阻塞）
-                if self.debug:
-                    print(f"[HttpClient] 释放流程Session时无法获取锁，跳过扩容（避免阻塞）")
-        except Exception as e:
-            # 扩容失败不影响流程，只记录日志
-            if self.debug:
-                print(f"[HttpClient] 释放流程Session后扩容异常: {e}")
-        
-        if self.debug:
-            print(f"[HttpClient] 流程Session已销毁，当前连接池大小: {len(self._pool)}, 总连接数: {self._session_count}")
-
-    def _release_session(self, session: requests.Session, is_flow_session: bool = False):
-        """
-        释放 Session
-        
-        Args:
-            session: 要释放的 Session
-            is_flow_session: 是否为流程级Session（流程级Session直接销毁，不放入池中）
-        """
-        if self._closed:
-            try:
-                session.close()
-            except Exception:
-                pass
-            return
-
-        # 流程级Session直接销毁，不放入池中
-        if is_flow_session:
-            self.release_flow_session(session)
-            return
-
-        # 检查 Session 是否已关闭
-        try:
-            # 尝试检查 Session 状态
-            if hasattr(session, 'closed') and session.closed:
-                # Session 已关闭，不放入池中
-                with self._lock:
-                    self._session_count -= 1
-                    session_id = id(session)
-                    if session_id in self._session_usage_count:
-                        del self._session_usage_count[session_id]
-                if self.debug:
-                    print("[HttpClient] Session 已关闭，移除连接")
-                return
-        except Exception:
-            # 无法检查状态，假设 Session 可能有问题，不放入池中
-            try:
-                session.close()
-            except Exception:
-                pass
-            with self._lock:
-                self._session_count -= 1
-                session_id = id(session)
-                if session_id in self._session_usage_count:
-                    del self._session_usage_count[session_id]
-            if self.debug:
-                print("[HttpClient] Session 状态异常，移除连接")
-            return
-
-        # 检查 Session 使用次数
-        session_id = id(session)
-        with self._lock:
-            usage_count = self._session_usage_count.get(session_id, 0)
-            usage_count += 1
-            self._session_usage_count[session_id] = usage_count
-            
-            # 如果使用次数超过限制，关闭并移除该 Session
-            if usage_count >= self._max_session_usage:
-                try:
-                    session.close()
-                except Exception:
-                    pass
-                self._session_count -= 1
-                if session_id in self._session_usage_count:
-                    del self._session_usage_count[session_id]
-                if self.debug:
-                    print(f"[HttpClient] Session 使用次数达到上限({self._max_session_usage}次)，重新创建连接")
-                return
-
-        if not self.enable_keep_alive:
-            try:
-                session.close()
-            except Exception:
-                pass
-            with self._lock:
-                self._session_count -= 1
-                session_id = id(session)
-                if session_id in self._session_usage_count:
-                    del self._session_usage_count[session_id]
-            if self.debug:
-                print("[HttpClient] Keep-Alive关闭，销毁连接")
-        else:
-            # 将 Session 放回池中
-            with self._pool_cond:
-                self._pool.append(session)
-                self._pool_cond.notify()
-
-    # ---------------------- 健康检测 ----------------------
-
-    def _health_check_loop(self):
-        """后台健康检测"""
-        while not self._closed:
-            time.sleep(self.health_check_interval)
-            with self._lock:
-                sessions_snapshot = list(self._pool)
-
-            alive = []
-            for s in sessions_snapshot:
-                try:
-                    # 检查 Session 是否已关闭
-                    if hasattr(s, 'closed') and s.closed:
-                        try:
-                            s.close()
-                        except Exception:
-                            pass
-                        if self.debug:
-                            print("[HttpClient] 检测到已关闭的连接，移除")
-                        continue
+                # 第二优先级：检查池是否已满
+                if len(_client_pool) < _client_pool_max_size:
+                    # 池未满，创建新的
+                    import time
+                    new_user_id = f"auto_session_{int(time.time() * 1000)}"
                     
-                    # 尝试检查 Session 状态
-                    # 注意：curl_cffi 的 Session 对象可能没有 curl 属性，或者 getinfo 需要参数
-                    # 我们只检查 closed 属性，不调用 getinfo
-                    if hasattr(s, "closed") and s.closed:
-                        continue
-                    
-                    # 如果 Session 有 curl 属性，尝试简单检查（但不调用 getinfo）
-                    # 因为 getinfo 需要参数，我们只检查对象是否存在
-                    if hasattr(s, "curl"):
-                        # 不调用 getinfo，只检查 curl 对象是否存在
-                        pass
-                    
-                    alive.append(s)
-                except Exception as e:
-                    # Session 已损坏或关闭
-                    try:
-                        s.close()
-                    except Exception:
-                        pass
                     if self.debug:
-                        print(f"[HttpClient] 检测到失效连接，已关闭: {e}")
-
-            with self._lock:
-                before = len(self._pool)
-                self._pool = [s for s in self._pool if s in alive]
-                after = len(self._pool)
-                if before != after and self.debug:
-                    print(f"[HttpClient] 健康检测: 移除失效连接 {before - after}")
-
-    # ---------------------- 请求构造 ----------------------
-
-    def _prepare_request_kwargs(
-        self,
-        headers: Optional[Dict[str, Any]] = None,
-        data: Optional[Union[str, bytes]] = None,
-        json: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-        impersonate: Optional[str] = None,
-        http_version: Optional[str] = None,
-        **kwargs,
-    ) -> Dict[str, Any]:
-        req = {"verify": self.verify, "timeout": self.timeout}
-        if headers:
-            req["headers"] = headers
-        if data is not None:
-            req["data"] = data
-        if json is not None:
-            req["json"] = json
-        if params is not None:
-            req["params"] = params
-        impersonate = impersonate or self.default_impersonate
-        if impersonate:
-            req["impersonate"] = impersonate
-        if http_version:
-            req["http_version"] = http_version
-        req.update(kwargs)
-        return req
-
-    # ---------------------- 请求执行 ----------------------
-
-    def _request_with_session(self, method: str, url: str, session: requests.Session, **kwargs) -> requests.Response:
-        """
-        使用指定的Session发送请求（不管理Session生命周期）
-        包含重试机制，处理代理连接错误
-        
-        Args:
-            method: HTTP方法
-            url: 请求URL
-            session: 要使用的Session对象
-            **kwargs: 请求参数
-        """
-        import time
-        request_start = time.time()
-        
-        # 验证 session 参数类型（检查是否有 post 方法，更通用）
-        if not hasattr(session, 'post') or not hasattr(session, 'get'):
-            raise TypeError(f"session 参数必须是 Session 对象（有 post/get 方法），但收到: {type(session)} ({session})")
-        
-        attempt = 0
-        while attempt < self.max_retries:
-            try:
-                # 确保超时参数被正确传递
-                if "timeout" not in kwargs:
-                    kwargs["timeout"] = self.timeout
-                
-                func = getattr(session, method.lower())
-                request_elapsed_start = time.time()
-                resp = func(url, **kwargs)
-                request_elapsed = time.time() - request_elapsed_start
-                
-                if self.debug:
-                    print(f"[HttpClient] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}")
-                
-                self._stats["requests"] += 1
-                
-                if self.debug:
-                    total_elapsed = time.time() - request_start
-                    print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
-                return resp
-            except (requests.RequestsError, ConnectionError, TimeoutError) as e:
-                self._stats["failures"] += 1
-                error_str = str(e).lower()
-                
-                # 检查是否是网络相关错误（需要重试）
-                is_network_error = (
-                    "proxy connect" in error_str or
-                    "proxy" in error_str and ("aborted" in error_str or "closed" in error_str) or
-                    "connection" in error_str and ("closed" in error_str or "aborted" in error_str) or
-                    "session is closed" in error_str or
-                    "closed" in error_str
-                )
-                
-                if is_network_error:
-                    attempt += 1
-                    if attempt >= self.max_retries:
-                        if self.debug:
-                            print(f"[HttpClient] 网络连接错误，已达到最大重试次数: {e}")
-                        raise
-                    self._stats["retries"] += 1
-                    if self.debug:
-                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
-                    time.sleep(self.retry_delay)
-                    continue
+                        print(f"[HttpClient] 池未满，创建新的自动 session: {new_user_id} "
+                              f"(池大小: {len(_client_pool)}/{_client_pool_max_size})")
+                    
+                    return new_user_id
                 else:
-                    # 非网络错误，直接抛出
+                    # 池已满且没有可用 session，触发后台清理
                     if self.debug:
-                        print(f"[HttpClient] 请求失败（非网络错误）: {e}")
-                    raise
-            except Exception as e:
-                self._stats["failures"] += 1
-                # 检查是否是网络相关错误（需要重试）
-                error_str = str(e).lower()
-                is_network_error = (
-                    "proxy connect" in error_str or
-                    "proxy" in error_str and ("aborted" in error_str or "closed" in error_str) or
-                    "connection" in error_str and ("closed" in error_str or "aborted" in error_str) or
-                    "session is closed" in error_str or
-                    "closed" in error_str
-                )
-                
-                if is_network_error:
-                    attempt += 1
-                    if attempt >= self.max_retries:
-                        if self.debug:
-                            print(f"[HttpClient] 网络连接错误，已达到最大重试次数: {e}")
-                        raise
-                    self._stats["retries"] += 1
-                    if self.debug:
-                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
-                    time.sleep(self.retry_delay)
-                    continue
-                else:
-                    # 其他错误，直接抛出
-                    if self.debug:
-                        print(f"[HttpClient] 请求失败: {e}")
-                    raise
+                        print(f"[HttpClient] 池已满且无可用 session，触发后台清理 "
+                              f"(重试 {retry_count + 1}/{max_retries})")
+            
+            # 在锁外触发清理
+            self._trigger_cleanup_full_sessions()
+            
+            # 等待一小段时间让清理完成
+            import time
+            time.sleep(0.1)
+            retry_count += 1
+        
+        # 重试失败，抛出异常
+        raise RuntimeError(f"无法获取可用 session: 池已满({_client_pool_max_size})且所有 session 都已达到使用上限")
 
-    def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
-        """带重试机制的请求执行"""
-        import time
-        request_start = time.time()
-        attempt = 0
-        session = None
-        while attempt < self.max_retries:
-            try:
-                if self.debug:
-                    print(f"[HttpClient] 尝试获取 Session (尝试 {attempt + 1}/{self.max_retries})...")
-                session_start = time.time()
-                session = self._get_session()
-                session_elapsed = time.time() - session_start
-                if session_elapsed > 0.1 and self.debug:
-                    print(f"[HttpClient] 获取 Session 耗时: {session_elapsed:.3f}s")
-                
-                func = getattr(session, method.lower())
-                request_elapsed_start = time.time()
-                # 确保超时参数被正确传递
-                if "timeout" not in kwargs:
-                    kwargs["timeout"] = self.timeout
-                resp = func(url, **kwargs)
-                request_elapsed = time.time() - request_elapsed_start
-                
-                if self.debug:
-                    print(f"[HttpClient] 请求完成，耗时: {request_elapsed:.3f}s, 状态码: {resp.status_code}")
-                
-                self._stats["requests"] += 1
-                # 请求成功，释放 Session 回池
-                self._release_session(session)
-                session = None
-                
-                if self.debug:
-                    total_elapsed = time.time() - request_start
-                    print(f"[HttpClient] 总耗时: {total_elapsed:.3f}s")
-                return resp
-            except (requests.RequestsError, ConnectionError, TimeoutError) as e:
-                self._stats["failures"] += 1
-                # Session 可能已损坏，关闭并移除
-                if session is not None:
-                    try:
-                        session.close()
-                    except Exception:
-                        pass
-                    with self._lock:
-                        self._session_count -= 1
-                    session = None
-                
-                attempt += 1
-                if attempt >= self.max_retries:
-                    raise
-                self._stats["retries"] += 1
-                if self.debug:
-                    print(f"[HttpClient] 网络错误({e})，重试 {attempt}/{self.max_retries}")
-                time.sleep(self.retry_delay)
-            except Exception as e:
-                self._stats["failures"] += 1
-                # 检查是否是网络相关错误（需要重试）
-                error_str = str(e).lower()
-                is_network_error = (
-                    "session is closed" in error_str or 
-                    "closed" in error_str or
-                    "connection to proxy closed" in error_str or
-                    "connection closed" in error_str or
-                    "proxy" in error_str and "closed" in error_str or
-                    "connection" in error_str and "closed" in error_str
-                )
-                
-                if is_network_error:
-                    # 网络错误，移除 Session 并重试
-                    if session is not None:
-                        try:
-                            session.close()
-                        except Exception:
-                            pass
-                        with self._lock:
-                            self._session_count -= 1
-                        session = None
-                    
-                    attempt += 1
-                    if attempt >= self.max_retries:
-                        raise
-                    self._stats["retries"] += 1
-                    if self.debug:
-                        print(f"[HttpClient] 网络连接错误({e})，重试 {attempt}/{self.max_retries}")
-                    time.sleep(self.retry_delay)
-                    continue
-                
-                # 其他错误，释放 Session 后抛出
-                if session is not None:
-                    self._release_session(session)
-                    session = None
-                if self.debug:
-                    print(f"[HttpClient] 未知错误: {e}")
-                raise
-
-    # ---------------------- 公共接口 ----------------------
-
-    def get(self, url: str, headers=None, params=None, impersonate=None, session=None, **kwargs):
+    def release_flow_session(self, session: Any):
         """
-        发送 GET 请求
+        向后兼容：释放 flow session
+        
+        在新的设计中，session 是自动管理的，这个方法什么都不做
         
         Args:
-            url: 请求URL
-            headers: 请求头
-            params: URL参数
-            impersonate: 模拟浏览器类型
-            session: 可选的Session对象
-                - 如果为 None：从连接池中获取Session，使用后放回池中（原有流程）
-                - 如果提供：使用指定的Session，不管理Session生命周期
-            **kwargs: 其他参数
+            session: session 对象（忽略）
         """
-        # 从 kwargs 中移除 session，避免被传递到 _prepare_request_kwargs
-        kwargs_without_session = {k: v for k, v in kwargs.items() if k != 'session'}
-        req = self._prepare_request_kwargs(headers=headers, params=params, impersonate=impersonate, **kwargs_without_session)
-        # 确保 req 中不包含 session 键
-        req.pop('session', None)
-        if session is not None:
-            # 使用指定的Session（流程级Session）
-            return self._request_with_session("GET", url, session, **req)
-        else:
-            # session 为 None，使用连接池（原有流程）
-            return self._request_with_retry("GET", url, **req)
+        pass  # 新设计中自动管理，不需要手动释放
 
-    def post(self, url: str, headers=None, data=None, json=None, impersonate=None, http_version=None, session=None, **kwargs):
+    def _trigger_cleanup_full_sessions(self):
         """
-        发送 POST 请求
+        触发后台清理：分批清除所有达到使用上限的 session
+        优先清除最早创建的 session（按 created_at 排序）
+        """
+        sessions_to_cleanup = []
         
-        Args:
-            url: 请求URL
-            headers: 请求头
-            data: 请求体数据
-            json: JSON数据
-            impersonate: 模拟浏览器类型
-            http_version: HTTP版本
-            session: 可选的Session对象
-                - 如果为 None：从连接池中获取Session，使用后放回池中（原有流程）
-                - 如果提供：使用指定的Session，不管理Session生命周期
-            **kwargs: 其他参数
-        """
-        # 从 kwargs 中移除 session，避免被传递到 _prepare_request_kwargs
-        kwargs_without_session = {k: v for k, v in kwargs.items() if k != 'session'}
-        req = self._prepare_request_kwargs(
-            headers=headers, data=data, json=json, impersonate=impersonate, http_version=http_version, **kwargs_without_session
-        )
-        # 确保 req 中不包含 session 键
-        req.pop('session', None)
-        if session is not None:
-            # 使用指定的Session（流程级Session）
-            return self._request_with_session("POST", url, session, **req)
-        else:
-            # session 为 None，使用连接池（原有流程）
-            return self._request_with_retry("POST", url, **req)
-
-    def put(self, url: str, headers=None, data=None, json=None, **kwargs):
-        req = self._prepare_request_kwargs(headers=headers, data=data, json=json, **kwargs)
-        return self._request_with_retry("PUT", url, **req)
-
-    def delete(self, url: str, headers=None, **kwargs):
-        req = self._prepare_request_kwargs(headers=headers, **kwargs)
-        return self._request_with_retry("DELETE", url, **kwargs)
-    
-    # ---------------------- 异步接口 ----------------------
-    
-    async def get_async(self, url: str, headers=None, params=None, impersonate=None, **kwargs):
-        """异步 GET 请求（在线程池中执行，不阻塞事件循环）"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.get, url, headers, params, impersonate, **kwargs)
-    
-    async def post_async(self, url: str, headers=None, data=None, json=None, impersonate=None, http_version=None, **kwargs):
-        """异步 POST 请求（在线程池中执行，不阻塞事件循环）"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.post, url, headers, data, json, impersonate, http_version, **kwargs)
-    
-    async def put_async(self, url: str, headers=None, data=None, json=None, **kwargs):
-        """异步 PUT 请求（在线程池中执行，不阻塞事件循环）"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.put, url, headers, data, json, **kwargs)
-    
-    async def delete_async(self, url: str, headers=None, **kwargs):
-        """异步 DELETE 请求（在线程池中执行，不阻塞事件循环）"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.delete, url, headers, **kwargs)
-
-    # ---------------------- 实用工具 ----------------------
-
-    def update_proxy(self, proxy: Optional[str], force_recreate=False):
-        """动态更新代理"""
-        self.proxy = proxy
-        with self._lock:
-            if force_recreate:
-                for s in self._pool:
-                    try:
-                        s.close()
-                    except Exception:
-                        pass
-                self._pool.clear()
-                self._session_count = 0
-                self._grow_pool()
-            else:
-                for s in self._pool:
-                    s.proxies = {"http": proxy, "https": proxy}
-        if self.debug:
-            print(f"[HttpClient] 已更新代理为: {proxy}")
-
-    def get_stats(self):
-        """返回当前统计数据"""
-        return dict(self._stats)
+        with _client_pool_lock:
+            # 找出所有达到使用上限的 session
+            for user_id, session_info in _client_pool.items():
+                if session_info["usage_count"] >= self._max_session_usage:
+                    sessions_to_cleanup.append((
+                        user_id,
+                        session_info["session"],
+                        session_info["created_at"],
+                        session_info["usage_count"]
+                    ))
+            
+            if not sessions_to_cleanup:
+                if self.debug:
+                    print(f"[HttpClient] 无需清理，没有达到上限的 session")
+                return
+            
+            # 按创建时间排序，最早的优先
+            sessions_to_cleanup.sort(key=lambda x: x[2])  # x[2] 是 created_at
+            
+            # 分批清理：每次清理 20% 或至少 1 个
+            batch_size = max(1, len(sessions_to_cleanup) // 5)
+            batch_to_cleanup = sessions_to_cleanup[:batch_size]
+            
+            if self.debug:
+                print(f"[HttpClient] 开始分批清理: 共 {len(sessions_to_cleanup)} 个达到上限的 session，"
+                      f"本次清理 {len(batch_to_cleanup)} 个")
+            
+            # 移除并加入清理队列
+            for user_id, session, created_at, usage_count in batch_to_cleanup:
+                # 从池中移除
+                if user_id in _client_pool:
+                    del _client_pool[user_id]
+                
+                # 加入清理队列
+                _cleanup_queue.put({
+                    "session": session,
+                    "user_id": user_id,
+                })
+                
+                # 更新统计
+                self._stats["sessions_recycled"] += 1
+                
+                if self.debug:
+                    import time
+                    age = time.time() - created_at
+                    print(f"[HttpClient] 清理 session: user_id={user_id}, "
+                          f"使用次数={usage_count}, 存活时间={age:.1f}秒")
 
     def close(self):
-        """关闭所有连接并停止健康检测"""
+        """关闭客户端"""
         self._closed = True
-        with self._lock:
-            for s in self._pool:
-                try:
-                    s.close()
-                except Exception:
-                    pass
-            self._pool.clear()
-            self._session_count = 0
+        
+        with _client_pool_lock:
+            # 将所有 session 加入清理队列
+            for user_id, session_info in _client_pool.items():
+                _cleanup_queue.put({
+                    "session": session_info["session"],
+                    "user_id": user_id,
+                })
+            
+            _client_pool.clear()
+        
         if self.debug:
-            print("[HttpClient] 已关闭连接池")
+            print(f"[HttpClient] 已关闭，清理了所有 session")
 
-    def __enter__(self):
-        return self
+    def __del__(self):
+        try:
+            self.close()
+        except:
+            pass
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-        return False
+
+# ========== 向后兼容 API（基于 flow_session 的旧接口）==========
+
+def get_flow_session_client(
+    proxy: Optional[str] = None,
+    timeout: int = 30,
+    max_retries: int = 3,
+    retry_delay: float = 1.0,
+    max_session_usage: int = 100,
+    max_pool_size: int = 5000,
+    debug: bool = False,
+) -> HttpClient:
+    """
+    创建一个 HttpClient 实例（向后兼容）
+    
+    注意：新的设计中，session 管理基于 user_id
+    """
+    return HttpClient(
+        proxy=proxy,
+        timeout=timeout,
+        max_retries=max_retries,
+        retry_delay=retry_delay,
+        max_session_usage=max_session_usage,
+        max_pool_size=max_pool_size,
+        debug=debug,
+    )
+
+
+class FlowSessionWrapper:
+    """
+    向后兼容的 flow_session 包装器
+    将旧的 flow_session API 适配到新的 user_id 模式
+    """
+    def __init__(self, client: HttpClient, user_id: str):
+        self._client = client
+        self._user_id = user_id
+
+    def request(self, method: str, url: str, **kwargs):
+        return self._client.request(method, url, self._user_id, **kwargs)
+
+    def get(self, url: str, **kwargs):
+        return self._client.get(url, self._user_id, **kwargs)
+
+    def post(self, url: str, **kwargs):
+        return self._client.post(url, self._user_id, **kwargs)
+
+
+# ========== 全局辅助函数 ==========
+
+def get_global_pool_stats() -> Dict[str, Any]:
+    """获取全局池统计信息"""
+    with _client_pool_lock:
+        pool_size = len(_client_pool)
+        
+        if pool_size > 0:
+            usage_counts = [info["usage_count"] for info in _client_pool.values()]
+            avg_usage = sum(usage_counts) / len(usage_counts)
+            max_usage = max(usage_counts)
+            min_usage = min(usage_counts)
+        else:
+            avg_usage = max_usage = min_usage = 0
+        
+        return {
+            "pool_size": pool_size,
+            "pool_max_size": _client_pool_max_size,
+            "avg_usage_count": avg_usage,
+            "max_usage_count": max_usage,
+            "min_usage_count": min_usage,
+            "cleanup_queue_size": _cleanup_queue.qsize(),
+        }
+
+
+def clear_global_pool():
+    """清空全局池"""
+    with _client_pool_lock:
+        for user_id, session_info in _client_pool.items():
+            _cleanup_queue.put({
+                "session": session_info["session"],
+                "user_id": user_id,
+            })
+        
+        _client_pool.clear()
+
+
+if __name__ == "__main__":
+    # 简单测试
+    client = HttpClient(debug=True, max_session_usage=5, max_pool_size=10)
+    
+    print("\n测试1: 同一 user_id 多次请求")
+    for i in range(7):
+        try:
+            resp = client.get("https://httpbin.org/get", user_id="user_001")
+            print(f"  请求 {i+1}: 成功, 状态码={resp.status_code}")
+        except Exception as e:
+            print(f"  请求 {i+1}: 失败, 错误={e}")
+    
+    print(f"\n当前池状态: {client.get_stats()}")
+    
+    print("\n测试2: 多个不同 user_id")
+    for i in range(15):
+        try:
+            resp = client.get("https://httpbin.org/get", user_id=f"user_{i:03d}")
+            print(f"  user_{i:03d}: 成功")
+        except Exception as e:
+            print(f"  user_{i:03d}: 失败")
+    
+    print(f"\n最终池状态: {client.get_stats()}")
+    print(f"全局池统计: {get_global_pool_stats()}")
+    
+    client.close()

@@ -181,7 +181,7 @@ def get_table_columns(db: MySQLDB, table_name: str) -> List[str]:
 def batch_upload_devices(
     db: MySQLDB,
     data_list: List[Dict[str, Any]],
-    table_name: str = "uni_devices",
+    table_name: str = "uni_devices_1",
     batch_size: int = 1000
 ) -> tuple[int, int]:
     """
@@ -381,7 +381,7 @@ def main():
         success_count, fail_count = batch_upload_devices(
             db=db,
             data_list=all_data,
-            table_name="uni_devices",
+            table_name="uni_devices_1",
             batch_size=1000
         )
         

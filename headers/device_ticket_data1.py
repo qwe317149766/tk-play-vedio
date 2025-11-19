@@ -113,7 +113,7 @@ def build_guard(
         if priv_hex and priv_hex != "...":
             kp = load_keypair_from_priv_hex(priv_hex)
         else:
-            kp = generate_delta_keypair()
+            kp = generate_delta_keypair() 
         device_token = device_guard_data0["device_token"]
 
         # 2) unsigned 字符串 —— 注意这里要和真实请求完全一样
