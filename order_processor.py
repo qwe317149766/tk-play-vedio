@@ -17,6 +17,7 @@ from config_loader import ConfigLoader
 from tiktok_api import TikTokAPI
 from message_queue import MessageQueue
 from redis_client import RedisClient  # 新增：使用Redis缓存
+import http_client_async  # 新增：用于清理HTTP session池
 import logging
 
 # 配置日志（同时输出到控制台和文件）
@@ -1575,8 +1576,6 @@ async def play_video_task(
                 
                 stage_elapsed = time.time() - stage_start
                 logger.debug(f"[阶段6] 更新播放统计完成（Redis缓存模式）, 耗时: {stage_elapsed:.2f}秒")
-                if stage_elapsed > 1.0:  # Redis模式下应该很快，超过1秒就告警
-                    logger.warning(f"[阶段6] 统计更新耗时过长: {stage_elapsed:.2f}秒（Redis模式）")
             except Exception as e:
                 stage_elapsed = time.time() - stage_start
                 logger.error(f"[阶段6] 更新统计失败: {e}, 耗时: {stage_elapsed:.2f}秒")
@@ -3510,7 +3509,15 @@ def main():
                     except Exception as e:
                         logger.error(f"刷新数据失败: {e}")
                 
-                # 3. 强制关闭线程池（不等待）
+                # 3. 清理HTTP session池（避免事件循环绑定问题）
+                logger.info("清理HTTP session池...")
+                try:
+                    http_client_async.clear_global_pool()
+                    logger.info("✓ HTTP session池已清理")
+                except Exception as e:
+                    logger.warning(f"清理HTTP session池时出错: {e}")
+                
+                # 4. 强制关闭线程池（不等待）
                 if _thread_pool:
                     logger.info("强制关闭线程池（不等待）...")
                     try:
@@ -3520,7 +3527,7 @@ def main():
                         logger.warning(f"关闭线程池时出错: {e}")
                     _thread_pool = None
                 
-                # 4. 强制重置队列实例
+                # 5. 强制重置队列实例
                 if _queue_instance:
                     try:
                         del _queue_instance
@@ -3529,7 +3536,7 @@ def main():
                 _queue_instance = None
                 logger.info("✓ 队列实例已强制重置")
                 
-                # 5. 强制停止设备状态监控线程（不等待）
+                # 6. 强制停止设备状态监控线程（不等待）
                 if _monitor_thread and _monitor_thread.is_alive():
                     logger.info("强制停止设备状态监控线程（不等待）...")
                     _monitor_stop_event.set()
