@@ -101,6 +101,10 @@ _task_stats_lock = threading.Lock()
 _monitor_thread = None
 _monitor_stop_event = threading.Event()
 
+# 订单完成标志（用于取消其他订单检查）
+_order_completed_flag = False
+_order_completed_lock = threading.Lock()
+
 
 
 
@@ -631,7 +635,15 @@ def check_and_update_order_completion(order_id: int, db: MySQLDB) -> Tuple[bool,
     Returns:
         (是否完成, order_num, complete_num)
     """
+    global _order_completed_flag, _order_completed_lock
+    
     try:
+        # 0. 检查是否已经有其他检查完成了订单
+        with _order_completed_lock:
+            if _order_completed_flag:
+                logger.debug(f"[订单完成检查] 订单已被其他检查标记为完成，跳过本次检查")
+                return False, 0, 0
+        
         # 1. 从Redis获取订单信息
         order_info = get_order_info_from_redis(order_id)
         if not order_info:
@@ -650,6 +662,13 @@ def check_and_update_order_completion(order_id: int, db: MySQLDB) -> Tuple[bool,
         
         # 4. 判断订单是否完成（完全基于 Redis 数据）
         if order_num > 0 and current_complete_num >= order_num and order_status != 2:
+            # 设置完成标志，阻止其他检查
+            with _order_completed_lock:
+                if _order_completed_flag:
+                    logger.debug(f"[订单完成检查] 订单已被其他检查标记为完成，跳过更新")
+                    return False, 0, 0
+                _order_completed_flag = True
+                logger.info(f"[订单完成检查] ✓ 设置订单完成标志，取消其他检查")
             logger.info(f"[订单完成检查] ✓ 订单 {order_id} 已完成！"
                        f"完成数={current_complete_num}/{order_num}（来自Redis），开始更新状态...")
             
@@ -2810,6 +2829,8 @@ def main():
         logger.info("=" * 80)
         
         while True:  # 外层循环：持续等待和处理订单
+            global _order_completed_flag, _order_completed_lock
+            
             try:
                 logger.info("")
                 logger.info("🔄" * 40)
@@ -3287,6 +3308,12 @@ def main():
                         
                         # 检查队列是否完全空闲（所有任务都已完成）
                         if queue_size == 0 and running_tasks == 0:
+                            # 检查是否已经有其他检查完成了订单
+                            with _order_completed_lock:
+                                if _order_completed_flag:
+                                    logger.info("订单已被标记为完成，跳过队列空闲检查")
+                                    continue
+                            
                             logger.info("=" * 80)
                             logger.info("检测到队列完全空闲，检查订单状态...")
                             logger.info("=" * 80)
@@ -3311,8 +3338,11 @@ def main():
                                         logger.info(f"当前订单 {order_id} 状态: complete_num={complete_num}, order_num={order_num}")
                                     
                                     if order_num > 0 and complete_num >= order_num:
-                                        # 订单已完成
-                                        logger.info(f"✅ 订单 {order_id} 已完成！")
+                                        # 设置订单完成标志，取消其他检查
+                                        with _order_completed_lock:
+                                            _order_completed_flag = True
+                                        logger.info(f"✅ 订单 {order_id} 已完成！已设置完成标志")
+                                        
                                         _db_instance.update("uni_order", {"status": 2}, "id = %s", (order_id,))
                                         _db_instance.commit()
                                         
@@ -3375,6 +3405,11 @@ def main():
                 logger.info("=" * 80)
                 logger.info("强制清理当前循环的资源...")
                 logger.info("=" * 80)
+                
+                # 0. 重置订单完成标志
+                with _order_completed_lock:
+                    _order_completed_flag = False
+                logger.info("✓ 订单完成标志已重置")
                 
                 # 1. 强制停止队列（不等待）
                 if _queue_instance:
