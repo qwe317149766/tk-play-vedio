@@ -2275,12 +2275,45 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                 if total_in_queue > 0:
                     logger.info(f"[阈值回调] ⏳ 等待队列中 {total_in_queue} 个任务完成后，设备将自动释放并可重复使用")
                 else:
-                    logger.warning(f"[阈值回调] ⚠️ 队列已空但仍无可用设备，可能设备状态异常")
+                    logger.warning(f"[阈值回调] ⚠️ 队列已空但仍无可用设备，检查是否需要重置设备状态")
+                    
+                    # 检查是否所有设备都已使用过
+                    try:
+                        status_sql = f"""
+                        SELECT status, COUNT(*) as count
+                        FROM {_device_table_name}
+                        GROUP BY status
+                        """
+                        status_results = _db_instance.execute(status_sql, fetch=True)
+                        status_counts = {row['status']: row['count'] for row in status_results}
+                        
+                        total_devices = sum(status_counts.values())
+                        completed_devices = status_counts.get(3, 0)
+                        failed_devices = status_counts.get(4, 0)
+                        
+                        # 如果大部分设备都已完成（>80%），则重置设备状态
+                        if total_devices > 0 and (completed_devices + failed_devices) / total_devices > 0.8:
+                            logger.info(f"[阈值回调] 🔄 检测到 {(completed_devices + failed_devices) / total_devices * 100:.1f}% 的设备已使用过，重置设备状态...")
+                            reset_count = reset_device_status(_db_instance, _device_table_name)
+                            logger.info(f"[阈值回调] ✅ 设备状态已重置，{reset_count} 个设备可重新使用")
+                            
+                            # 重新获取设备
+                            devices = get_devices_from_table(_db_instance, _device_table_name, limit=need_count_with_buffer, status=0)
+                            if devices:
+                                logger.info(f"[阈值回调] ✅ 重置后获取到 {len(devices)} 个设备，继续创建任务")
+                                # 继续执行后面的任务创建逻辑
+                            else:
+                                logger.warning(f"[阈值回调] ⚠️ 重置后仍无可用设备")
+                                return []
+                        else:
+                            logger.info(f"[阈值回调] 设备使用率 {(completed_devices + failed_devices) / total_devices * 100:.1f}%，暂不重置")
+                    except Exception as e:
+                        logger.error(f"[阈值回调] 检查设备状态时出错: {e}")
             
-            logger.info(f"[阈值回调] 本次不添加新任务，等待队列中现有任务完成后释放设备")
-            logger.info(f"[阈值回调] 注意：阈值回调返回空列表不会影响队列中已有任务的正常执行")
-            # 不立即停止，返回空列表让队列继续处理现有任务
-            return []
+            if not devices:
+                logger.info(f"[阈值回调] 本次不添加新任务，等待队列中现有任务完成后释放设备")
+                logger.info(f"[阈值回调] 注意：阈值回调返回空列表不会影响队列中已有任务的正常执行")
+                return []
         
         # 为每个设备创建任务
         tasks = []
@@ -3190,6 +3223,43 @@ def main():
                                     logger.warning(f"⚠️ 队列已空且没有可用设备 (等待 {no_device_wait_count}/{max_no_device_wait})")
                                     
                                     if no_device_wait_count >= max_no_device_wait:
+                                        # 检查是否所有设备都已使用过（status=3）
+                                        logger.info("检查是否所有设备都已使用过...")
+                                        try:
+                                            # 统计各状态设备数量
+                                            status_sql = f"""
+                                            SELECT status, COUNT(*) as count
+                                            FROM {_device_table_name}
+                                            GROUP BY status
+                                            """
+                                            status_results = _db_instance.execute(status_sql, fetch=True)
+                                            status_counts = {row['status']: row['count'] for row in status_results}
+                                            
+                                            total_devices = sum(status_counts.values())
+                                            completed_devices = status_counts.get(3, 0)  # status=3: 已完成
+                                            failed_devices = status_counts.get(4, 0)  # status=4: 连续失败异常
+                                            
+                                            logger.info(f"设备状态统计: 总数={total_devices}, 已完成={completed_devices}, 失败={failed_devices}")
+                                            
+                                            # 如果大部分设备都已完成（>80%），则重置设备状态
+                                            if total_devices > 0 and (completed_devices + failed_devices) / total_devices > 0.8:
+                                                logger.info("=" * 80)
+                                                logger.info(f"🔄 检测到 {(completed_devices + failed_devices) / total_devices * 100:.1f}% 的设备已使用过")
+                                                logger.info("🔄 重置设备状态，让所有设备可以重新使用...")
+                                                logger.info("=" * 80)
+                                                
+                                                # 重置设备状态：将 status=3 和 status=1 的设备改为 status=0
+                                                reset_count = reset_device_status(_db_instance, _device_table_name)
+                                                logger.info(f"✅ 设备状态已重置，{reset_count} 个设备可重新使用")
+                                                
+                                                # 重置等待计数器，继续处理
+                                                no_device_wait_count = 0
+                                                continue
+                                            else:
+                                                logger.warning(f"设备使用率较低 ({(completed_devices + failed_devices) / total_devices * 100:.1f}%)，不重置")
+                                        except Exception as e:
+                                            logger.error(f"检查设备状态时出错: {e}")
+                                        
                                         stop_reason = "队列已空且持续无可用设备"
                                         logger.info(f"[队列停止] 原因: {stop_reason}")
                                         logger.info(f"[队列停止] 所有任务已完成，设备表中无可用设备，程序将优雅退出")
@@ -3311,8 +3381,9 @@ def main():
                             # 检查是否已经有其他检查完成了订单
                             with _order_completed_lock:
                                 if _order_completed_flag:
-                                    logger.info("订单已被标记为完成，跳过队列空闲检查")
-                                    continue
+                                    logger.info("✅ 订单已被标记为完成，跳出循环切换到下一个订单")
+                                    stop_reason = "订单已完成"
+                                    break
                             
                             logger.info("=" * 80)
                             logger.info("检测到队列完全空闲，检查订单状态...")
