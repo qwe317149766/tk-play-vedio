@@ -2509,6 +2509,35 @@ async def task_callback(task_data: Dict[str, Any]):
         primary_key_value = task_data.get('primary_key_value')
         order_id = task_data.get('order_id')
         
+        # 在执行任务前，检查订单是否已经完成（使用Redis缓存，避免频繁查询数据库）
+        # 只有当订单接近完成时才检查，避免不必要的查询
+        if order_id and _redis:
+            try:
+                # 从Redis获取订单进度（快速，不查询数据库）
+                redis_complete = get_order_complete_from_redis(order_id)
+                redis_order_num = get_order_num_from_redis(order_id)
+                
+                if redis_order_num and redis_order_num > 0:
+                    # 只有当完成度超过90%时才检查（避免不必要的检查）
+                    if redis_complete >= redis_order_num * 0.9:
+                        # 接近完成，从数据库确认一下
+                        order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
+                        if order_info:
+                            order_num = order_info.get('order_num', 0) or 0
+                            complete_num = order_info.get('complete_num', 0) or 0
+                            
+                            if order_num > 0 and complete_num >= order_num:
+                                # 订单已完成，跳过此任务
+                                logger.info(f"[任务跳过] 订单 {order_id} 已完成({complete_num}/{order_num})，跳过任务: 主键ID={primary_key_value}, 设备ID={device_id}")
+                                
+                                # 释放设备状态
+                                primary_key_field = get_table_primary_key_field(_db_instance, device_table)
+                                update_device_status_to_redis(primary_key_value, 0)  # 状态0：可用
+                                
+                                return  # 直接返回，不执行任务
+            except Exception as e:
+                logger.debug(f"[任务检查] 检查订单状态时出错: {e}，继续执行任务")
+        
         logger.info(f"[任务开始] 主键ID: {primary_key_value}, 设备ID: {device_id}, 视频ID: {aweme_id}")
         task_start = time.time()
         
@@ -2665,9 +2694,11 @@ def main():
         # 使用连接池：固定数量的连接，多线程共享
         # pool_size: 核心连接数（建议设置为 10-20）
         # max_overflow: 最大溢出连接数（高峰期临时创建）
+        # 数据库连接池大小应该 >= 并发数，避免任务等待连接
+        # pool_size + max_overflow 应该 >= max_concurrent
         _db_instance = MySQLConnectionPool(
-            pool_size=20,  # 核心连接数：20个固定连接
-            max_overflow=30,  # 最大溢出：高峰期可增加30个（总共最多50个）
+            pool_size=50,  # 核心连接数：50个固定连接
+            max_overflow=200,  # 最大溢出：高峰期可增加200个（总共最多250个）
             timeout=30  # 获取连接超时：30秒
         )
         stats = _db_instance.get_stats()
@@ -2780,6 +2811,12 @@ def main():
         
         while True:  # 外层循环：持续等待和处理订单
             try:
+                logger.info("")
+                logger.info("🔄" * 40)
+                logger.info("🔄 开始新一轮订单处理循环")
+                logger.info("🔄" * 40)
+                logger.info("")
+                
                 # 步骤1：加载所有待处理订单到Redis
                 logger.info("=" * 80)
                 logger.info("步骤1：加载所有待处理订单到Redis...")
@@ -3248,17 +3285,34 @@ def main():
                             logger.error(f"[队列停止] 原因: {stop_reason}")
                             break
                         
-                        # 检查订单是否完成（在线程池中执行，避免阻塞）
-                        import concurrent.futures
-                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                            def check_order_status():
+                        # 检查队列是否完全空闲（所有任务都已完成）
+                        if queue_size == 0 and running_tasks == 0:
+                            logger.info("=" * 80)
+                            logger.info("检测到队列完全空闲，检查订单状态...")
+                            logger.info("=" * 80)
+                            
+                            # 立即检查订单是否完成
+                            try:
+                                # 先从Redis获取最新的完成数（因为任务更新是写入Redis的）
+                                redis_complete = get_order_complete_from_redis(order_id) if _redis else 0
+                                redis_order_num = get_order_num_from_redis(order_id) if _redis else 0
+                                
+                                # 从数据库获取订单信息
                                 order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
                                 if order_info:
                                     order_num = order_info.get('order_num', 0) or 0
                                     complete_num = order_info.get('complete_num', 0) or 0
                                     
+                                    # 使用Redis中的完成数（更准确）
+                                    if redis_complete > complete_num:
+                                        logger.info(f"当前订单 {order_id} 状态: complete_num={redis_complete}(Redis)/{order_num}, 数据库中={complete_num}")
+                                        complete_num = redis_complete
+                                    else:
+                                        logger.info(f"当前订单 {order_id} 状态: complete_num={complete_num}, order_num={order_num}")
+                                    
                                     if order_num > 0 and complete_num >= order_num:
-                                        # 更新订单状态为已完成
+                                        # 订单已完成
+                                        logger.info(f"✅ 订单 {order_id} 已完成！")
                                         _db_instance.update("uni_order", {"status": 2}, "id = %s", (order_id,))
                                         _db_instance.commit()
                                         
@@ -3270,26 +3324,38 @@ def main():
                                             limit=1
                                         )
                                         
-                                        return True, order_num, complete_num, next_orders
-                                return False, 0, 0, []
-                            
-                            future = executor.submit(check_order_status)
-                            order_completed, order_num, complete_num, next_orders = future.result(timeout=5.0)  # 最多等待5秒
-                            
-                            if order_completed:
-                                logger.info(f"订单 {order_id} 已完成！complete_num={complete_num}, order_num={order_num}")
-                                
-                                # 检查是否有下一个订单
-                                if next_orders:
-                                    next_order = next_orders[0]
-                                    next_order_id = next_order['id']
-                                    logger.info(f"发现下一个订单 {next_order_id}，继续执行...")
-                                    # 不退出，继续循环处理下一个订单
-                                else:
-                                    # 所有订单已完成，跳出内层循环，回到外层循环重新开始
-                                    logger.info("所有订单已完成，返回步骤1检查新订单...")
-                                    stop_reason = "所有订单已完成"
-                                    break
+                                        if next_orders:
+                                            next_order = next_orders[0]
+                                            next_order_id = next_order['id']
+                                            logger.info(f"发现下一个订单 {next_order_id}，准备切换...")
+                                            stop_reason = "当前订单完成，切换到下一个订单"
+                                        else:
+                                            logger.info("没有更多待处理订单")
+                                            stop_reason = "所有订单已完成"
+                                        break
+                                    else:
+                                        # 订单未完成，但队列已空
+                                        logger.warning(f"⚠️ 订单 {order_id} 未完成但队列已空")
+                                        logger.warning(f"   订单进度: {complete_num}/{order_num}")
+                                        logger.warning(f"   任务统计: 完成={completed_tasks}, 失败={failed_tasks}")
+                                        
+                                        # 检查是否还有可用设备
+                                        available_devices = get_devices_from_table(_db_instance, _device_table_name, limit=1, status=0)
+                                        if not available_devices:
+                                            logger.warning(f"   没有可用设备，订单无法继续")
+                                            logger.info("结束当前订单处理，返回外层循环")
+                                            stop_reason = "订单未完成但无可用设备"
+                                            break
+                                        else:
+                                            logger.info(f"   有可用设备，但队列已空，可能是阈值回调未触发")
+                                            logger.info(f"   继续等待阈值回调补充任务...")
+                            except Exception as e:
+                                logger.error(f"检查订单状态时出错: {e}")
+                                import traceback
+                                logger.error(traceback.format_exc())
+                        
+                        # 注意：订单完成检查已经在队列空闲时立即执行
+                        # 这里不再需要定期检查，避免重复查询数据库
                 except KeyboardInterrupt:
                     stop_reason = "用户中断（Ctrl+C）"
                     logger.info(f"[队列停止] 原因: {stop_reason}")
@@ -3305,17 +3371,24 @@ def main():
                 # 内层循环结束，记录原因
                 logger.info(f"内层循环结束，原因: {stop_reason}")
                 
-                # 清理队列和资源，准备下一轮循环
+                # 清理队列和资源，准备下一轮循环（强制停止模式）
                 logger.info("=" * 80)
-                logger.info("清理当前循环的资源...")
+                logger.info("强制清理当前循环的资源...")
                 logger.info("=" * 80)
                 
-                # 1. 停止队列（等待所有任务完成）
-                if _queue_instance and _queue_instance.is_running:
-                    logger.info("停止消息队列，等待所有任务完成...")
-                    _queue_instance.stop()
-                    _queue_instance.wait()
-                    logger.info("消息队列已停止")
+                # 1. 强制停止队列（不等待）
+                if _queue_instance:
+                    logger.info("强制停止消息队列（不等待任务完成）...")
+                    try:
+                        # 直接停止，不等待
+                        if _queue_instance.is_running:
+                            _queue_instance.stop()
+                        logger.info("✓ 消息队列停止信号已发送")
+                    except Exception as e:
+                        logger.warning(f"停止队列时出错: {e}")
+                    
+                    # 不等待事件循环关闭，直接继续
+                    logger.info("✓ 跳过事件循环等待（强制模式）")
                 
                 # 2. 刷新Redis数据到MySQL
                 if _redis is not None:
@@ -3323,7 +3396,7 @@ def main():
                     try:
                         flush_stats = flush_redis_to_mysql(_db_instance, _device_table_name)
                         logger.info(f"数据刷新完成: 设备更新={flush_stats['devices_updated']}, "
-                                  f"订单更新={flush_stats['orders_updated']}")
+                                  f"设备失败={flush_stats.get('devices_failed', 0)}")
                         
                         # 清理Redis缓存（只清理设备缓存，订单缓存在下一轮重新加载）
                         clear_redis_cache(clear_orders=False)
@@ -3331,33 +3404,38 @@ def main():
                     except Exception as e:
                         logger.error(f"刷新数据失败: {e}")
                 
-                # 3. 关闭线程池
+                # 3. 强制关闭线程池（不等待）
                 if _thread_pool:
-                    logger.info("关闭线程池...")
+                    logger.info("强制关闭线程池（不等待）...")
                     try:
-                        _thread_pool.shutdown(wait=True)
-                        logger.info("线程池已关闭")
+                        _thread_pool.shutdown(wait=False)
+                        logger.info("✓ 线程池已强制关闭")
                     except Exception as e:
                         logger.warning(f"关闭线程池时出错: {e}")
                     _thread_pool = None
                 
-                # 4. 重置队列实例，下一轮重新创建
+                # 4. 强制重置队列实例
+                if _queue_instance:
+                    try:
+                        del _queue_instance
+                    except:
+                        pass
                 _queue_instance = None
-                logger.info("队列实例已重置")
+                logger.info("✓ 队列实例已强制重置")
                 
-                # 5. 停止设备状态监控线程
+                # 5. 强制停止设备状态监控线程（不等待）
                 if _monitor_thread and _monitor_thread.is_alive():
-                    logger.info("停止设备状态监控线程...")
+                    logger.info("强制停止设备状态监控线程（不等待）...")
                     _monitor_stop_event.set()
-                    _monitor_thread.join(timeout=5)
-                    if _monitor_thread.is_alive():
-                        logger.warning("设备监控线程未能在5秒内停止")
-                    else:
-                        logger.info("设备监控线程已停止")
+                    # 不等待线程结束，直接继续
+                    logger.info("✓ 监控线程停止信号已发送")
                 
                 logger.info("=" * 80)
                 logger.info("资源清理完成，准备开始新一轮循环...")
                 logger.info("=" * 80)
+                
+                # 明确标记：即将回到外层循环开始
+                logger.info("🔄 回到外层循环，重新开始步骤1...")
                 
             except KeyboardInterrupt:
                 logger.info("用户中断，程序退出")
