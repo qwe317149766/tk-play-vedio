@@ -3389,67 +3389,67 @@ def main():
                             logger.info("检测到队列完全空闲，检查订单状态...")
                             logger.info("=" * 80)
                             
-                            # 立即检查订单是否完成
+                            # 立即检查订单是否完成（完全从Redis读取）
                             try:
-                                # 先从Redis获取最新的完成数（因为任务更新是写入Redis的）
-                                redis_complete = get_order_complete_from_redis(order_id) if _redis else 0
-                                redis_order_num = get_order_num_from_redis(order_id) if _redis else 0
+                                # 从Redis获取订单信息和进度
+                                if not _redis:
+                                    logger.warning("Redis未连接，无法检查订单状态")
+                                    continue
                                 
-                                # 从数据库获取订单信息
-                                order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
-                                if order_info:
-                                    order_num = order_info.get('order_num', 0) or 0
-                                    complete_num = order_info.get('complete_num', 0) or 0
+                                redis_complete = get_order_complete_from_redis(order_id)
+                                redis_order_num = get_order_num_from_redis(order_id)
+                                
+                                if redis_order_num is None or redis_order_num == 0:
+                                    logger.warning(f"订单 {order_id} 在Redis中没有order_num数据")
+                                    continue
+                                
+                                logger.info(f"当前订单 {order_id} 状态(Redis): complete_num={redis_complete}/{redis_order_num}")
+                                
+                                # 完全基于Redis数据判断
+                                if redis_complete >= redis_order_num:
+                                    # 设置订单完成标志，取消其他检查
+                                    with _order_completed_lock:
+                                        _order_completed_flag = True
+                                    logger.info(f"✅ 订单 {order_id} 已完成！已设置完成标志")
                                     
-                                    # 使用Redis中的完成数（更准确）
-                                    if redis_complete > complete_num:
-                                        logger.info(f"当前订单 {order_id} 状态: complete_num={redis_complete}(Redis)/{order_num}, 数据库中={complete_num}")
-                                        complete_num = redis_complete
+                                    # 更新数据库状态（使用Redis中的完成数）
+                                    _db_instance.update("uni_order", {"status": 2, "complete_num": redis_complete}, "id = %s", (order_id,))
+                                    _db_instance.commit()
+                                    logger.info(f"✅ 订单 {order_id} 数据库状态已更新: status=2, complete_num={redis_complete}")
+                                    
+                                    # 查找下一个待处理订单
+                                    next_orders = _db_instance.select(
+                                        "uni_order",
+                                        where="status IN (0, 1)",
+                                        order_by="id ASC",
+                                        limit=1
+                                    )
+                                    
+                                    if next_orders:
+                                        next_order = next_orders[0]
+                                        next_order_id = next_order['id']
+                                        logger.info(f"发现下一个订单 {next_order_id}，准备切换...")
+                                        stop_reason = "当前订单完成，切换到下一个订单"
                                     else:
-                                        logger.info(f"当前订单 {order_id} 状态: complete_num={complete_num}, order_num={order_num}")
+                                        logger.info("没有更多待处理订单")
+                                        stop_reason = "所有订单已完成"
+                                    break
+                                else:
+                                    # 订单未完成，但队列已空
+                                    logger.warning(f"⚠️ 订单 {order_id} 未完成但队列已空")
+                                    logger.warning(f"   订单进度(Redis): {redis_complete}/{redis_order_num}")
+                                    logger.warning(f"   任务统计: 完成={completed_tasks}, 失败={failed_tasks}")
                                     
-                                    if order_num > 0 and complete_num >= order_num:
-                                        # 设置订单完成标志，取消其他检查
-                                        with _order_completed_lock:
-                                            _order_completed_flag = True
-                                        logger.info(f"✅ 订单 {order_id} 已完成！已设置完成标志")
-                                        
-                                        _db_instance.update("uni_order", {"status": 2}, "id = %s", (order_id,))
-                                        _db_instance.commit()
-                                        
-                                        # 查找下一个待处理订单
-                                        next_orders = _db_instance.select(
-                                            "uni_order",
-                                            where="status IN (0, 1)",
-                                            order_by="id ASC",
-                                            limit=1
-                                        )
-                                        
-                                        if next_orders:
-                                            next_order = next_orders[0]
-                                            next_order_id = next_order['id']
-                                            logger.info(f"发现下一个订单 {next_order_id}，准备切换...")
-                                            stop_reason = "当前订单完成，切换到下一个订单"
-                                        else:
-                                            logger.info("没有更多待处理订单")
-                                            stop_reason = "所有订单已完成"
+                                    # 检查是否还有可用设备
+                                    available_devices = get_devices_from_table(_db_instance, _device_table_name, limit=1, status=0)
+                                    if not available_devices:
+                                        logger.warning(f"   没有可用设备，订单无法继续")
+                                        logger.info("结束当前订单处理，返回外层循环")
+                                        stop_reason = "订单未完成但无可用设备"
                                         break
                                     else:
-                                        # 订单未完成，但队列已空
-                                        logger.warning(f"⚠️ 订单 {order_id} 未完成但队列已空")
-                                        logger.warning(f"   订单进度: {complete_num}/{order_num}")
-                                        logger.warning(f"   任务统计: 完成={completed_tasks}, 失败={failed_tasks}")
-                                        
-                                        # 检查是否还有可用设备
-                                        available_devices = get_devices_from_table(_db_instance, _device_table_name, limit=1, status=0)
-                                        if not available_devices:
-                                            logger.warning(f"   没有可用设备，订单无法继续")
-                                            logger.info("结束当前订单处理，返回外层循环")
-                                            stop_reason = "订单未完成但无可用设备"
-                                            break
-                                        else:
-                                            logger.info(f"   有可用设备，但队列已空，可能是阈值回调未触发")
-                                            logger.info(f"   继续等待阈值回调补充任务...")
+                                        logger.info(f"   有可用设备，但队列已空，可能是阈值回调未触发")
+                                        logger.info(f"   继续等待阈值回调补充任务...")
                             except Exception as e:
                                 logger.error(f"检查订单状态时出错: {e}")
                                 import traceback
