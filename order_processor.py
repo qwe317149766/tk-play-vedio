@@ -2756,7 +2756,7 @@ def main():
     _http_client_instance = _api_instance.http_client
     
     try:
-        # 步骤0：刷新上次程序遗留在Redis中的设备数据到MySQL
+        # 步骤0：刷新上次程序遗留在Redis中的设备数据到MySQL（只在程序启动时执行一次）
         # 注意：订单数据不在此刷新，只有在订单完成时才刷新
         logger.info("=" * 80)
         logger.info("步骤0：刷新上次遗留的Redis设备数据到MySQL...")
@@ -2773,454 +2773,538 @@ def main():
         else:
             logger.info("Redis未连接，跳过步骤0")
         
-        # 步骤1：加载所有待处理订单到Redis
+        # 主循环：持续处理订单
         logger.info("=" * 80)
-        logger.info("步骤1：加载所有待处理订单到Redis...")
-        logger.info("=" * 80)
-        if _redis is not None:
-            orders_loaded = load_orders_to_redis(_db_instance)
-            if orders_loaded > 0:
-                logger.info(f"✅ 成功加载 {orders_loaded} 个订单到Redis")
-            else:
-                logger.error("没有找到待处理订单，程序退出")
-                sys.exit(1)
-        else:
-            logger.error("Redis未连接，无法加载订单，程序退出")
-            sys.exit(1)
-        
-        # 步骤2：重置设备状态（将所有 status in (0,1) 的设备更新为 status = 0）
-        logger.info("=" * 80)
-        logger.info("步骤2：重置设备状态...")
-        logger.info("=" * 80)
-        reset_count = reset_device_status(_db_instance, _device_table_name)
-        logger.info(f"设备状态重置完成，共重置 {reset_count} 个设备")
-        
-        # 统计设备总数
-        try:
-            total_devices_sql = f"SELECT COUNT(*) as total FROM {_device_table_name}"
-            result = _db_instance.execute(total_devices_sql, fetch=True)
-            if result and len(result) > 0:
-                total_devices = result[0].get('total', 0)
-                logger.info(f"设备表 {_device_table_name} 总设备数: {total_devices}")
-                if total_devices > 0:
-                    logger.info(f"可用设备占比: {reset_count}/{total_devices} ({reset_count/total_devices*100:.1f}%)")
-        except Exception as e:
-            logger.warning(f"统计设备总数失败: {e}")
-        
-        # 步骤3：在事务中获取并发数数量的设备并更新状态为1（进行中）
-        logger.info("=" * 80)
-        logger.info(f"步骤3：在事务中获取 {_max_concurrent} 个设备并更新状态为1...")
-        logger.info("=" * 80)
-        initial_devices = get_and_lock_devices(
-            db=_db_instance,
-            table_name=_device_table_name,
-            limit=_max_concurrent,
-            status=0
-        )
-        
-        if not initial_devices:
-            logger.error("没有可用的设备（status=0），程序退出")
-            sys.exit(1)
-        
-        # 步骤4：从Redis获取第一个待处理订单
-        logger.info("=" * 80)
-        logger.info("步骤4：从Redis获取第一个待处理订单...")
-        logger.info("=" * 80)
-        orders = get_all_pending_orders_from_redis()
-        
-        if not orders:
-            logger.error("Redis中没有待处理的订单，程序退出")
-            # 将设备状态更新回 0
-            device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
-            if device_ids:
-                update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
-            sys.exit(1)
-        
-        order = orders[0]
-        order_id = order['id']
-        order_info_str = order.get('order_info', '')
-        order_num = order.get('order_num', 0) or 0
-        video_ids = parse_video_ids(order_info_str)
-        
-        logger.info(f"从Redis获取到第一个订单: ID={order_id}, order_num={order_num}, Redis中共有 {len(orders)} 个待处理订单")
-        
-        if not video_ids:
-            logger.error(f"订单 {order_id} 没有有效的视频ID，程序退出")
-            # 将设备状态更新回 0
-            device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
-            if device_ids:
-                update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
-            sys.exit(1)
-        
-        # 设置当前正在处理的订单（全局变量）
-        global _current_order
-        with _current_order_lock:
-            _current_order = order
-        
-        logger.info(f"使用订单 {order_id}，视频ID数量: {len(video_ids)}，order_num={order_num}，已设置为当前处理订单")
-        
-        # 步骤5：创建初始任务列表
-        logger.info("=" * 80)
-        logger.info("步骤5：创建初始任务列表...")
-        logger.info("=" * 80)
-        initial_tasks = []
-        primary_key_field = get_table_primary_key_field(_db_instance, _device_table_name)
-        
-        for device in initial_devices:
-            # 获取主键值
-            primary_key_value = device.get(primary_key_field)
-            
-            if not primary_key_value:
-                logger.warning(f"设备主键值为空，跳过")
-                continue
-            
-            # 解析 device_config
-            device_config_str = device.get('device_config', '')
-            if device_config_str:
-                device_dict = parse_device_config(device_config_str)
-            else:
-                device_dict = {}
-            
-            # 从解析后的 device_config 中获取 device_id
-            device_id = device_dict.get('device_id', '')
-            if not device_id:
-                # 如果没有device_id，使用主键值作为标识
-                device_id = str(primary_key_value)
-            
-            # 随机选择一个视频ID
-            aweme_id = random.choice(video_ids)
-            
-            # 创建任务
-            task = {
-                "aweme_id": aweme_id,
-                "device": device_dict,
-                "device_id": device_id,
-                "device_table": _device_table_name,
-                "primary_key_value": primary_key_value,
-                "order_id": order_id
-            }
-            initial_tasks.append(task)
-        
-        logger.info(f"创建了 {len(initial_tasks)} 个初始任务")
-        
-        # 步骤6：创建消息队列
-        logger.info("=" * 80)
-        logger.info("步骤6：创建消息队列...")
-        logger.info("=" * 80)
-        _queue_instance = MessageQueue(
-            max_concurrent=_max_concurrent,
-            threshold_callback=threshold_callback,
-            task_callback=task_callback,
-            task_timeout=300.0  # 5 分钟超时（视频播放任务）
-        )
-        
-        # 步骤7：启动队列
-        logger.info("=" * 80)
-        logger.info("步骤7：启动消息队列...")
-        logger.info("=" * 80)
-        _queue_instance.start()
-        
-        # 等待队列启动
-        logger.info("等待队列启动...")
-        max_wait = 10
-        wait_count = 0
-        while not _queue_instance.is_running and wait_count < max_wait * 10:
-            time.sleep(0.1)
-            wait_count += 1
-            if wait_count % 10 == 0:
-                logger.info(f"等待队列启动... ({wait_count/10:.1f}秒)")
-        
-        if not _queue_instance.is_running:
-            logger.error("队列启动超时，程序退出")
-            sys.exit(1)
-        
-        logger.info("队列已启动")
-        
-        # 步骤6.5：为事件循环设置专用线程池（解决线程池耗尽问题）
-        logger.info("=" * 80)
-        logger.info("步骤6.5：设置专用线程池...")
-        logger.info("=" * 80)
-        import concurrent.futures
-        # 创建一个足够大的线程池：max_concurrent * 3（每个worker可能同时使用多个线程）
-        thread_pool_size = _max_concurrent * 3
-        _thread_pool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=thread_pool_size,
-            thread_name_prefix="OrderProcessor"
-        )
-        
-        # 将线程池设置为事件循环的默认executor
-        if _queue_instance.loop:
-            _queue_instance.loop.set_default_executor(_thread_pool)
-            logger.info(f"已为事件循环设置专用线程池，大小: {thread_pool_size} 个线程")
-        else:
-            logger.error("队列的事件循环不存在，无法设置线程池")
-            sys.exit(1)
-        
-        # 步骤6.8：启动设备状态监控线程
-        logger.info("=" * 80)
-        logger.info("步骤6.8：启动设备状态监控线程...")
-        logger.info("=" * 80)
-        global _monitor_thread, _monitor_stop_event
-        _monitor_stop_event.clear()
-        _monitor_thread = threading.Thread(
-            target=device_status_monitor,
-            name="DeviceMonitor",
-            daemon=True
-        )
-        _monitor_thread.start()
-        logger.info("设备状态监控线程已启动（每30秒报告一次）")
-        
-        # 步骤8：添加初始任务到队列
-        logger.info("=" * 80)
-        logger.info("步骤8：添加初始任务到队列...")
+        logger.info("进入订单处理主循环...")
         logger.info("=" * 80)
         
-        initial_added = 0
-        initial_failed = 0
-        for idx, task in enumerate(initial_tasks):
-            success = _queue_instance.add_task(task)
-            if success:
-                initial_added += 1
-            else:
-                initial_failed += 1
-                logger.error(f"初始任务添加失败（第 {idx+1}/{len(initial_tasks)} 个）")
-        
-        if initial_failed > 0:
-            logger.warning(f"初始任务添加完成: 成功={initial_added}, 失败={initial_failed}, 总计={len(initial_tasks)}")
-            if initial_added == 0:
-                logger.error("所有初始任务添加失败，程序退出")
-                sys.exit(1)
-        else:
-            logger.info(f"已成功添加 {initial_added} 个初始任务到队列")
-        
-        # 步骤9：主循环（监控队列状态）
-        logger.info("=" * 80)
-        logger.info("步骤9：进入主循环，监控队列状态...")
-        logger.info("=" * 80)
-        
-        stats_every = order_config.get("stats_every", 5)
-        
-        # Session 池监控变量
-        last_session_check = time.time()
-        session_check_interval = 60  # 每 60 秒检查一次 session 池
-        
-        # 性能监控变量
-        last_performance_check = time.time()
-        performance_check_interval = 60  # 每 60 秒检查一次性能指标
-        last_completed_count = 0
-        last_failed_count = 0
-        
-        # 停止原因变量
-        stop_reason = "未知原因"
-        
-        # 无设备等待计数器
-        no_device_wait_count = 0
-        max_no_device_wait = 6  # 最多等待6个周期（30秒，如果stats_every=5）
-        
-        try:
-            while _queue_instance.is_running:
-                time.sleep(stats_every)  # 主循环中的 sleep，用于控制统计频率
-                
-                queue_stats = _queue_instance.get_stats()
-                queue_size = queue_stats.get("queue_size", 0)
-                running_tasks = queue_stats.get("running_tasks", 0)
-                completed_tasks = queue_stats.get("completed_tasks", 0)
-                failed_tasks = queue_stats.get("failed_tasks", 0)
-                
-                # 获取当前订单的实时进度（从Redis）
-                order_progress_info = ""
-                with _current_order_lock:
-                    if _current_order:
-                        current_order_id = _current_order.get('id')
-                        if current_order_id and _redis:
+        while True:  # 外层循环：持续等待和处理订单
+            try:
+                # 步骤1：加载所有待处理订单到Redis
+                logger.info("=" * 80)
+                logger.info("步骤1：加载所有待处理订单到Redis...")
+                logger.info("=" * 80)
+                if _redis is not None:
+                    orders_loaded = load_orders_to_redis(_db_instance)
+                    if orders_loaded > 0:
+                        logger.info(f"✅ 成功加载 {orders_loaded} 个订单到Redis")
+                    else:
+                        # 没有订单时，等待订单而不是退出
+                        logger.warning("没有找到待处理订单，程序将等待新订单...")
+                        logger.info("提示：程序将每30秒检查一次是否有新订单，按 Ctrl+C 可退出")
+                        
+                        # 等待订单出现
+                        wait_interval = 30  # 每30秒检查一次
+                        while True:
                             try:
-                                redis_complete = get_order_complete_from_redis(current_order_id)
-                                redis_order_num = get_order_num_from_redis(current_order_id)
-                                if redis_order_num is not None:
-                                    order_progress_info = f", 订单{current_order_id}进度={redis_complete}/{redis_order_num}"
+                                time.sleep(wait_interval)
+                                logger.info(f"[等待订单] 检查是否有新订单...")
+                                
+                                # 重新加载订单
+                                orders_loaded = load_orders_to_redis(_db_instance)
+                                if orders_loaded > 0:
+                                    logger.info(f"✅ 发现 {orders_loaded} 个新订单，开始处理...")
+                                    break
                                 else:
-                                    order_progress_info = f", 订单{current_order_id}进度={redis_complete}"
-                            except:
-                                pass
-                
-                logger.info(f"队列状态: 队列大小={queue_size}, 运行中={running_tasks}/{_max_concurrent}, "
-                          f"队列任务完成={completed_tasks}, 失败={failed_tasks}{order_progress_info}")
-                
-                # 检查是否队列为空且没有可用设备
-                if queue_size == 0 and running_tasks == 0:
-                    # 队列完全空了，检查是否有可用设备
-                    try:
-                        check_devices = get_devices_from_table(_db_instance, _device_table_name, limit=1, status=0)
-                        if not check_devices:
-                            no_device_wait_count += 1
-                            logger.warning(f"⚠️ 队列已空且没有可用设备 (等待 {no_device_wait_count}/{max_no_device_wait})")
-                            
-                            if no_device_wait_count >= max_no_device_wait:
-                                stop_reason = "队列已空且持续无可用设备"
-                                logger.info(f"[队列停止] 原因: {stop_reason}")
-                                logger.info(f"[队列停止] 所有任务已完成，设备表中无可用设备，程序将优雅退出")
-                                break
-                        else:
-                            # 有设备了，重置计数器
-                            if no_device_wait_count > 0:
-                                logger.info(f"✅ 发现可用设备，恢复正常运行")
-                                no_device_wait_count = 0
-                    except Exception as e:
-                        logger.error(f"检查可用设备时出错: {e}")
+                                    logger.info(f"[等待订单] 暂无新订单，{wait_interval}秒后再次检查...")
+                            except KeyboardInterrupt:
+                                logger.info("用户中断等待，程序退出")
+                                raise  # 重新抛出，让外层处理
+                            except Exception as e:
+                                logger.error(f"检查订单时出错: {e}")
+                                logger.info(f"{wait_interval}秒后重试...")
                 else:
-                    # 队列不为空，重置计数器
-                    if no_device_wait_count > 0:
-                        no_device_wait_count = 0
+                    logger.error("Redis未连接，无法加载订单，程序退出")
+                    sys.exit(1)
+        
+                # 步骤2：重置设备状态（将所有 status in (0,1) 的设备更新为 status = 0）
+                logger.info("=" * 80)
+                logger.info("步骤2：重置设备状态...")
+                logger.info("=" * 80)
+                reset_count = reset_device_status(_db_instance, _device_table_name)
+                logger.info(f"设备状态重置完成，共重置 {reset_count} 个设备")
                 
-                # 定期检查 Session 池状态
-                if time.time() - last_session_check > session_check_interval:
-                    try:
-                        # 获取 HttpClient 统计信息
-                        http_stats = _http_client_instance.get_stats()
-                        
-                        # 新设计：基于 user_id 的全局池
-                        pool_size = http_stats.get('pool_size', 0)
-                        pool_max_size = http_stats.get('pool_max_size', 5000)
-                        avg_usage = http_stats.get('avg_usage_count', 0)
-                        
-                        # 计算使用率
-                        usage_rate = (pool_size / pool_max_size * 100) if pool_max_size > 0 else 0
-                        
-                        proxy_close_count = http_stats.get('proxy_close_errors', 0)
-                        dead_sessions = http_stats.get('dead_sessions_removed', 0)
-                        sessions_created = http_stats.get('sessions_created', 0)
-                        sessions_recycled = http_stats.get('sessions_recycled', 0)
-                        
-                        logger.info(f"Session池状态: 设备数={pool_size}/{pool_max_size}, "
-                                  f"池使用率={usage_rate:.1f}%, "
-                                  f"平均使用次数={avg_usage:.1f}, "
-                                  f"请求={http_stats.get('requests', 0)}, "
-                                  f"失败={http_stats.get('failures', 0)}, "
-                                  f"重试={http_stats.get('retries', 0)}, "
-                                  f"🔴ProxyClose={proxy_close_count}, "
-                                  f"创建={sessions_created}, "
-                                  f"回收={sessions_recycled}, "
-                                  f"失效清理={dead_sessions}")
-                        
-                        # 警告：池接近满载
-                        if pool_size > pool_max_size * 0.9:
-                            logger.warning(f"⚠️ Session池接近满载: {pool_size}/{pool_max_size} ({usage_rate:.1f}%), "
-                                         f"建议增加 max_pool_size 或清理无用设备")
-                        
-                        # 警告：失败率过高
-                        total_requests = http_stats.get('requests', 0)
-                        total_failures = http_stats.get('failures', 0)
-                        if total_requests > 100 and total_failures > 0:
-                            failure_rate = (total_failures / total_requests * 100)
-                            if failure_rate > 10:
-                                logger.warning(f"⚠️ HTTP请求失败率过高: {failure_rate:.1f}% ({total_failures}/{total_requests})")
-                        
-                        # 警告：Proxy Close 错误过多
-                        if proxy_close_count > 0:
-                            proxy_close_rate = (proxy_close_count / total_failures * 100) if total_failures > 0 else 0
-                            if proxy_close_rate > 30:
-                                logger.warning(f"🔴 Proxy Close 错误占比过高: {proxy_close_rate:.1f}% ({proxy_close_count}/{total_failures})")
-                                logger.warning(f"   建议: 1) 检查代理质量 2) 降低 max_session_usage 3) 缩短 health_check_interval")
-                            elif proxy_close_count > 50:
-                                logger.warning(f"🔴 Proxy Close 错误总数较多: {proxy_close_count} 次")
-                        
-                        last_session_check = time.time()
-                    except Exception as e:
-                        logger.error(f"检查 Session 池状态时出错: {e}")
+                # 统计设备总数
+                try:
+                    total_devices_sql = f"SELECT COUNT(*) as total FROM {_device_table_name}"
+                    result = _db_instance.execute(total_devices_sql, fetch=True)
+                    if result and len(result) > 0:
+                        total_devices = result[0].get('total', 0)
+                        logger.info(f"设备表 {_device_table_name} 总设备数: {total_devices}")
+                        if total_devices > 0:
+                            logger.info(f"可用设备占比: {reset_count}/{total_devices} ({reset_count/total_devices*100:.1f}%)")
+                except Exception as e:
+                    logger.warning(f"统计设备总数失败: {e}")
                 
-                # 定期检查性能指标并给出调优建议
-                if time.time() - last_performance_check > performance_check_interval:
-                    try:
+                # 步骤3：在事务中获取并发数数量的设备并更新状态为1（进行中）
+                logger.info("=" * 80)
+                logger.info(f"步骤3：在事务中获取 {_max_concurrent} 个设备并更新状态为1...")
+                logger.info("=" * 80)
+                initial_devices = get_and_lock_devices(
+                    db=_db_instance,
+                    table_name=_device_table_name,
+                    limit=_max_concurrent,
+                    status=0
+                )
+                
+                if not initial_devices:
+                    logger.warning("没有可用的设备（status=0），等待设备释放...")
+                    logger.info("提示：程序将每30秒检查一次是否有可用设备，按 Ctrl+C 可退出")
+                    
+                    # 等待设备释放
+                    wait_interval = 30
+                    while True:
+                        try:
+                            time.sleep(wait_interval)
+                            logger.info(f"[等待设备] 检查是否有可用设备...")
+                            
+                            # 重新尝试获取设备
+                            initial_devices = get_and_lock_devices(
+                                db=_db_instance,
+                                table_name=_device_table_name,
+                                limit=_max_concurrent,
+                                status=0
+                            )
+                            
+                            if initial_devices:
+                                logger.info(f"✅ 获取到 {len(initial_devices)} 个可用设备")
+                                break
+                            else:
+                                logger.info(f"[等待设备] 暂无可用设备，{wait_interval}秒后再次检查...")
+                        except KeyboardInterrupt:
+                            logger.info("用户中断等待，程序退出")
+                            raise
+                        except Exception as e:
+                            logger.error(f"检查设备时出错: {e}")
+                            logger.info(f"{wait_interval}秒后重试...")
+                
+                # 步骤4：从Redis获取第一个待处理订单
+                logger.info("=" * 80)
+                logger.info("步骤4：从Redis获取第一个待处理订单...")
+                logger.info("=" * 80)
+                orders = get_all_pending_orders_from_redis()
+                
+                if not orders:
+                    logger.warning("Redis中没有待处理的订单（这不应该发生，因为步骤1已确保有订单）")
+                    # 将设备状态更新回 0
+                    device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
+                    if device_ids:
+                        update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
+                    # 回到外层循环重新开始
+                    logger.info("返回步骤1重新检查订单...")
+                    continue
+                
+                order = orders[0]
+                order_id = order['id']
+                order_info_str = order.get('order_info', '')
+                order_num = order.get('order_num', 0) or 0
+                video_ids = parse_video_ids(order_info_str)
+                
+                logger.info(f"从Redis获取到第一个订单: ID={order_id}, order_num={order_num}, Redis中共有 {len(orders)} 个待处理订单")
+                
+                if not video_ids:
+                    logger.warning(f"订单 {order_id} 没有有效的视频ID，跳过此订单")
+                    # 将设备状态更新回 0
+                    device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
+                    if device_ids:
+                        update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
+                    # 标记订单为失败状态（可选）
+                    _db_instance.update("uni_order", {"status": 3}, "id = %s", (order_id,))
+                    _db_instance.commit()
+                    # 回到外层循环重新开始
+                    logger.info("返回步骤1处理下一个订单...")
+                    continue
+                
+                # 设置当前正在处理的订单（全局变量）
+                global _current_order
+                with _current_order_lock:
+                    _current_order = order
+                
+                logger.info(f"使用订单 {order_id}，视频ID数量: {len(video_ids)}，order_num={order_num}，已设置为当前处理订单")
+                
+                # 步骤5：创建初始任务列表
+                logger.info("=" * 80)
+                logger.info("步骤5：创建初始任务列表...")
+                logger.info("=" * 80)
+                initial_tasks = []
+                primary_key_field = get_table_primary_key_field(_db_instance, _device_table_name)
+                
+                for device in initial_devices:
+                    # 获取主键值
+                    primary_key_value = device.get(primary_key_field)
+                    
+                    if not primary_key_value:
+                        logger.warning(f"设备主键值为空，跳过")
+                        continue
+                    
+                    # 解析 device_config
+                    device_config_str = device.get('device_config', '')
+                    if device_config_str:
+                        device_dict = parse_device_config(device_config_str)
+                    else:
+                        device_dict = {}
+                    
+                    # 从解析后的 device_config 中获取 device_id
+                    device_id = device_dict.get('device_id', '')
+                    if not device_id:
+                        # 如果没有device_id，使用主键值作为标识
+                        device_id = str(primary_key_value)
+                    
+                    # 随机选择一个视频ID
+                    aweme_id = random.choice(video_ids)
+                    
+                    # 创建任务
+                    task = {
+                        "aweme_id": aweme_id,
+                        "device": device_dict,
+                        "device_id": device_id,
+                        "device_table": _device_table_name,
+                        "primary_key_value": primary_key_value,
+                        "order_id": order_id
+                    }
+                    initial_tasks.append(task)
+                
+                logger.info(f"创建了 {len(initial_tasks)} 个初始任务")
+                
+                # 步骤6：创建消息队列（如果还没创建）
+                logger.info("=" * 80)
+                if _queue_instance is None:
+                    logger.info("步骤6：创建消息队列...")
+                    logger.info("=" * 80)
+                    _queue_instance = MessageQueue(
+                        max_concurrent=_max_concurrent,
+                        threshold_callback=threshold_callback,
+                        task_callback=task_callback,
+                        task_timeout=300.0  # 5 分钟超时（视频播放任务）
+                    )
+                    
+                    # 步骤7：启动队列
+                    logger.info("=" * 80)
+                    logger.info("步骤7：启动消息队列...")
+                    logger.info("=" * 80)
+                    _queue_instance.start()
+                    
+                    # 等待队列启动
+                    logger.info("等待队列启动...")
+                    max_wait = 10
+                    wait_count = 0
+                    while not _queue_instance.is_running and wait_count < max_wait * 10:
+                        time.sleep(0.1)
+                        wait_count += 1
+                        if wait_count % 10 == 0:
+                            logger.info(f"等待队列启动... ({wait_count/10:.1f}秒)")
+                    
+                    if not _queue_instance.is_running:
+                        logger.error("队列启动超时，返回步骤1重试")
+                        continue
+                    
+                    logger.info("队列已启动")
+                    
+                    # 步骤6.5：为事件循环设置专用线程池（解决线程池耗尽问题）
+                    logger.info("=" * 80)
+                    logger.info("步骤6.5：设置专用线程池...")
+                    logger.info("=" * 80)
+                    import concurrent.futures
+                    # 创建一个足够大的线程池：max_concurrent * 3（每个worker可能同时使用多个线程）
+                    thread_pool_size = _max_concurrent * 3
+                    _thread_pool = concurrent.futures.ThreadPoolExecutor(
+                        max_workers=thread_pool_size,
+                        thread_name_prefix="OrderProcessor"
+                    )
+                    
+                    # 将线程池设置为事件循环的默认executor
+                    if _queue_instance.loop:
+                        _queue_instance.loop.set_default_executor(_thread_pool)
+                        logger.info(f"已为事件循环设置专用线程池，大小: {thread_pool_size} 个线程")
+                    else:
+                        logger.error("队列的事件循环不存在，无法设置线程池")
+                        continue
+                    
+                    # 步骤6.8：启动设备状态监控线程
+                    logger.info("=" * 80)
+                    logger.info("步骤6.8：启动设备状态监控线程...")
+                    logger.info("=" * 80)
+                    global _monitor_thread, _monitor_stop_event
+                    _monitor_stop_event.clear()
+                    _monitor_thread = threading.Thread(
+                        target=device_status_monitor,
+                        name="DeviceMonitor",
+                        daemon=True
+                    )
+                    _monitor_thread.start()
+                    logger.info("设备状态监控线程已启动（每30秒报告一次）")
+                else:
+                    logger.info("消息队列已存在，跳过创建步骤")
+                    logger.info("=" * 80)
+                
+                # 步骤8：添加初始任务到队列
+                logger.info("=" * 80)
+                logger.info("步骤8：添加初始任务到队列...")
+                logger.info("=" * 80)
+                
+                initial_added = 0
+                initial_failed = 0
+                for idx, task in enumerate(initial_tasks):
+                    success = _queue_instance.add_task(task)
+                    if success:
+                        initial_added += 1
+                    else:
+                        initial_failed += 1
+                        logger.error(f"初始任务添加失败（第 {idx+1}/{len(initial_tasks)} 个）")
+                
+                if initial_failed > 0:
+                    logger.warning(f"初始任务添加完成: 成功={initial_added}, 失败={initial_failed}, 总计={len(initial_tasks)}")
+                    if initial_added == 0:
+                        logger.error("所有初始任务添加失败，返回步骤1重试")
+                        continue
+                else:
+                    logger.info(f"已成功添加 {initial_added} 个初始任务到队列")
+                
+                # 步骤9：主循环（监控队列状态）
+                logger.info("=" * 80)
+                logger.info("步骤9：进入内层循环，监控队列状态...")
+                logger.info("=" * 80)
+                
+                stats_every = order_config.get("stats_every", 5)
+                
+                # Session 池监控变量
+                last_session_check = time.time()
+                session_check_interval = 60  # 每 60 秒检查一次 session 池
+                
+                # 性能监控变量
+                last_performance_check = time.time()
+                performance_check_interval = 60  # 每 60 秒检查一次性能指标
+                last_completed_count = 0
+                last_failed_count = 0
+                
+                # 停止原因变量
+                stop_reason = "未知原因"
+                
+                # 无设备等待计数器
+                no_device_wait_count = 0
+                max_no_device_wait = 6  # 最多等待6个周期（30秒，如果stats_every=5）
+                
+                try:
+                    while _queue_instance.is_running:
+                        time.sleep(stats_every)  # 主循环中的 sleep，用于控制统计频率
+                        
                         queue_stats = _queue_instance.get_stats()
-                        current_completed = queue_stats.get('completed_tasks', 0)
-                        current_failed = queue_stats.get('failed_tasks', 0)
+                        queue_size = queue_stats.get("queue_size", 0)
+                        running_tasks = queue_stats.get("running_tasks", 0)
+                        completed_tasks = queue_stats.get("completed_tasks", 0)
+                        failed_tasks = queue_stats.get("failed_tasks", 0)
                         
-                        # 计算最近1分钟的完成数和失败数
-                        completed_delta = current_completed - last_completed_count
-                        failed_delta = current_failed - last_failed_count
-                        total_delta = completed_delta + failed_delta
+                        # 获取当前订单的实时进度（从Redis）
+                        order_progress_info = ""
+                        with _current_order_lock:
+                            if _current_order:
+                                current_order_id = _current_order.get('id')
+                                if current_order_id and _redis:
+                                    try:
+                                        redis_complete = get_order_complete_from_redis(current_order_id)
+                                        redis_order_num = get_order_num_from_redis(current_order_id)
+                                        if redis_order_num is not None:
+                                            order_progress_info = f", 订单{current_order_id}进度={redis_complete}/{redis_order_num}"
+                                        else:
+                                            order_progress_info = f", 订单{current_order_id}进度={redis_complete}"
+                                    except:
+                                        pass
                         
-                        if total_delta > 0:
-                            success_rate = (completed_delta / total_delta * 100)
-                            throughput = total_delta / performance_check_interval  # 每秒处理数
-                            
-                            logger.info(f"📊 性能统计（最近{performance_check_interval:.0f}秒）：")
-                            logger.info(f"   - 处理速度: {throughput:.1f} 任务/秒")
-                            logger.info(f"   - 成功率: {success_rate:.1f}% ({completed_delta}成功/{failed_delta}失败)")
-                            logger.info(f"   - 总计: 完成{current_completed}, 失败{current_failed}")
-                            
-                            # 给出性能调优建议
-                            if success_rate < 50:
-                                logger.warning(f"⚠️ [性能建议] 成功率过低({success_rate:.1f}%)，建议：")
-                                logger.warning(f"   1. 降低并发数（当前{_max_concurrent}）到 {int(_max_concurrent * 0.7)}")
-                                logger.warning(f"   2. 增加请求延迟（当前{_request_delay_min*1000:.0f}-{_request_delay_max*1000:.0f}ms）")
-                                logger.warning(f"   3. 检查代理质量和网络状况")
-                            elif success_rate > 90 and throughput < _max_concurrent * 0.3:
-                                logger.info(f"✅ [性能建议] 成功率很高({success_rate:.1f}%)但吞吐量较低，可以考虑：")
-                                logger.info(f"   1. 适当提高并发数到 {int(_max_concurrent * 1.3)}")
-                                logger.info(f"   2. 减少请求延迟（当前{_request_delay_min*1000:.0f}-{_request_delay_max*1000:.0f}ms）")
+                        logger.info(f"队列状态: 队列大小={queue_size}, 运行中={running_tasks}/{_max_concurrent}, "
+                                  f"队列任务完成={completed_tasks}, 失败={failed_tasks}{order_progress_info}")
                         
-                        last_completed_count = current_completed
-                        last_failed_count = current_failed
-                        last_performance_check = time.time()
-                    except Exception as e:
-                        logger.error(f"检查性能指标时出错: {e}")
-                
-                # 检查队列是否意外停止
-                if not _queue_instance.is_running:
-                    stop_reason = "队列意外停止"
-                    logger.error(f"[队列停止] 原因: {stop_reason}")
-                    break
-                
-                # 检查订单是否完成（在线程池中执行，避免阻塞）
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    def check_order_status():
-                        order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
-                        if order_info:
-                            order_num = order_info.get('order_num', 0) or 0
-                            complete_num = order_info.get('complete_num', 0) or 0
-                            
-                            if order_num > 0 and complete_num >= order_num:
-                                # 更新订单状态为已完成
-                                _db_instance.update("uni_order", {"status": 2}, "id = %s", (order_id,))
-                                _db_instance.commit()
-                                
-                                # 查找下一个待处理订单
-                                next_orders = _db_instance.select(
-                                    "uni_order",
-                                    where="status IN (0, 1)",
-                                    order_by="id ASC",
-                                    limit=1
-                                )
-                                
-                                return True, order_num, complete_num, next_orders
-                        return False, 0, 0, []
-                    
-                    future = executor.submit(check_order_status)
-                    order_completed, order_num, complete_num, next_orders = future.result(timeout=5.0)  # 最多等待5秒
-                    
-                    if order_completed:
-                        logger.info(f"订单 {order_id} 已完成！complete_num={complete_num}, order_num={order_num}")
-                        
-                        # 检查是否有下一个订单
-                        if next_orders:
-                            next_order = next_orders[0]
-                            next_order_id = next_order['id']
-                            logger.info(f"发现下一个订单 {next_order_id}，继续执行...")
-                            # 不退出，继续循环处理下一个订单
+                        # 检查是否队列为空且没有可用设备
+                        if queue_size == 0 and running_tasks == 0:
+                            # 队列完全空了，检查是否有可用设备
+                            try:
+                                check_devices = get_devices_from_table(_db_instance, _device_table_name, limit=1, status=0)
+                                if not check_devices:
+                                    no_device_wait_count += 1
+                                    logger.warning(f"⚠️ 队列已空且没有可用设备 (等待 {no_device_wait_count}/{max_no_device_wait})")
+                                    
+                                    if no_device_wait_count >= max_no_device_wait:
+                                        stop_reason = "队列已空且持续无可用设备"
+                                        logger.info(f"[队列停止] 原因: {stop_reason}")
+                                        logger.info(f"[队列停止] 所有任务已完成，设备表中无可用设备，程序将优雅退出")
+                                        break
+                                else:
+                                    # 有设备了，重置计数器
+                                    if no_device_wait_count > 0:
+                                        logger.info(f"✅ 发现可用设备，恢复正常运行")
+                                        no_device_wait_count = 0
+                            except Exception as e:
+                                logger.error(f"检查可用设备时出错: {e}")
                         else:
-                            stop_reason = "所有订单已完成"
-                            logger.info(f"[队列停止] 原因: {stop_reason}")
+                            # 队列不为空，重置计数器
+                            if no_device_wait_count > 0:
+                                no_device_wait_count = 0
+                        
+                        # 定期检查 Session 池状态
+                        if time.time() - last_session_check > session_check_interval:
+                            try:
+                                # 获取 HttpClient 统计信息
+                                http_stats = _http_client_instance.get_stats()
+                                
+                                # 新设计：基于 user_id 的全局池
+                                pool_size = http_stats.get('pool_size', 0)
+                                pool_max_size = http_stats.get('pool_max_size', 5000)
+                                avg_usage = http_stats.get('avg_usage_count', 0)
+                                
+                                # 计算使用率
+                                usage_rate = (pool_size / pool_max_size * 100) if pool_max_size > 0 else 0
+                                
+                                proxy_close_count = http_stats.get('proxy_close_errors', 0)
+                                dead_sessions = http_stats.get('dead_sessions_removed', 0)
+                                sessions_created = http_stats.get('sessions_created', 0)
+                                sessions_recycled = http_stats.get('sessions_recycled', 0)
+                                
+                                logger.info(f"Session池状态: 设备数={pool_size}/{pool_max_size}, "
+                                          f"池使用率={usage_rate:.1f}%, "
+                                          f"平均使用次数={avg_usage:.1f}, "
+                                          f"请求={http_stats.get('requests', 0)}, "
+                                          f"失败={http_stats.get('failures', 0)}, "
+                                          f"重试={http_stats.get('retries', 0)}, "
+                                          f"🔴ProxyClose={proxy_close_count}, "
+                                          f"创建={sessions_created}, "
+                                          f"回收={sessions_recycled}, "
+                                          f"失效清理={dead_sessions}")
+                                
+                                # 警告：池接近满载
+                                if pool_size > pool_max_size * 0.9:
+                                    logger.warning(f"⚠️ Session池接近满载: {pool_size}/{pool_max_size} ({usage_rate:.1f}%), "
+                                                 f"建议增加 max_pool_size 或清理无用设备")
+                                
+                                # 警告：失败率过高
+                                total_requests = http_stats.get('requests', 0)
+                                total_failures = http_stats.get('failures', 0)
+                                if total_requests > 100 and total_failures > 0:
+                                    failure_rate = (total_failures / total_requests * 100)
+                                    if failure_rate > 10:
+                                        logger.warning(f"⚠️ HTTP请求失败率过高: {failure_rate:.1f}% ({total_failures}/{total_requests})")
+                                
+                                # 警告：Proxy Close 错误过多
+                                if proxy_close_count > 0:
+                                    proxy_close_rate = (proxy_close_count / total_failures * 100) if total_failures > 0 else 0
+                                    if proxy_close_rate > 30:
+                                        logger.warning(f"🔴 Proxy Close 错误占比过高: {proxy_close_rate:.1f}% ({proxy_close_count}/{total_failures})")
+                                        logger.warning(f"   建议: 1) 检查代理质量 2) 降低 max_session_usage 3) 缩短 health_check_interval")
+                                    elif proxy_close_count > 50:
+                                        logger.warning(f"🔴 Proxy Close 错误总数较多: {proxy_close_count} 次")
+                                
+                                last_session_check = time.time()
+                            except Exception as e:
+                                logger.error(f"检查 Session 池状态时出错: {e}")
+                        
+                        # 定期检查性能指标并给出调优建议
+                        if time.time() - last_performance_check > performance_check_interval:
+                            try:
+                                queue_stats = _queue_instance.get_stats()
+                                current_completed = queue_stats.get('completed_tasks', 0)
+                                current_failed = queue_stats.get('failed_tasks', 0)
+                                
+                                # 计算最近1分钟的完成数和失败数
+                                completed_delta = current_completed - last_completed_count
+                                failed_delta = current_failed - last_failed_count
+                                total_delta = completed_delta + failed_delta
+                                
+                                if total_delta > 0:
+                                    success_rate = (completed_delta / total_delta * 100)
+                                    throughput = total_delta / performance_check_interval  # 每秒处理数
+                                    
+                                    logger.info(f"📊 性能统计（最近{performance_check_interval:.0f}秒）：")
+                                    logger.info(f"   - 处理速度: {throughput:.1f} 任务/秒")
+                                    logger.info(f"   - 成功率: {success_rate:.1f}% ({completed_delta}成功/{failed_delta}失败)")
+                                    logger.info(f"   - 总计: 完成{current_completed}, 失败{current_failed}")
+                                    
+                                    # 给出性能调优建议
+                                    if success_rate < 50:
+                                        logger.warning(f"⚠️ [性能建议] 成功率过低({success_rate:.1f}%)，建议：")
+                                        logger.warning(f"   1. 降低并发数（当前{_max_concurrent}）到 {int(_max_concurrent * 0.7)}")
+                                        logger.warning(f"   2. 增加请求延迟（当前{_request_delay_min*1000:.0f}-{_request_delay_max*1000:.0f}ms）")
+                                        logger.warning(f"   3. 检查代理质量和网络状况")
+                                    elif success_rate > 90 and throughput < _max_concurrent * 0.3:
+                                        logger.info(f"✅ [性能建议] 成功率很高({success_rate:.1f}%)但吞吐量较低，可以考虑：")
+                                        logger.info(f"   1. 适当提高并发数到 {int(_max_concurrent * 1.3)}")
+                                        logger.info(f"   2. 减少请求延迟（当前{_request_delay_min*1000:.0f}-{_request_delay_max*1000:.0f}ms）")
+                                
+                                last_completed_count = current_completed
+                                last_failed_count = current_failed
+                                last_performance_check = time.time()
+                            except Exception as e:
+                                logger.error(f"检查性能指标时出错: {e}")
+                        
+                        # 检查队列是否意外停止
+                        if not _queue_instance.is_running:
+                            stop_reason = "队列意外停止"
+                            logger.error(f"[队列停止] 原因: {stop_reason}")
                             break
-        except KeyboardInterrupt:
-            stop_reason = "用户中断（Ctrl+C）"
-            logger.info(f"[队列停止] 原因: {stop_reason}")
-        except Exception as inner_e:
-            stop_reason = f"主循环异常: {inner_e}"
-            logger.error(f"[队列停止] 原因: {stop_reason}")
-            import traceback
-            logger.error(traceback.format_exc())
+                        
+                        # 检查订单是否完成（在线程池中执行，避免阻塞）
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                            def check_order_status():
+                                order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
+                                if order_info:
+                                    order_num = order_info.get('order_num', 0) or 0
+                                    complete_num = order_info.get('complete_num', 0) or 0
+                                    
+                                    if order_num > 0 and complete_num >= order_num:
+                                        # 更新订单状态为已完成
+                                        _db_instance.update("uni_order", {"status": 2}, "id = %s", (order_id,))
+                                        _db_instance.commit()
+                                        
+                                        # 查找下一个待处理订单
+                                        next_orders = _db_instance.select(
+                                            "uni_order",
+                                            where="status IN (0, 1)",
+                                            order_by="id ASC",
+                                            limit=1
+                                        )
+                                        
+                                        return True, order_num, complete_num, next_orders
+                                return False, 0, 0, []
+                            
+                            future = executor.submit(check_order_status)
+                            order_completed, order_num, complete_num, next_orders = future.result(timeout=5.0)  # 最多等待5秒
+                            
+                            if order_completed:
+                                logger.info(f"订单 {order_id} 已完成！complete_num={complete_num}, order_num={order_num}")
+                                
+                                # 检查是否有下一个订单
+                                if next_orders:
+                                    next_order = next_orders[0]
+                                    next_order_id = next_order['id']
+                                    logger.info(f"发现下一个订单 {next_order_id}，继续执行...")
+                                    # 不退出，继续循环处理下一个订单
+                                else:
+                                    # 所有订单已完成，跳出内层循环，回到外层循环重新开始
+                                    logger.info("所有订单已完成，返回步骤1检查新订单...")
+                                    stop_reason = "所有订单已完成"
+                                    break
+                except KeyboardInterrupt:
+                    stop_reason = "用户中断（Ctrl+C）"
+                    logger.info(f"[队列停止] 原因: {stop_reason}")
+                    raise  # 重新抛出到最外层
+                except Exception as inner_e:
+                    stop_reason = f"主循环异常: {inner_e}"
+                    logger.error(f"[队列停止] 原因: {stop_reason}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    # 发生异常时也跳出内层循环，回到外层循环重试
+                    logger.info("发生异常，返回步骤1重新开始...")
+                
+                # 内层循环结束，记录原因
+                logger.info(f"内层循环结束，原因: {stop_reason}")
+                
+            except KeyboardInterrupt:
+                logger.info("用户中断，程序退出")
+                raise  # 退出外层循环
+            except Exception as outer_e:
+                logger.error(f"外层循环异常: {outer_e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                logger.info("30秒后重试...")
+                time.sleep(30)
     except Exception as e:
         logger.error(f"程序执行异常: {e}")
         import traceback
