@@ -3113,6 +3113,15 @@ def main():
                         logger.info(f"队列状态: 队列大小={queue_size}, 运行中={running_tasks}/{_max_concurrent}, "
                                   f"队列任务完成={completed_tasks}, 失败={failed_tasks}{order_progress_info}")
                         
+                        # 检查失败率，如果过高则发出警告
+                        total_tasks = completed_tasks + failed_tasks
+                        if total_tasks > 50:  # 至少有50个任务后才开始检查
+                            failure_rate = (failed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+                            if failure_rate > 50:
+                                logger.error(f"🔴 任务失败率过高: {failure_rate:.1f}% ({failed_tasks}/{total_tasks})")
+                                logger.error(f"🔴 建议：1) 检查代理质量 2) 降低并发数（当前{_max_concurrent}）3) 增加请求延迟")
+                                logger.error(f"🔴 如果持续失败，请考虑暂停程序检查配置")
+                        
                         # 检查是否队列为空且没有可用设备
                         if queue_size == 0 and running_tasks == 0:
                             # 队列完全空了，检查是否有可用设备
@@ -3295,6 +3304,60 @@ def main():
                 
                 # 内层循环结束，记录原因
                 logger.info(f"内层循环结束，原因: {stop_reason}")
+                
+                # 清理队列和资源，准备下一轮循环
+                logger.info("=" * 80)
+                logger.info("清理当前循环的资源...")
+                logger.info("=" * 80)
+                
+                # 1. 停止队列（等待所有任务完成）
+                if _queue_instance and _queue_instance.is_running:
+                    logger.info("停止消息队列，等待所有任务完成...")
+                    _queue_instance.stop()
+                    _queue_instance.wait()
+                    logger.info("消息队列已停止")
+                
+                # 2. 刷新Redis数据到MySQL
+                if _redis is not None:
+                    logger.info("刷新Redis缓存数据到MySQL...")
+                    try:
+                        flush_stats = flush_redis_to_mysql(_db_instance, _device_table_name)
+                        logger.info(f"数据刷新完成: 设备更新={flush_stats['devices_updated']}, "
+                                  f"订单更新={flush_stats['orders_updated']}")
+                        
+                        # 清理Redis缓存（只清理设备缓存，订单缓存在下一轮重新加载）
+                        clear_redis_cache(clear_orders=False)
+                        logger.info("Redis设备缓存已清理")
+                    except Exception as e:
+                        logger.error(f"刷新数据失败: {e}")
+                
+                # 3. 关闭线程池
+                if _thread_pool:
+                    logger.info("关闭线程池...")
+                    try:
+                        _thread_pool.shutdown(wait=True)
+                        logger.info("线程池已关闭")
+                    except Exception as e:
+                        logger.warning(f"关闭线程池时出错: {e}")
+                    _thread_pool = None
+                
+                # 4. 重置队列实例，下一轮重新创建
+                _queue_instance = None
+                logger.info("队列实例已重置")
+                
+                # 5. 停止设备状态监控线程
+                if _monitor_thread and _monitor_thread.is_alive():
+                    logger.info("停止设备状态监控线程...")
+                    _monitor_stop_event.set()
+                    _monitor_thread.join(timeout=5)
+                    if _monitor_thread.is_alive():
+                        logger.warning("设备监控线程未能在5秒内停止")
+                    else:
+                        logger.info("设备监控线程已停止")
+                
+                logger.info("=" * 80)
+                logger.info("资源清理完成，准备开始新一轮循环...")
+                logger.info("=" * 80)
                 
             except KeyboardInterrupt:
                 logger.info("用户中断，程序退出")
