@@ -154,7 +154,7 @@
           </div>
           <div class="order-info-row">
             <span>支付金额：</span>
-            <strong>{{ successData.amount }}</strong>
+            <strong>{{ successData.pay_amount }}</strong>
           </div>
         </div>
 
@@ -400,42 +400,48 @@ async function submitOrder () {
   storage.set('cardKey', cardKey.value)
 
   try {
-    const service = selectedService.value
+    const serviceKey = selectedService.value
+    const serviceObj = renderedServices.value.find(s => s.key === serviceKey)
+    if (!serviceObj || !serviceObj.id) {
+      message.error('服务信息不完整')
+      return
+    }
     let orderData = {
-      service_type: service,
-      remark: remark.value,
-      card_key: cardKey.value
+      service_id: serviceObj.id,
+      pay_num: '',
+      txt_info: '',
+      orderKey: cardKey.value
     }
 
     // 根据服务类型添加特定配置
-    if (isServiceType(service, 'play')) {
-      orderData.video_ids = playConfig.value.videoIds
+    if (isServiceType(serviceKey, 'play')) {
+      orderData.txt_info = playConfig.value.videoIds
       const orderQuantityPerVideo = playConfig.value.orderQuantityPerVideo
-      orderData.play_count_per_video = orderQuantityPerVideo * 1000
-      orderData.total_tasks = playConfig.value.videoIds.length * orderData.play_count_per_video
-    } else if (isServiceType(service, 'like')) {
+      orderData.pay_num = orderQuantityPerVideo
+
+    } else if (isServiceType(serviceKey, 'like')) {
       orderData.video_ids = likeConfig.value.videoIds
       orderData.like_count_per_video = likeConfig.value.likeCountPerVideo
       orderData.total_tasks = likeConfig.value.videoIds.length * likeConfig.value.likeCountPerVideo
-    } else if (isServiceType(service, 'comment')) {
+    } else if (isServiceType(serviceKey, 'comment')) {
       orderData.video_ids = commentConfig.value.videoIds
       orderData.comment_count_per_video = commentConfig.value.commentCountPerVideo
       orderData.comment_templates = commentConfig.value.commentTemplates
       orderData.add_emoji = commentConfig.value.addEmoji
       orderData.total_tasks = commentConfig.value.videoIds.length * commentConfig.value.commentCountPerVideo
-    } else if (isServiceType(service, 'follow')) {
+    } else if (isServiceType(serviceKey, 'follow')) {
       orderData.target_users = followConfig.value.targetUsers
       orderData.message_content = followConfig.value.messageContent
       orderData.add_random_emoji = followConfig.value.addRandomEmoji
       orderData.custom_emojis = followConfig.value.customEmojis
       orderData.total_tasks = followConfig.value.targetUsers.length
     }
-
+    console.log(playConfig.value, 333)
     const result = await apiService.createService(orderData)
 
-    if (result.code === 0) {
+    if (result.code === 200) {
       showConfirm.value = false
-      showSuccessModal(result.data)
+      showSuccessModal(result.data.order)
       // 刷新卡密统计
       await refreshCardStats()
     } else {
@@ -448,33 +454,12 @@ async function submitOrder () {
 }
 
 function showSuccessModal (orderData) {
-  const service = selectedService.value
-  const unitPrice = servicePrices.value[service] || 0
-  let quantityText = ''
-  let totalTasks = orderData.total_tasks || 0
-  let total = 0
-
-  if (isServiceType(service, 'play')) {
-    const videoCount = playConfig.value.videoIds.length
-    const orderQuantityPerVideo = playConfig.value.orderQuantityPerVideo
-    quantityText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`
-    total = (totalTasks / 1000) * unitPrice
-  } else if (isServiceType(service, 'like')) {
-    quantityText = `${likeConfig.value.videoIds.length} 个视频，共 ${totalTasks} 个点赞`
-    total = (totalTasks / 1000) * unitPrice
-  } else if (isServiceType(service, 'comment')) {
-    quantityText = `${commentConfig.value.videoIds.length} 个视频，共 ${totalTasks} 条评论`
-    total = (totalTasks / 1000) * unitPrice
-  } else if (isServiceType(service, 'follow')) {
-    quantityText = `${followConfig.value.targetUsers.length} 个用户`
-    total = (totalTasks / 1000) * unitPrice
-  }
-
+  // 使用API返回的数据字段
   successData.value = {
     orderId: orderData.order_id || orderData.id || 'N/A',
-    service: SERVICE_TYPES[service].name,
-    quantity: quantityText,
-    amount: `${total.toFixed(2)} 积分`
+    service: orderData.product_name || SERVICE_TYPES[selectedService.value]?.name || '未知服务',
+    quantity: `${orderData.pay_num || 0} 单`,
+    pay_amount: orderData.pay_amount ? `${orderData.pay_amount} 积分` : '0.00 积分'
   }
 
   showSuccess.value = true
