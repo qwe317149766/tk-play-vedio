@@ -1,2 +1,0 @@
-# tt_protobuf package
-
