@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok服务下单系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .service-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .service-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .service-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .service-card .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .service-card .name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .service-card .price {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .service-card .loading {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input[type="file"] {
+            padding: 10px;
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .input-group input[type="file"]:hover {
+            background: #e9ecef;
+        }
+
+        .input-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .card-query-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .card-query-actions .btn {
+            width: 100%;
+        }
+
+        .card-query-result {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .card-query-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .card-query-stat {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .card-query-stat .label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .card-query-stat .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .card-query-orders-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .card-query-orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-order-row {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .card-order-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .card-order-meta {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .card-query-placeholder {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+
+        /* 成功页面 */
+        .success-page {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .success-page h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .success-page p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .order-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        /* 进度页面 */
+        .progress-page {
+            padding: 20px;
+        }
+
+        .order-list {
+            margin-top: 20px;
+        }
+
+        .order-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .order-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .order-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .order-item-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .order-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-status.processing {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .order-status.completed {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .service-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 主页面 -->
+        <div id="mainPage">
+            <div class="header">
+                <h1>🎵 TikTok服务下单系统</h1>
+                <p>专业、快速、安全的TikTok增值服务</p>
+            </div>
+
+            <div class="content">
+                <!-- 服务选择 -->
+                <div class="section">
+                    <div class="section-title">选择服务类型</div>
+                    <div class="service-grid" id="serviceGrid">
+                        <!-- 动态加载服务卡片 -->
+                    </div>
+                </div>
+
+                <!-- 播放服务配置 -->
+                <div class="section" id="playConfig" style="display: none;">
+                    <div class="section-title">播放任务配置</div>
+                    
+                    <div class="input-group">
+                        <label for="videoIdsInput">视频ID列表（直接输入或上传TXT文件）</label>
+                        <textarea id="videoIdsInput" rows="5" placeholder="每行一个视频ID，例如：&#10;7569608169052212501&#10;7569608169052212502&#10;7569608169052212503"></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="file" id="videoIdsFile" accept=".txt" style="display: none;">
+                            <button type="button" onclick="document.getElementById('videoIdsFile').click()" style="flex: 1; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📁 上传TXT文件</button>
+                            <button type="button" onclick="document.getElementById('videoIdsInput').value = ''" style="flex: 1; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 清空</button>
+                        </div>
+                        <div class="hint" id="videoCountHint">请直接输入或上传文件，每行一个视频ID</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="playCountPerVideo">每个视频订单数量（每单=1000次播放）</label>
+                        <input type="number" id="playCountPerVideo" min="1" step="1" value="1" placeholder="例如：5 表示5000次播放">
+                        <div class="hint">订单以1000次播放为单位，请输入整数订单数</div>
+                    </div>
+                </div>
+
+                <!-- 点赞服务配置 -->
+                <div class="section" id="likeConfig" style="display: none;">
+                    <div class="section-title">点赞任务配置</div>
+                    
+                    <div class="input-group">
+                        <label for="likeVideoIdsInput">待点赞视频ID列表（直接输入或上传TXT文件）</label>
+                        <textarea id="likeVideoIdsInput" rows="5" placeholder="每行一个视频ID，例如：&#10;7569608169052212501&#10;7569608169052212502"></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="file" id="likeVideoIdsFile" accept=".txt" style="display: none;">
+                            <button type="button" onclick="document.getElementById('likeVideoIdsFile').click()" style="flex: 1; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📁 上传TXT文件</button>
+                            <button type="button" onclick="document.getElementById('likeVideoIdsInput').value = ''" style="flex: 1; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 清空</button>
+                        </div>
+                        <div class="hint" id="likeVideoCountHint">请直接输入或上传文件，每行一个视频ID</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="likeCountPerVideo">每个视频点赞数量</label>
+                        <input type="number" id="likeCountPerVideo" min="100" step="100" value="1000" placeholder="例如：1000">
+                        <div class="hint">建议按1000为单位，例如：1000、2000、3000</div>
+                    </div>
+                </div>
+
+                <!-- 评论服务配置 -->
+                <div class="section" id="commentConfig" style="display: none;">
+                    <div class="section-title">评论任务配置</div>
+                    
+                    <div class="input-group">
+                        <label for="commentVideoIdsInput">待评论视频ID列表（直接输入或上传TXT文件）</label>
+                        <textarea id="commentVideoIdsInput" rows="5" placeholder="每行一个视频ID，例如：&#10;7569608169052212501&#10;7569608169052212502"></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="file" id="commentVideoIdsFile" accept=".txt" style="display: none;">
+                            <button type="button" onclick="document.getElementById('commentVideoIdsFile').click()" style="flex: 1; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📁 上传TXT文件</button>
+                            <button type="button" onclick="document.getElementById('commentVideoIdsInput').value = ''" style="flex: 1; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 清空</button>
+                        </div>
+                        <div class="hint">请直接输入或上传文件，每行一个视频ID</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="commentCountPerVideo">每个视频评论数量</label>
+                        <input type="number" id="commentCountPerVideo" min="100" step="100" value="1000" placeholder="例如：1000">
+                        <div class="hint">建议按1000为单位，例如：1000、2000、3000</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="commentTemplatesInput">评论模板列表（直接输入或上传TXT文件）</label>
+                        <textarea id="commentTemplatesInput" rows="6" placeholder="每行一条评论模板，例如：&#10;很棒的视频！&#10;太精彩了！&#10;喜欢这个内容"></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="file" id="commentTemplatesFile" accept=".txt" style="display: none;">
+                            <button type="button" onclick="document.getElementById('commentTemplatesFile').click()" style="flex: 1; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📁 上传TXT文件</button>
+                            <button type="button" onclick="document.getElementById('commentTemplatesInput').value = ''" style="flex: 1; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 清空</button>
+                        </div>
+                        <div class="hint">系统会随机选择模板进行评论</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="commentAddEmoji" checked>
+                            随机添加表情后缀
+                        </label>
+                        <div class="hint">例如：很棒的视频 👍、喜欢 ❤️、太好了 🎉</div>
+                    </div>
+                </div>
+
+                <!-- 私信服务配置 -->
+                <div class="section" id="followConfig" style="display: none;">
+                    <div class="section-title">私信任务配置</div>
+                    
+                    <div class="input-group">
+                        <label for="targetUsersInput">待私信用户列表（直接输入或上传TXT文件）</label>
+                        <textarea id="targetUsersInput" rows="5" placeholder="每行一个用户名或用户ID，例如：&#10;@username&#10;123456789&#10;@anotheruser"></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <input type="file" id="targetUsersFile" accept=".txt" style="display: none;">
+                            <button type="button" onclick="document.getElementById('targetUsersFile').click()" style="flex: 1; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📁 上传TXT文件</button>
+                            <button type="button" onclick="document.getElementById('targetUsersInput').value = ''" style="flex: 1; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 清空</button>
+                        </div>
+                        <div class="hint" id="targetUsersCountHint">请直接输入或上传文件，每行一个用户</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="messageContent">私信文本内容</label>
+                        <textarea id="messageContent" rows="4" placeholder="输入要发送的私信内容..."></textarea>
+                        <div class="hint">支持多行文本，可以使用变量：{username} = 用户名</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="messageAddRandomEmoji" checked>
+                            随机添加表情后缀
+                        </label>
+                        <div class="hint">系统会从常用表情中随机选择1-3个添加到消息末尾</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="messageEmojis">自定义表情（可选）</label>
+                        <input type="text" id="messageEmojis" placeholder="例如：😊,❤️,👍,🎉,✨">
+                        <div class="hint">用逗号分隔多个表情，留空则使用系统默认</div>
+                    </div>
+                </div>
+
+                <!-- 备注 -->
+                <div class="section">
+                    <div class="input-group">
+                        <label for="remark">备注（选填）</label>
+                        <textarea id="remark" rows="3" placeholder="输入订单备注信息"></textarea>
+                    </div>
+                </div>
+
+                <!-- 卡密统计信息 -->
+                <div class="section" id="cardStatsSection" style="display: none;">
+                    <div class="section-title">💳 卡密统计</div>
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 5px;">已完成订单</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #667eea;" id="cardCompletedOrders">-</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 5px;">已使用额度</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #f59e0b;" id="cardUsedQuota">-</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; color: #666; margin-bottom: 5px;">剩余额度</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #10b981;" id="cardRemainingQuota">-</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; text-align: center;">
+                        <button type="button" onclick="refreshCardStats()" style="padding: 6px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🔄 刷新统计</button>
+                    </div>
+                </div>
+                <div style="margin: -10px 0 10px; text-align: center;">
+                    <button type="button" id="cardQueryToggleBtn" style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🔎 卡密查询</button>
+                </div>
+
+                <!-- 卡密查询 -->
+                <div class="section hidden" id="cardQuerySection">
+                    <div class="section-title">🔐 卡密查询</div>
+                    <div class="input-group">
+                        <label for="cardQueryInput">查询卡密</label>
+                        <input type="text" id="cardQueryInput" placeholder="输入要查询的卡密">
+                        <div class="hint">查询后可查看该卡密剩余积分及关联订单</div>
+                    </div>
+                    <div class="card-query-actions">
+                        <button type="button" class="btn btn-primary" id="cardQueryBtn">查询卡密信息</button>
+                        <button type="button" class="btn btn-secondary" id="cardQueryResetBtn">清空</button>
+                    </div>
+                    <div class="card-query-result hidden" id="cardQueryResult">
+                        <div class="card-query-stats" id="cardQueryStats">
+                            <p class="card-query-placeholder">请先输入卡密进行查询</p>
+                        </div>
+                        <div class="card-query-orders">
+                            <div class="card-query-orders-title">关联订单</div>
+                            <div class="card-query-orders-list" id="cardQueryOrdersList">
+                                <p class="card-query-placeholder">暂无数据</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 订单摘要 -->
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>服务类型：</span>
+                        <span id="summaryService">未选择</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>单价：</span>
+                        <span id="summaryUnitPrice">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>数量：</span>
+                        <span id="summaryQuantity">0 单位</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>总计：</span>
+                        <span id="summaryTotal">0 USDT</span>
+                    </div>
+                </div>
+
+                <!-- 下单按钮 -->
+                <button class="btn btn-primary" id="submitOrderBtn" disabled>
+                    立即下单
+                </button>
+
+                <button class="btn btn-secondary" id="viewProgressBtn">
+                    查看订单进度
+                </button>
+            </div>
+        </div>
+
+        <!-- 订单进度页面 -->
+        <div id="progressPage" class="hidden">
+            <div class="header">
+                <h1>📊 订单进度查询</h1>
+                <p>实时查看您的订单完成情况</p>
+            </div>
+
+            <div class="content progress-page">
+                <button class="btn btn-secondary" id="backToMainBtn">
+                    返回下单
+                </button>
+
+                <!-- 订单号查询 -->
+                <div class="section">
+                    <div class="section-title">🔍 订单号查询</div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end;">
+                        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="searchOrderId">输入订单号</label>
+                            <input type="text" id="searchOrderId" placeholder="例如：ORD20231117001">
+                        </div>
+                        <button type="button" onclick="searchOrderById()" style="padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; white-space: nowrap; height: 46px;">
+                            🔍 查询
+                        </button>
+                        <button type="button" onclick="loadAllOrders()" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; white-space: nowrap; height: 46px;">
+                            📋 全部订单
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 订单列表 -->
+                <div class="section">
+                    <div class="section-title">📦 订单列表</div>
+                    <div class="order-list" id="orderList">
+                        <!-- 动态加载订单列表 -->
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <p>请输入订单号查询，或点击"全部订单"查看所有订单</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认下单模态框 -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认下单信息</h3>
+            </div>
+            <div class="modal-body">
+                <div class="order-info">
+                    <div class="order-info-row">
+                        <span>服务类型：</span>
+                        <strong id="confirmService"></strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>视频链接：</span>
+                        <strong id="confirmUrl" style="word-break: break-all; font-size: 12px;"></strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>数量：</span>
+                        <strong id="confirmQuantity"></strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>单价：</span>
+                        <strong id="confirmUnitPrice"></strong>
+                    </div>
+                    <div class="order-info-row" style="border-top: 2px solid #e0e0e0; padding-top: 10px; margin-top: 10px;">
+                        <span>总计：</span>
+                        <strong style="color: #667eea; font-size: 18px;" id="confirmTotal"></strong>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="cardKey">卡密</label>
+                    <input type="text" id="cardKey" placeholder="请输入卡密">
+                    <div class="hint">首次下单需要输入卡密，系统会自动记住</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelOrderBtn">取消</button>
+                <button class="btn btn-primary" id="confirmOrderBtn">确认下单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 下单成功模态框 -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-body success-page">
+                <div class="success-icon">✅</div>
+                <h2>下单成功！</h2>
+                <p>您的订单已提交，系统正在处理中</p>
+
+                <div class="order-info">
+                    <div class="order-info-row">
+                        <span>订单编号：</span>
+                        <strong id="successOrderId"></strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>服务类型：</span>
+                        <strong id="successService"></strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>下单数量：</span>
+                        <strong id="successQuantity"></strong>
+                    </div>
+                    <div class="order-info-row">
+                        <span>支付金额：</span>
+                        <strong id="successAmount"></strong>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="viewOrderBtn">查看订单进度</button>
+                <button class="btn btn-secondary" id="continueOrderBtn">继续下单</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 配置
+        const API_BASE_URL = 'http://localhost:8000/api'; // 修改为实际的API地址
+
+        // 服务类型配置
+        const SERVICE_TYPES = {
+            play: { name: 'TikTok播放', icon: '▶️', unit: '1000次播放', key: 'play' },
+            like: { name: 'TikTok点赞', icon: '❤️', unit: '1000个', key: 'like' },
+            comment: { name: 'TikTok评论', icon: '💬', unit: '1000条', key: 'comment' },
+            follow: { name: 'TikTok私信', icon: '💌', unit: '1000条', key: 'follow' },
+        };
+
+        // 全局状态
+        let currentState = {
+            selectedService: null,
+            servicePrices: {},
+            remark: '',
+            cardKey: localStorage.getItem('cardKey') || '',
+            // 播放配置
+            playConfig: {
+                videoIds: [],
+                orderQuantityPerVideo: 1
+            },
+            // 点赞配置
+            likeConfig: {
+                videoIds: [],
+                likeCountPerVideo: 1000
+            },
+            // 评论配置
+            commentConfig: {
+                videoIds: [],
+                commentCountPerVideo: 1000,
+                commentTemplates: [],
+                addEmoji: true
+            },
+            // 私信配置
+            followConfig: {
+                targetUsers: [],
+                messageContent: '',
+                addRandomEmoji: true,
+                customEmojis: []
+            }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initServiceCards();
+            bindEvents();
+            loadCardKey();
+        });
+
+        // 初始化服务卡片
+        async function initServiceCards() {
+            const serviceGrid = document.getElementById('serviceGrid');
+            serviceGrid.innerHTML = '';
+
+            for (const [key, service] of Object.entries(SERVICE_TYPES)) {
+                const card = document.createElement('div');
+                card.className = 'service-card';
+                card.dataset.service = key;
+                card.innerHTML = `
+                    <div class="icon">${service.icon}</div>
+                    <div class="name">${service.name}</div>
+                    <div class="price loading">加载价格中...</div>
+                `;
+                card.onclick = () => selectService(key);
+                serviceGrid.appendChild(card);
+            }
+
+            // 加载价格
+            await loadPrices();
+        }
+
+        // 加载价格
+        async function loadPrices() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/prices`);
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    currentState.servicePrices = result.data;
+
+                    // 更新价格显示
+                    for (const [key, price] of Object.entries(result.data)) {
+                        const card = document.querySelector(`[data-service="${key}"]`);
+                        if (card) {
+                            const priceElement = card.querySelector('.price');
+                            priceElement.textContent = `${price} USDT/${SERVICE_TYPES[key].unit}`;
+                            priceElement.classList.remove('loading');
+                        }
+                    }
+                } else {
+                    console.error('加载价格失败:', result.msg);
+                    // 使用默认价格
+                    currentState.servicePrices = {
+                        play: 1.0,
+                        like: 2.0,
+                        comment: 3.0,
+                        follow: 2.5
+                    };
+                    updatePriceDisplay();
+                }
+            } catch (error) {
+                console.error('加载价格失败:', error);
+                // 使用默认价格
+                currentState.servicePrices = {
+                    play: 1.0,
+                    like: 2.0,
+                    comment: 3.0,
+                    follow: 2.5
+                };
+                updatePriceDisplay();
+            }
+        }
+
+        // 更新价格显示（使用默认价格）
+        function updatePriceDisplay() {
+            for (const [key, price] of Object.entries(currentState.servicePrices)) {
+                const card = document.querySelector(`[data-service="${key}"]`);
+                if (card) {
+                    const priceElement = card.querySelector('.price');
+                    priceElement.textContent = `${price} USDT/${SERVICE_TYPES[key].unit}`;
+                    priceElement.classList.remove('loading');
+                }
+            }
+        }
+
+        // 选择服务
+        function selectService(serviceKey) {
+            // 移除之前的选中状态
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 添加选中状态
+            const selectedCard = document.querySelector(`[data-service="${serviceKey}"]`);
+            selectedCard.classList.add('selected');
+
+            currentState.selectedService = serviceKey;
+
+            // 隐藏所有配置区域
+            document.getElementById('playConfig').style.display = 'none';
+            document.getElementById('likeConfig').style.display = 'none';
+            document.getElementById('commentConfig').style.display = 'none';
+            document.getElementById('followConfig').style.display = 'none';
+
+            // 显示对应的配置区域
+            if (serviceKey === 'play') {
+                document.getElementById('playConfig').style.display = 'block';
+            } else if (serviceKey === 'like') {
+                document.getElementById('likeConfig').style.display = 'block';
+            } else if (serviceKey === 'comment') {
+                document.getElementById('commentConfig').style.display = 'block';
+            } else if (serviceKey === 'follow') {
+                document.getElementById('followConfig').style.display = 'block';
+            }
+
+            updateSummary();
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // 备注变化
+            document.getElementById('remark').addEventListener('input', (e) => {
+                currentState.remark = e.target.value.trim();
+            });
+
+            // ========== 播放服务事件 ==========
+            document.getElementById('videoIdsFile').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const content = await readTextFile(file);
+                    const videoIds = content.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+                    document.getElementById('videoIdsInput').value = videoIds.join('\n');
+                    currentState.playConfig.videoIds = videoIds;
+                    document.getElementById('videoCountHint').textContent = `已上传 ${videoIds.length} 个视频ID`;
+                    updateSummary();
+                    e.target.value = ''; // 清空文件选择，允许重复上传同一文件
+                }
+            });
+
+            document.getElementById('videoIdsInput').addEventListener('input', (e) => {
+                const videoIds = e.target.value.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+                currentState.playConfig.videoIds = videoIds;
+                document.getElementById('videoCountHint').textContent = videoIds.length > 0 ? 
+                    `已输入 ${videoIds.length} 个视频ID` : '请直接输入或上传文件，每行一个视频ID';
+                updateSummary();
+            });
+
+            document.getElementById('playCountPerVideo').addEventListener('input', (e) => {
+                currentState.playConfig.orderQuantityPerVideo = Math.max(1, parseInt(e.target.value) || 1);
+                document.getElementById('playCountPerVideo').value = currentState.playConfig.orderQuantityPerVideo;
+                updateSummary();
+            });
+
+            // ========== 点赞服务事件 ==========
+            document.getElementById('likeVideoIdsFile').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const content = await readTextFile(file);
+                    const videoIds = content.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+                    document.getElementById('likeVideoIdsInput').value = videoIds.join('\n');
+                    currentState.likeConfig.videoIds = videoIds;
+                    document.getElementById('likeVideoCountHint').textContent = `已上传 ${videoIds.length} 个视频ID`;
+                    updateSummary();
+                    e.target.value = '';
+                }
+            });
+
+            document.getElementById('likeVideoIdsInput').addEventListener('input', (e) => {
+                const videoIds = e.target.value.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+                currentState.likeConfig.videoIds = videoIds;
+                document.getElementById('likeVideoCountHint').textContent = videoIds.length > 0 ? 
+                    `已输入 ${videoIds.length} 个视频ID` : '请直接输入或上传文件，每行一个视频ID';
+                updateSummary();
+            });
+
+            document.getElementById('likeCountPerVideo').addEventListener('input', (e) => {
+                currentState.likeConfig.likeCountPerVideo = parseInt(e.target.value) || 1000;
+                updateSummary();
+            });
+
+            // ========== 评论服务事件 ==========
+            document.getElementById('commentVideoIdsFile').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const content = await readTextFile(file);
+                    const videoIds = content.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+                    document.getElementById('commentVideoIdsInput').value = videoIds.join('\n');
+                    currentState.commentConfig.videoIds = videoIds;
+                    updateSummary();
+                    e.target.value = '';
+                }
+            });
+
+            document.getElementById('commentVideoIdsInput').addEventListener('input', (e) => {
+                const videoIds = e.target.value.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+                currentState.commentConfig.videoIds = videoIds;
+                updateSummary();
+            });
+
+            document.getElementById('commentCountPerVideo').addEventListener('input', (e) => {
+                currentState.commentConfig.commentCountPerVideo = parseInt(e.target.value) || 1000;
+                updateSummary();
+            });
+
+            document.getElementById('commentTemplatesFile').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const content = await readTextFile(file);
+                    const templates = content.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+                    document.getElementById('commentTemplatesInput').value = templates.join('\n');
+                    currentState.commentConfig.commentTemplates = templates;
+                    e.target.value = '';
+                }
+            });
+
+            document.getElementById('commentTemplatesInput').addEventListener('input', (e) => {
+                const templates = e.target.value.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+                currentState.commentConfig.commentTemplates = templates;
+            });
+
+            document.getElementById('commentAddEmoji').addEventListener('change', (e) => {
+                currentState.commentConfig.addEmoji = e.target.checked;
+            });
+
+            // ========== 私信服务事件 ==========
+            document.getElementById('targetUsersFile').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const content = await readTextFile(file);
+                    const users = content.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+                    document.getElementById('targetUsersInput').value = users.join('\n');
+                    currentState.followConfig.targetUsers = users;
+                    document.getElementById('targetUsersCountHint').textContent = `已上传 ${users.length} 个用户`;
+                    updateSummary();
+                    e.target.value = '';
+                }
+            });
+
+            document.getElementById('targetUsersInput').addEventListener('input', (e) => {
+                const users = e.target.value.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+                currentState.followConfig.targetUsers = users;
+                document.getElementById('targetUsersCountHint').textContent = users.length > 0 ? 
+                    `已输入 ${users.length} 个用户` : '请直接输入或上传文件，每行一个用户';
+                updateSummary();
+            });
+
+            document.getElementById('messageContent').addEventListener('input', (e) => {
+                currentState.followConfig.messageContent = e.target.value.trim();
+            });
+
+            document.getElementById('messageAddRandomEmoji').addEventListener('change', (e) => {
+                currentState.followConfig.addRandomEmoji = e.target.checked;
+            });
+
+            document.getElementById('messageEmojis').addEventListener('input', (e) => {
+                const emojis = e.target.value.split(',').map(e => e.trim()).filter(e => e.length > 0);
+                currentState.followConfig.customEmojis = emojis;
+            });
+
+            // 下单按钮
+            document.getElementById('submitOrderBtn').addEventListener('click', showConfirmModal);
+
+            // 查看进度按钮
+            document.getElementById('viewProgressBtn').addEventListener('click', showProgressPage);
+
+            // 返回主页按钮
+            document.getElementById('backToMainBtn').addEventListener('click', showMainPage);
+
+            // 取消下单
+            document.getElementById('cancelOrderBtn').addEventListener('click', hideConfirmModal);
+
+            // 确认下单
+            document.getElementById('confirmOrderBtn').addEventListener('click', submitOrder);
+
+            // 查看订单
+            document.getElementById('viewOrderBtn').addEventListener('click', () => {
+                hideSuccessModal();
+                showProgressPage();
+            });
+
+            // 继续下单
+            document.getElementById('continueOrderBtn').addEventListener('click', () => {
+                hideSuccessModal();
+                resetForm();
+            });
+
+            document.getElementById('cardQueryToggleBtn').addEventListener('click', () => {
+                document.getElementById('cardQuerySection').classList.remove('hidden');
+                document.getElementById('cardQueryToggleBtn').style.display = 'none';
+            });
+            document.getElementById('cardQueryBtn').addEventListener('click', queryCardInfo);
+            document.getElementById('cardQueryResetBtn').addEventListener('click', () => {
+                document.getElementById('cardQueryInput').value = '';
+                document.getElementById('cardQueryResult').classList.add('hidden');
+            });
+            document.getElementById('cardQueryInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    queryCardInfo();
+                }
+            });
+        }
+
+        // 读取文本文件
+        async function readTextFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        function setCardKey(cardKey) {
+            currentState.cardKey = cardKey;
+            document.getElementById('cardKey').value = cardKey;
+            document.getElementById('cardQueryInput').value = cardKey;
+            localStorage.setItem('cardKey', cardKey);
+        }
+
+        // 加载卡密
+        function loadCardKey() {
+            const savedCardKey = localStorage.getItem('cardKey');
+            if (savedCardKey) {
+                setCardKey(savedCardKey);
+            }
+        }
+
+        // 更新摘要
+        function updateSummary() {
+            const service = currentState.selectedService;
+
+            if (!service || !SERVICE_TYPES[service]) {
+                document.getElementById('summaryService').textContent = '未选择';
+                document.getElementById('summaryUnitPrice').textContent = '-';
+                document.getElementById('summaryQuantity').textContent = '0';
+                document.getElementById('summaryTotal').textContent = '0 USDT';
+                updateSubmitButton();
+                return;
+            }
+
+            // 计算不同服务的数量和价格
+            let totalTasks = 0;
+            let totalVideos = 0;
+            let totalUsers = 0;
+            let quantityText = '0';
+
+            if (service === 'play') {
+                const videoCount = currentState.playConfig.videoIds.length;
+                const orderQuantityPerVideo = currentState.playConfig.orderQuantityPerVideo;
+                const playCountPerVideo = orderQuantityPerVideo * 1000;
+                totalTasks = videoCount * playCountPerVideo;
+                totalVideos = videoCount;
+                quantityText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`;
+            } else if (service === 'like') {
+                const videoCount = currentState.likeConfig.videoIds.length;
+                const likeCountPerVideo = currentState.likeConfig.likeCountPerVideo;
+                totalTasks = videoCount * likeCountPerVideo;
+                totalVideos = videoCount;
+                quantityText = `${videoCount} 个视频 × ${likeCountPerVideo} 个点赞`;
+            } else if (service === 'comment') {
+                const videoCount = currentState.commentConfig.videoIds.length;
+                const commentCountPerVideo = currentState.commentConfig.commentCountPerVideo;
+                totalTasks = videoCount * commentCountPerVideo;
+                totalVideos = videoCount;
+                quantityText = `${videoCount} 个视频 × ${commentCountPerVideo} 条评论`;
+            } else if (service === 'follow') {
+                totalUsers = currentState.followConfig.targetUsers.length;
+                totalTasks = totalUsers;
+                quantityText = `${totalUsers} 个用户`;
+            }
+
+            document.getElementById('summaryService').textContent = SERVICE_TYPES[service].name;
+            const unitPrice = currentState.servicePrices[service] || 0;
+            document.getElementById('summaryUnitPrice').textContent = `${unitPrice} USDT/${SERVICE_TYPES[service].unit}`;
+            document.getElementById('summaryQuantity').textContent = quantityText;
+            
+            // 计算总价：根据任务总数计算
+            let total = 0;
+            if (service === 'play') {
+                // 播放按1000次计费
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'like') {
+                // 点赞按1000个计费
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'comment') {
+                // 评论按1000条计费
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'follow') {
+                // 私信按1000条计费
+                total = (totalTasks / 1000) * unitPrice;
+            }
+            
+            document.getElementById('summaryTotal').textContent = `${total.toFixed(2)} USDT`;
+
+            updateSubmitButton();
+        }
+
+        // 更新提交按钮状态
+        function updateSubmitButton() {
+            const btn = document.getElementById('submitOrderBtn');
+            let canSubmit = false;
+
+            const service = currentState.selectedService;
+            
+            if (service === 'play') {
+                canSubmit = currentState.playConfig.videoIds.length > 0 && 
+                   currentState.playConfig.orderQuantityPerVideo > 0;
+            } else if (service === 'like') {
+                canSubmit = currentState.likeConfig.videoIds.length > 0 && 
+                           currentState.likeConfig.likeCountPerVideo > 0;
+            } else if (service === 'comment') {
+                canSubmit = currentState.commentConfig.videoIds.length > 0 && 
+                           currentState.commentConfig.commentCountPerVideo > 0 &&
+                           currentState.commentConfig.commentTemplates.length > 0;
+            } else if (service === 'follow') {
+                canSubmit = currentState.followConfig.targetUsers.length > 0 && 
+                           currentState.followConfig.messageContent.length > 0;
+            }
+
+            btn.disabled = !canSubmit;
+        }
+
+        // 显示确认模态框
+        function showConfirmModal() {
+            const service = currentState.selectedService;
+            const unitPrice = currentState.servicePrices[service] || 0;
+
+            // 计算详细信息
+            let detailText = '';
+            let totalTasks = 0;
+            let total = 0;
+
+            if (service === 'play') {
+                const videoCount = currentState.playConfig.videoIds.length;
+                const orderQuantityPerVideo = currentState.playConfig.orderQuantityPerVideo;
+                const playCountPerVideo = orderQuantityPerVideo * 1000;
+                totalTasks = videoCount * playCountPerVideo;
+                detailText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`;
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'like') {
+                const videoCount = currentState.likeConfig.videoIds.length;
+                const likeCountPerVideo = currentState.likeConfig.likeCountPerVideo;
+                totalTasks = videoCount * likeCountPerVideo;
+                detailText = `${videoCount} 个视频 × ${likeCountPerVideo} 个点赞 = ${totalTasks} 个点赞`;
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'comment') {
+                const videoCount = currentState.commentConfig.videoIds.length;
+                const commentCountPerVideo = currentState.commentConfig.commentCountPerVideo;
+                totalTasks = videoCount * commentCountPerVideo;
+                detailText = `${videoCount} 个视频 × ${commentCountPerVideo} 条评论 = ${totalTasks} 条评论`;
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'follow') {
+                const userCount = currentState.followConfig.targetUsers.length;
+                totalTasks = userCount;
+                detailText = `${userCount} 个用户`;
+                total = (totalTasks / 1000) * unitPrice;
+            }
+
+            document.getElementById('confirmService').textContent = SERVICE_TYPES[service].name;
+            document.getElementById('confirmUrl').textContent = detailText;
+            document.getElementById('confirmQuantity').textContent = detailText;
+            document.getElementById('confirmUnitPrice').textContent = `${unitPrice} USDT/${SERVICE_TYPES[service].unit}`;
+            document.getElementById('confirmTotal').textContent = `${total.toFixed(2)} USDT`;
+
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        // 隐藏确认模态框
+        function hideConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+
+        // 提交订单
+        async function submitOrder() {
+            const cardKey = document.getElementById('cardKey').value.trim();
+            
+            if (!cardKey) {
+                alert('请输入卡密');
+                return;
+            }
+
+            // 保存卡密
+            setCardKey(cardKey);
+
+            const btn = document.getElementById('confirmOrderBtn');
+            btn.disabled = true;
+            btn.textContent = '提交中...';
+
+            try {
+                const service = currentState.selectedService;
+                let orderData = {
+                    service_type: service,
+                    remark: currentState.remark,
+                    card_key: cardKey
+                };
+
+                // 根据服务类型添加特定配置
+                if (service === 'play') {
+                    orderData.video_ids = currentState.playConfig.videoIds;
+            const orderQuantityPerVideo = currentState.playConfig.orderQuantityPerVideo;
+            orderData.play_count_per_video = orderQuantityPerVideo * 1000;
+            orderData.total_tasks = currentState.playConfig.videoIds.length * orderData.play_count_per_video;
+                } else if (service === 'like') {
+                    orderData.video_ids = currentState.likeConfig.videoIds;
+                    orderData.like_count_per_video = currentState.likeConfig.likeCountPerVideo;
+                    orderData.total_tasks = currentState.likeConfig.videoIds.length * currentState.likeConfig.likeCountPerVideo;
+                } else if (service === 'comment') {
+                    orderData.video_ids = currentState.commentConfig.videoIds;
+                    orderData.comment_count_per_video = currentState.commentConfig.commentCountPerVideo;
+                    orderData.comment_templates = currentState.commentConfig.commentTemplates;
+                    orderData.add_emoji = currentState.commentConfig.addEmoji;
+                    orderData.total_tasks = currentState.commentConfig.videoIds.length * currentState.commentConfig.commentCountPerVideo;
+                } else if (service === 'follow') {
+                    orderData.target_users = currentState.followConfig.targetUsers;
+                    orderData.message_content = currentState.followConfig.messageContent;
+                    orderData.add_random_emoji = currentState.followConfig.addRandomEmoji;
+                    orderData.custom_emojis = currentState.followConfig.customEmojis;
+                    orderData.total_tasks = currentState.followConfig.targetUsers.length;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    // 下单成功
+                    hideConfirmModal();
+                    showSuccessModal(result.data);
+                } else {
+                    alert(`下单失败: ${result.msg}`);
+                }
+            } catch (error) {
+                console.error('下单失败:', error);
+                alert('网络错误，请稍后重试');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '确认下单';
+            }
+        }
+
+        // 显示成功模态框
+        function showSuccessModal(orderData) {
+            const service = currentState.selectedService;
+            const unitPrice = currentState.servicePrices[service] || 0;
+
+            let quantityText = '';
+            let totalTasks = orderData.total_tasks || 0;
+            let total = 0;
+
+            if (service === 'play') {
+                const videoCount = currentState.playConfig.videoIds.length;
+                const orderQuantityPerVideo = currentState.playConfig.orderQuantityPerVideo;
+                quantityText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`;
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'like') {
+                quantityText = `${currentState.likeConfig.videoIds.length} 个视频，共 ${totalTasks} 个点赞`;
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'comment') {
+                quantityText = `${currentState.commentConfig.videoIds.length} 个视频，共 ${totalTasks} 条评论`;
+                total = (totalTasks / 1000) * unitPrice;
+            } else if (service === 'follow') {
+                quantityText = `${currentState.followConfig.targetUsers.length} 个用户`;
+                total = (totalTasks / 1000) * unitPrice;
+            }
+
+            document.getElementById('successOrderId').textContent = orderData.order_id || orderData.id || 'N/A';
+            document.getElementById('successService').textContent = SERVICE_TYPES[service].name;
+            document.getElementById('successQuantity').textContent = quantityText;
+            document.getElementById('successAmount').textContent = `${total.toFixed(2)} USDT`;
+
+            document.getElementById('successModal').classList.add('show');
+        }
+
+        // 隐藏成功模态框
+        function hideSuccessModal() {
+            document.getElementById('successModal').classList.remove('show');
+        }
+
+        // 重置表单
+        function resetForm() {
+            currentState.selectedService = null;
+            currentState.remark = '';
+            
+            // 重置播放配置
+            currentState.playConfig = {
+                videoIds: [],
+        orderQuantityPerVideo: 1
+            };
+            
+            // 重置点赞配置
+            currentState.likeConfig = {
+                videoIds: [],
+                likeCountPerVideo: 1000
+            };
+            
+            // 重置评论配置
+            currentState.commentConfig = {
+                videoIds: [],
+                commentCountPerVideo: 1000,
+                commentTemplates: [],
+                addEmoji: true
+            };
+            
+            // 重置私信配置
+            currentState.followConfig = {
+                targetUsers: [],
+                messageContent: '',
+                addRandomEmoji: true,
+                customEmojis: []
+            };
+
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 重置文件输入
+            document.getElementById('videoIdsFile').value = '';
+            document.getElementById('videoIdsInput').value = '';
+    document.getElementById('playCountPerVideo').value = 1;
+            
+            document.getElementById('likeVideoIdsFile').value = '';
+            document.getElementById('likeVideoIdsInput').value = '';
+            document.getElementById('likeCountPerVideo').value = 1000;
+            
+            document.getElementById('commentVideoIdsFile').value = '';
+            document.getElementById('commentVideoIdsInput').value = '';
+            document.getElementById('commentCountPerVideo').value = 1000;
+            document.getElementById('commentTemplatesFile').value = '';
+            document.getElementById('commentTemplatesInput').value = '';
+            document.getElementById('commentAddEmoji').checked = true;
+            
+            document.getElementById('targetUsersFile').value = '';
+            document.getElementById('targetUsersInput').value = '';
+            document.getElementById('messageContent').value = '';
+            document.getElementById('messageAddRandomEmoji').checked = true;
+            document.getElementById('messageEmojis').value = '';
+            
+            document.getElementById('remark').value = '';
+
+            // 隐藏所有配置区域
+            document.getElementById('playConfig').style.display = 'none';
+            document.getElementById('likeConfig').style.display = 'none';
+            document.getElementById('commentConfig').style.display = 'none';
+            document.getElementById('followConfig').style.display = 'none';
+
+            updateSummary();
+        }
+
+        // 显示主页
+        function showMainPage() {
+            document.getElementById('mainPage').classList.remove('hidden');
+            document.getElementById('progressPage').classList.add('hidden');
+        }
+
+        // 显示进度页面
+        async function showProgressPage() {
+            document.getElementById('mainPage').classList.add('hidden');
+            document.getElementById('progressPage').classList.remove('hidden');
+
+            await loadOrders();
+        }
+
+        // 加载订单列表
+        async function loadOrders() {
+            const orderList = document.getElementById('orderList');
+            orderList.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const cardKey = currentState.cardKey;
+                const response = await fetch(`${API_BASE_URL}/orders?card_key=${encodeURIComponent(cardKey)}`);
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    const orders = result.data || [];
+                    
+                    if (orders.length === 0) {
+                        orderList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">暂无订单</p>';
+                        return;
+                    }
+
+                    orderList.innerHTML = '';
+                    orders.forEach(order => {
+                        const orderItem = createOrderItem(order);
+                        orderList.appendChild(orderItem);
+                    });
+
+                    // 定时刷新进度
+                    setTimeout(loadOrders, 5000); // 每5秒刷新一次
+                } else {
+                    orderList.innerHTML = `<p style="text-align: center; color: #999; padding: 40px;">加载失败: ${result.msg}</p>`;
+                }
+            } catch (error) {
+                console.error('加载订单失败:', error);
+                orderList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">网络错误，请稍后重试</p>';
+            }
+        }
+
+        // 创建订单项
+        function createOrderItem(order) {
+            const div = document.createElement('div');
+            div.className = 'order-item';
+
+            const statusClass = getStatusClass(order.status);
+            const statusText = getStatusText(order.status);
+            const progress = order.complete_num / order.order_num * 100;
+
+            div.innerHTML = `
+                <div class="order-item-header">
+                    <div class="order-item-title">
+                        订单 #${order.id} - ${SERVICE_TYPES[order.service_type]?.name || order.service_type}
+                    </div>
+                    <span class="order-status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="order-info-row" style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                    <span>下单时间: ${order.created_at || 'N/A'}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: ${progress}%"></div>
+                </div>
+                <div class="progress-text">
+                    ${order.complete_num} / ${order.order_num} (${progress.toFixed(1)}%)
+                </div>
+            `;
+
+            return div;
+        }
+
+        // 获取状态类名
+        function getStatusClass(status) {
+            const statusMap = {
+                0: 'pending',
+                1: 'processing',
+                2: 'completed'
+            };
+            return statusMap[status] || 'pending';
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                0: '待处理',
+                1: '处理中',
+                2: '已完成'
+            };
+            return statusMap[status] || '未知';
+        }
+
+        function formatQuota(value) {
+            const num = Number(value) || 0;
+            return num.toFixed(2);
+        }
+
+        function updateCardStatsDisplay(stats) {
+            if (!stats) {
+                return;
+            }
+
+            document.getElementById('cardCompletedOrders').textContent = stats.completed_orders || '0';
+            document.getElementById('cardUsedQuota').textContent = `${formatQuota(stats.used_quota)} USDT`;
+            document.getElementById('cardRemainingQuota').textContent = `${formatQuota(stats.remaining_quota)} USDT`;
+            document.getElementById('cardStatsSection').style.display = 'block';
+        }
+
+        function renderCardQueryStats(stats) {
+            const statsContainer = document.getElementById('cardQueryStats');
+
+            if (!stats) {
+                statsContainer.innerHTML = '<p class="card-query-placeholder">未获取到卡密统计数据</p>';
+                return;
+            }
+
+            statsContainer.innerHTML = `
+                <div class="card-query-stat">
+                    <div class="label">剩余积分</div>
+                    <div class="value">${formatQuota(stats.remaining_quota)}</div>
+                </div>
+                <div class="card-query-stat">
+                    <div class="label">已使用积分</div>
+                    <div class="value">${formatQuota(stats.used_quota)}</div>
+                </div>
+                <div class="card-query-stat">
+                    <div class="label">已完成订单</div>
+                    <div class="value">${stats.completed_orders || 0}</div>
+                </div>
+            `;
+        }
+
+        function renderCardQueryOrders(orders) {
+            const container = document.getElementById('cardQueryOrdersList');
+
+            if (!orders || orders.length === 0) {
+                container.innerHTML = '<p class="card-query-placeholder">该卡密尚未产生订单</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            const list = orders.slice(0, 10);
+
+            list.forEach(order => {
+                const row = document.createElement('div');
+                row.className = 'card-order-row';
+
+                const statusClass = getStatusClass(order.status);
+                const statusText = getStatusText(order.status);
+
+                row.innerHTML = `
+                    <div>
+                        <div class="card-order-title">订单 #${order.id} · ${SERVICE_TYPES[order.service_type]?.name || order.service_type}</div>
+                        <div class="card-order-meta">
+                            数量：${order.order_num || 0} ｜ 完成：${order.complete_num || 0} ｜ 下单时间：${order.created_at || 'N/A'}
+                        </div>
+                    </div>
+                    <span class="order-status ${statusClass}">${statusText}</span>
+                `;
+
+                container.appendChild(row);
+            });
+
+            if (orders.length > list.length) {
+                const tip = document.createElement('p');
+                tip.className = 'card-query-placeholder';
+                tip.textContent = `仅显示最近 ${list.length} 条，共 ${orders.length} 条订单`;
+                container.appendChild(tip);
+            }
+        }
+
+        // 刷新卡密统计
+        async function refreshCardStats() {
+            const cardKey = currentState.cardKey;
+            
+            if (!cardKey) {
+                alert('请先输入卡密');
+                return;
+            }
+
+            try {
+                // 调用API获取卡密统计信息
+                const response = await fetch(`${API_BASE_URL}/card/stats?card_key=${encodeURIComponent(cardKey)}`);
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    updateCardStatsDisplay(result.data || {});
+                } else {
+                    alert(`获取卡密统计失败: ${result.msg}`);
+                }
+            } catch (error) {
+                console.error('获取卡密统计失败:', error);
+                alert('网络错误，请稍后重试');
+            }
+        }
+
+        // 根据订单号查询订单
+        async function searchOrderById() {
+            const orderId = document.getElementById('searchOrderId').value.trim();
+            
+            if (!orderId) {
+                alert('请输入订单号');
+                return;
+            }
+
+            const orderList = document.getElementById('orderList');
+            orderList.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/order/${encodeURIComponent(orderId)}`);
+                const result = await response.json();
+
+                if (result.code === 0) {
+                    const order = result.data;
+                    
+                    if (!order) {
+                        orderList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">未找到该订单</p>';
+                        return;
+                    }
+
+                    orderList.innerHTML = '';
+                    const orderItem = createOrderItem(order);
+                    orderList.appendChild(orderItem);
+                } else {
+                    orderList.innerHTML = `<p style="text-align: center; color: #999; padding: 40px;">查询失败: ${result.msg}</p>`;
+                }
+            } catch (error) {
+                console.error('查询订单失败:', error);
+                orderList.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">网络错误，请稍后重试</p>';
+            }
+        }
+
+        // 加载所有订单（使用卡密）
+        async function loadAllOrders() {
+            const cardKey = currentState.cardKey;
+            
+            if (!cardKey) {
+                alert('请先输入卡密');
+                return;
+            }
+
+            await loadOrders();
+        }
+
+        async function queryCardInfo() {
+            const queryInput = document.getElementById('cardQueryInput');
+            let cardKey = queryInput.value.trim();
+
+            if (!cardKey) {
+                cardKey = document.getElementById('cardKey').value.trim() || currentState.cardKey;
+            }
+
+            if (!cardKey) {
+                alert('请输入卡密');
+                return;
+            }
+
+            const resultContainer = document.getElementById('cardQueryResult');
+            const statsContainer = document.getElementById('cardQueryStats');
+            const ordersContainer = document.getElementById('cardQueryOrdersList');
+
+            resultContainer.classList.remove('hidden');
+            statsContainer.innerHTML = '<div class="loading-spinner" style="width: 40px; height: 40px; margin: 10px auto;"></div>';
+            ordersContainer.innerHTML = '<div class="loading-spinner" style="width: 40px; height: 40px; margin: 10px auto;"></div>';
+
+            try {
+                const [statsResponse, ordersResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/card/stats?card_key=${encodeURIComponent(cardKey)}`),
+                    fetch(`${API_BASE_URL}/orders?card_key=${encodeURIComponent(cardKey)}`)
+                ]);
+
+                const statsResult = await statsResponse.json();
+                const ordersResult = await ordersResponse.json();
+
+                if (statsResult.code === 0) {
+                    const stats = statsResult.data || {};
+                    renderCardQueryStats(stats);
+                    updateCardStatsDisplay(stats);
+                } else {
+                    statsContainer.innerHTML = `<p class="card-query-placeholder">获取卡密统计失败：${statsResult.msg}</p>`;
+                }
+
+                if (ordersResult.code === 0) {
+                    renderCardQueryOrders(ordersResult.data || []);
+                } else {
+                    ordersContainer.innerHTML = `<p class="card-query-placeholder">获取订单失败：${ordersResult.msg}</p>`;
+                }
+
+                setCardKey(cardKey);
+            } catch (error) {
+                console.error('查询卡密信息失败:', error);
+                statsContainer.innerHTML = '<p class="card-query-placeholder">获取卡密统计数据失败</p>';
+                ordersContainer.innerHTML = '<p class="card-query-placeholder">获取订单列表失败</p>';
+            }
+        }
+
+        // 监听卡密输入变化
+        document.getElementById('cardKey').addEventListener('change', async (e) => {
+            const cardKey = e.target.value.trim();
+            if (cardKey) {
+                setCardKey(cardKey);
+                
+                // 自动加载卡密统计
+                await refreshCardStats();
+            }
+        });
+
+        // 监听订单号输入框的回车键
+        document.getElementById('searchOrderId').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchOrderById();
+            }
+        });
+
+        // 页面加载时，如果有卡密则自动加载统计
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentState.cardKey) {
+                refreshCardStats();
+            }
+        });
+    </script>
+</body>
+</html>
+

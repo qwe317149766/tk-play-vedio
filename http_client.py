@@ -124,7 +124,7 @@ class HttpClient:
         }
 
         self._closed = False
-
+        
         # 启动清理线程
         _start_cleanup_thread()
 
@@ -197,7 +197,7 @@ class HttpClient:
                                   f"继续使用，交给回收池处理: user_id={user_id}")
                     
                     return session
-                else:
+            else:
                     # Session 已失效，移除
                     if self.debug:
                         print(f"[HttpClient] Session 已失效，重新创建: user_id={user_id}")
@@ -606,7 +606,7 @@ class HttpClient:
             
             _client_pool.clear()
         
-        if self.debug:
+                if self.debug:
             print(f"[HttpClient] 已关闭，清理了所有 session")
 
     def __del__(self):
