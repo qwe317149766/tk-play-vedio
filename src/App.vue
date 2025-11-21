@@ -338,9 +338,9 @@ function normalizeServiceItem (item, index) {
   return {
     ...item,
     key,
-    icon: item.img || base.icon || '🛠️',
-    name: item.product_name || base.name || `服务 ${index + 1}`,
-    unit: base.unit || (item.unit_num ? `${item.unit_num} 次` : '次'),
+    icon: item.img || '🛠️',
+    name: item.product_name,
+    unit: `${item.unit_num} 次`,
     price: Number(item.price) || 0
   }
 }
