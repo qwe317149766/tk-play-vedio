@@ -17,7 +17,7 @@
     "decode_responses": true,
     "socket_timeout": 5,
     "socket_connect_timeout": 5,
-    "max_connections": 100,
+    "max_connections": 200,
     "default_ex": null
   },
   "message_queue": {

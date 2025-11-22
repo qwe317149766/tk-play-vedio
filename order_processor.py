@@ -63,10 +63,10 @@ try:
     log_file = setup_logging()
 except Exception as e:
     # 如果日志设置失败，回退到基本配置
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
     print(f"警告: 日志文件设置失败: {e}，使用默认控制台输出")
 
 logger = logging.getLogger(__name__)
@@ -1171,23 +1171,23 @@ def get_and_lock_devices(db: MySQLDB, table_name: str, limit: int, status: int =
     retry_count = 0
     
     while retry_count < max_retries:
-    try:
-        start_time = time.time()
-        # 获取时间字段名和主键字段名
-        time_field = get_table_create_time_field(db, table_name)
-        primary_key_field = get_table_primary_key_field(db, table_name)
-        
-        # 开始事务
-        conn = db._get_connection()
-        # 检查连接是否有效
         try:
-            conn.ping(reconnect=False)
-        except Exception as e:
-            logger.warning(f"[get_and_lock_devices] 数据库连接无效，尝试重新连接: {e}")
-            db._close_connection()
+            start_time = time.time()
+            # 获取时间字段名和主键字段名
+            time_field = get_table_create_time_field(db, table_name)
+            primary_key_field = get_table_primary_key_field(db, table_name)
+            
+            # 开始事务
             conn = db._get_connection()
-        
-        original_autocommit = conn.get_autocommit() if hasattr(conn, 'get_autocommit') else (conn.autocommit if isinstance(conn.autocommit, bool) else False)
+            # 检查连接是否有效
+            try:
+                conn.ping(reconnect=False)
+            except Exception as e:
+                logger.warning(f"[get_and_lock_devices] 数据库连接无效，尝试重新连接: {e}")
+                db._close_connection()
+                conn = db._get_connection()
+            
+            original_autocommit = conn.get_autocommit() if hasattr(conn, 'get_autocommit') else (conn.autocommit if isinstance(conn.autocommit, bool) else False)
             conn.autocommit(False)
             
             try:
@@ -1196,71 +1196,71 @@ def get_and_lock_devices(db: MySQLDB, table_name: str, limit: int, status: int =
                     # 使用乐观锁策略：先 SELECT 再 UPDATE，通过 affected_rows 检查并发冲突
                     # 优化：只查询需要的字段，而不是 SELECT *
                     # 强制使用复合索引以避免文件排序
-                select_sql = f"""
+                    select_sql = f"""
                         SELECT {primary_key_field}, device_config, play_num, status, {time_field}, update_time
                         FROM {table_name} USE INDEX (idx_status_playnum_createtime)
-                    WHERE status = %s
+                        WHERE status = %s
                         ORDER BY play_num ASC, {time_field} DESC
-                    LIMIT %s
-                """
-                select_start = time.time()
+                        LIMIT %s
+                    """
+                    select_start = time.time()
                     logger.info(f"[get_and_lock_devices] 正在一次性获取 {limit} 个设备，表: {table_name}")
-                cursor.execute(select_sql, (status, limit))
-                devices = cursor.fetchall()
-                select_elapsed = time.time() - select_start
-                
+                    cursor.execute(select_sql, (status, limit))
+                    devices = cursor.fetchall()
+                    select_elapsed = time.time() - select_start
+                    
                     # 记录查询耗时
-                if select_elapsed > 10.0:
+                    if select_elapsed > 10.0:
                         logger.warning(f"[get_and_lock_devices] SELECT查询耗时: {select_elapsed:.3f}秒, 数量: {limit}, 表: {table_name}")
                     elif select_elapsed > 5.0:
                         logger.info(f"[get_and_lock_devices] SELECT查询耗时: {select_elapsed:.3f}秒, 数量: {limit}")
                     else:
                         logger.info(f"[get_and_lock_devices] SELECT查询耗时: {select_elapsed:.3f}秒")
                 
-                if not devices:
-                    conn.rollback()
+                    if not devices:
+                        conn.rollback()
                         if hasattr(conn, 'close'):
                             conn.close()
                         logger.info(f"[get_and_lock_devices] 没有可用设备 (status={status})，返回空列表")
-                    return []
-                
-                # 步骤2：获取设备ID列表
-                device_ids = [device.get(primary_key_field) for device in devices if device.get(primary_key_field) is not None]
-                
-                if not device_ids:
-                    conn.rollback()
+                        return []
+                    
+                    # 步骤2：获取设备ID列表
+                    device_ids = [device.get(primary_key_field) for device in devices if device.get(primary_key_field) is not None]
+                    
+                    if not device_ids:
+                        conn.rollback()
                         if hasattr(conn, 'close'):
                             conn.close()
                         logger.warning(f"[get_and_lock_devices] 设备主键值为空，返回空列表")
-                    return []
-                
-                # 步骤3：更新设备状态为1（进行中）
+                        return []
+                    
+                    # 步骤3：更新设备状态为1（进行中）
                     # 添加 status = 0 条件，避免更新已被其他进程改变的设备（乐观锁）
-                placeholders = ','.join(['%s'] * len(device_ids))
-                update_sql = f"""
-                    UPDATE {table_name}
-                    SET status = 1
-                    WHERE {primary_key_field} IN ({placeholders})
+                    placeholders = ','.join(['%s'] * len(device_ids))
+                    update_sql = f"""
+                        UPDATE {table_name}
+                        SET status = 1
+                        WHERE {primary_key_field} IN ({placeholders})
                         AND status = 0
-                """
-                cursor.execute(update_sql, device_ids)
-                affected_rows = cursor.rowcount
-                
-                if affected_rows != len(device_ids):
+                    """
+                    cursor.execute(update_sql, device_ids)
+                    affected_rows = cursor.rowcount
+                    
+                    if affected_rows != len(device_ids):
                         logger.warning(f"更新设备状态时，预期更新 {len(device_ids)} 个，实际更新 {affected_rows} 个（可能存在并发竞争）")
                         # 不回滚，提交实际更新的设备
                         if affected_rows == 0:
                             # 所有设备都被其他进程抢占了，回滚并重试
-                    conn.rollback()
+                            conn.rollback()
                             if hasattr(conn, 'close'):
                                 conn.close()
                             logger.warning(f"[get_and_lock_devices] 所有设备都被其他进程抢占，将重试 (attempt {retry_count + 1}/{max_retries})")
                             retry_count += 1
                             time.sleep(0.1 * retry_count)  # 指数退避
                             continue
-                
-                # 提交事务
-                conn.commit()
+                    
+                    # 提交事务
+                    conn.commit()
                     
                     # 如果更新的行数少于预期，只返回成功更新的设备
                     if affected_rows < len(devices):
@@ -1268,13 +1268,13 @@ def get_and_lock_devices(db: MySQLDB, table_name: str, limit: int, status: int =
                         # 简化处理：返回前 affected_rows 个设备
                         devices = devices[:affected_rows]
                     
-                total_elapsed = time.time() - start_time
+                    total_elapsed = time.time() - start_time
                     logger.info(f"[get_and_lock_devices] 成功获取并锁定 {len(devices)} 个设备，总耗时 {total_elapsed:.2f}秒")
                     
-                return devices
+                    return devices
                 
-        except Exception as e:
-            conn.rollback()
+            except Exception as e:
+                conn.rollback()
                 # 检查是否是锁等待超时
                 if hasattr(e, 'args') and len(e.args) > 0 and (1205 in str(e.args) or 'Lock wait timeout' in str(e)):
                     logger.warning(f"[get_and_lock_devices] 锁等待超时，将重试 (attempt {retry_count + 1}/{max_retries})")
@@ -1282,23 +1282,23 @@ def get_and_lock_devices(db: MySQLDB, table_name: str, limit: int, status: int =
                     time.sleep(0.5 * retry_count)  # 指数退避
                     continue
                 else:
-            raise e
-        finally:
+                    raise e
+            finally:
                 # 恢复原来的 autocommit 设置
                 conn.autocommit(original_autocommit)
                 # 归还连接（如果是 ConnectionWrapper）
                 if hasattr(conn, 'close'):
                     conn.close()
             
-    except Exception as e:
-        logger.error(f"在事务中获取并锁定设备失败: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
+        except Exception as e:
+            logger.error(f"在事务中获取并锁定设备失败: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return []
     
     # 重试次数用尽
     logger.error(f"[get_and_lock_devices] 重试次数用尽 ({max_retries} 次)，返回空列表")
-        return []
+    return []
 
 
 def parse_device_config(device_config: str) -> Dict[str, Any]:
@@ -1386,10 +1386,10 @@ async def play_video_task(
                         api.get_seed_async(device, session=flow_session),
                         timeout=30.0  # 30秒超时
                     )
-                # 更新 device 字典
-                device['seed'] = seed
-                device['seed_type'] = seed_type
-                need_update_db = True
+                    # 更新 device 字典
+                    device['seed'] = seed
+                    device['seed_type'] = seed_type
+                    need_update_db = True
                     stage_elapsed = time.time() - stage_start
                     logger.debug(f"[阶段2] 获取 seed 成功, 耗时: {stage_elapsed:.2f}秒")
                 except asyncio.TimeoutError:
@@ -1411,9 +1411,9 @@ async def play_video_task(
                         api.get_token_async(device, session=flow_session),
                         timeout=30.0  # 30秒超时
                     )
-                # 更新 device 字典
-                device['token'] = token
-                need_update_db = True
+                    # 更新 device 字典
+                    device['token'] = token
+                    need_update_db = True
                     stage_elapsed = time.time() - stage_start
                     logger.debug(f"[阶段3] 获取 token 成功, 耗时: {stage_elapsed:.2f}秒")
                 except asyncio.TimeoutError:
@@ -1550,7 +1550,7 @@ async def play_video_task(
                 logger.debug(f"✓ 设备 primary_key={primary_key_value} (device_id={device_id}) 播放次数已记录到Redis")
                 
                 # 2. 如果播放成功且提供了 order_id，更新订单完成次数到Redis
-                    if success and order_id is not None:
+                if success and order_id is not None:
                     increment_order_complete_in_redis(order_id, amount=1)
                     logger.debug(f"✓ 订单 {order_id} 完成次数已记录到Redis")
                     
@@ -1583,13 +1583,13 @@ async def play_video_task(
                 # 设置为0而不是3，让设备可以重复使用
                 def update_device_status():
                     primary_key_field = get_table_primary_key_field(db, device_table)
-                        update_status_sql = f"""
-                            UPDATE {device_table} 
+                    update_status_sql = f"""
+                        UPDATE {device_table} 
                         SET status = 0
-                            WHERE {primary_key_field} = %s
-                        """
-                        with db.get_cursor() as cursor:
-                            cursor.execute(update_status_sql, (primary_key_value,))
+                        WHERE {primary_key_field} = %s
+                    """
+                    with db.get_cursor() as cursor:
+                        cursor.execute(update_status_sql, (primary_key_value,))
                     logger.debug(f"设备 {device_id} 状态已更新为 0（已完成，恢复可用状态，可重复使用）")
                 
                 # 在线程池中执行设备状态更新（不阻塞事件循环）
@@ -1676,12 +1676,12 @@ async def process_order_videos(
     semaphore = asyncio.Semaphore(max_concurrent)
     
     # 获取当前完成数
-        order_info = db.select_one("uni_order", where="id = %s", where_params=(order_id,))
-        if not order_info:
-            logger.error(f"订单 {order_id} 不存在")
-            return 0
-        current_complete = order_info.get('complete_num', 0) or 0
-        current_play_num = order_info.get('play_num', 0) or 0
+    order_info = db.select_one("uni_order", where="id = %s", where_params=(order_id,))
+    if not order_info:
+        logger.error(f"订单 {order_id} 不存在")
+        return 0
+    current_complete = order_info.get('complete_num', 0) or 0
+    current_play_num = order_info.get('play_num', 0) or 0
     
     # 如果 order_num > 0，检查是否已完成
     if order_num > 0 and current_complete >= order_num:
@@ -2033,13 +2033,13 @@ def _threshold_callback_processor():
                             try:
                                 success = _queue_instance.add_task(task)
                                 if success:
-                                added_count += 1
-                        else:
+                                    added_count += 1
+                                else:
                                     failed_count += 1
-                                
-                                # 如果失败过多，提前终止
-                                if failed_count > 5:
-                                    break
+                                    
+                                    # 如果失败过多，提前终止
+                                    if failed_count > 5:
+                                        break
                             except Exception:
                                 failed_count += 1
                                 if failed_count > 5:
@@ -2056,7 +2056,7 @@ def _threshold_callback_processor():
                     queue_increase = queue_size_after - queue_size_before
                     if failed_count > 0:
                         logger.warning(f"[阈值回调] ⚠️ 一次性补齐：成功{added_count}个，失败{failed_count}个 | 队列: {queue_size_before}→{queue_size_after}(+{queue_increase})，已完成: {completed_after}")
-                else:
+                    else:
                         logger.info(f"[阈值回调] ✓ 一次性补齐成功: {added_count}个任务 | 队列: {queue_size_before}→{queue_size_after}(+{queue_increase})，已完成: {completed_after}")
                 else:
                     # 返回空列表，可能是临时失败或没有可用设备
@@ -2129,7 +2129,7 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
             
             with _current_order_lock:
                 if not _current_order:
-                logger.error("[阈值回调] 当前订单为空")
+                    logger.error("[阈值回调] 当前订单为空")
                     return []
                 order_id = _current_order.get('id')
         
@@ -2151,27 +2151,27 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
             import traceback
             logger.error(traceback.format_exc())
             return []
-                
-                if not order_info:
-                    logger.error(f"[阈值回调] 订单 {order_id} 不存在，这是不应该发生的情况！")
+        
+        if not order_info:
+            logger.error(f"[阈值回调] 订单 {order_id} 不存在，这是不应该发生的情况！")
             logger.error(f"[阈值回调停止原因] 当前订单 {order_id} 已被删除或不存在")
-                    return []
-                
-                order_num = order_info.get('order_num', 0) or 0
-                complete_num = order_info.get('complete_num', 0) or 0
-                
-                # 检查订单还需要多少任务
-                if order_num > 0:
-                    remaining_tasks = order_num - complete_num
+            return []
+        
+        order_num = order_info.get('order_num', 0) or 0
+        complete_num = order_info.get('complete_num', 0) or 0
+        
+        # 检查订单还需要多少任务
+        if order_num > 0:
+            remaining_tasks = order_num - complete_num
             
             # 限制获取数量不超过订单剩余任务数
             if remaining_tasks < need_count_with_buffer:
                 need_count_with_buffer = remaining_tasks
                 logger.info(f"[阈值回调] 订单剩余任务数 {remaining_tasks} 小于需求，调整获取数量为 {need_count_with_buffer}")
-                    
-                    # 如果订单已完成，自动切换到下一个订单
-                    if remaining_tasks <= 0:
-                        logger.info(f"[阈值回调] 订单 {order_id} 已完成（complete_num={complete_num} >= order_num={order_num}），更新状态为已完成并切换到下一个订单")
+            
+            # 如果订单已完成，自动切换到下一个订单
+            if remaining_tasks <= 0:
+                logger.info(f"[阈值回调] 订单 {order_id} 已完成（complete_num={complete_num} >= order_num={order_num}），更新状态为已完成并切换到下一个订单")
                 # 更新订单状态为已完成并切换到下一个订单 - 在线程池中执行，避免阻塞
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -2179,9 +2179,9 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                         _db_instance.update("uni_order", {"status": 2}, "id = %s", (order_id,))
                         _db_instance.commit()
                         return _db_instance.select(
-                "uni_order",
-                where="status IN (0, 1)",
-                order_by="id ASC",
+                            "uni_order",
+                            where="status IN (0, 1)",
+                            order_by="id ASC",
                             limit=1
                         )
                     future = executor.submit(switch_order)
@@ -2190,49 +2190,49 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                     except concurrent.futures.TimeoutError:
                         logger.warning(f"[阈值回调] 切换订单操作超时（15秒），返回空列表等待下次回调")
                         return []
-                
-                        if not next_orders:
-                    logger.info("[阈值回调] 没有更多待处理的订单，返回空列表")
-                    logger.info("[阈值回调停止原因] 所有订单已完成，没有待处理的订单")
-                    with _current_order_lock:
+                    
+                    if not next_orders:
+                        logger.info("[阈值回调] 没有更多待处理的订单，返回空列表")
+                        logger.info("[阈值回调停止原因] 所有订单已完成，没有待处理的订单")
+                        with _current_order_lock:
                             _current_order = None
-                            return []
-                        
-                        # 切换到下一个订单
-                with _current_order_lock:
+                        return []
+                    
+                    # 切换到下一个订单
+                    with _current_order_lock:
                         _current_order = next_orders[0]
                         order_info = _current_order
                         order_id = order_info['id']
                         order_num = order_info.get('order_num', 0) or 0
                         complete_num = order_info.get('complete_num', 0) or 0
-                
-                # 缓存新订单的 order_num 到 Redis
-                if _redis is not None:
-                    set_order_num_to_redis(order_id, order_num)
-                    logger.info(f"✓ 切换到新订单 {order_id}，总数已缓存到Redis: order_num={order_num}")
-                        
-                        # 重新计算剩余任务数
-                        if order_num > 0:
-                            remaining_tasks = order_num - complete_num
-                            if remaining_tasks <= 0:
-                                return []
-                    need_count_with_buffer = min(need_count_with_buffer, remaining_tasks)
+                    
+                    # 缓存新订单的 order_num 到 Redis
+                    if _redis is not None:
+                        set_order_num_to_redis(order_id, order_num)
+                        logger.info(f"✓ 切换到新订单 {order_id}，总数已缓存到Redis: order_num={order_num}")
+                    
+                    # 重新计算剩余任务数
+                    if order_num > 0:
+                        remaining_tasks = order_num - complete_num
+                        if remaining_tasks <= 0:
+                            return []
+                        need_count_with_buffer = min(need_count_with_buffer, remaining_tasks)
                     else:
                         # 限制获取的设备数量不超过订单剩余任务数
-                need_count_with_buffer = min(need_count_with_buffer, remaining_tasks)
+                        need_count_with_buffer = min(need_count_with_buffer, remaining_tasks)
         
         if need_count_with_buffer <= 0:
-                    logger.warning(f"[阈值回调] 调整后需要补充数量 <= 0，返回空列表")
-                    return []
-                
-                # 检查订单是否有有效的视频ID
-                order_info_str = order_info.get('order_info', '')
-                video_ids = parse_video_ids(order_info_str)
-                
-                if not video_ids:
+            logger.warning(f"[阈值回调] 调整后需要补充数量 <= 0，返回空列表")
+            return []
+        
+        # 检查订单是否有有效的视频ID
+        order_info_str = order_info.get('order_info', '')
+        video_ids = parse_video_ids(order_info_str)
+        
+        if not video_ids:
             logger.warning(f"[阈值回调] 订单 {order_id} 没有有效的视频ID")
             logger.warning(f"[阈值回调停止原因] 订单 {order_id} 的 order_info 字段为空或格式错误")
-                    return []
+            return []
                 
         # 在事务中从数据库获取设备并更新状态为1（进行中）
         # 使用缓冲数量确保一次性补齐
@@ -2274,8 +2274,8 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
             import traceback
             logger.error(traceback.format_exc())
             return []  # 异常返回空列表，但不停止后续处理
-            
-            if not devices:
+        
+        if not devices:
             logger.warning(f"[阈值回调] 没有可用设备 (status=0)，表: {_device_table_name}")
             
             # 获取队列状态，打印当前任务数量
@@ -2331,13 +2331,13 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                     except Exception as e:
                         logger.error(f"[阈值回调] 检查设备状态时出错: {e}")
             
-            if not devices:
-                logger.info(f"[阈值回调] 本次不添加新任务，等待队列中现有任务完成后释放设备")
-                logger.info(f"[阈值回调] 注意：阈值回调返回空列表不会影响队列中已有任务的正常执行")
-                return []
-            
-            # 为每个设备创建任务
-            tasks = []
+        if not devices:
+            logger.info(f"[阈值回调] 本次不添加新任务，等待队列中现有任务完成后释放设备")
+            logger.info(f"[阈值回调] 注意：阈值回调返回空列表不会影响队列中已有任务的正常执行")
+            return []
+        
+        # 为每个设备创建任务
+        tasks = []
         
         # 获取主键字段名（在线程池中执行，避免阻塞）
         try:
@@ -2353,9 +2353,9 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
             logger.error(f"[阈值回调] 获取主键字段失败: {e}")
             primary_key_field = 'id'  # 默认使用 'id'
         
-            skipped_count = 0
-            
-            for device in devices:
+        skipped_count = 0
+        
+        for device in devices:
             try:
                 # 获取主键值
                 primary_key_value = device.get(primary_key_field)
@@ -2369,7 +2369,7 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                 device_config_str = device.get('device_config', '')
                 if device_config_str:
                     try:
-                    device_dict = parse_device_config(device_config_str)
+                        device_dict = parse_device_config(device_config_str)
                     except Exception as e:
                         logger.warning(f"[阈值回调] 解析设备配置失败: {e}，使用空字典")
                         device_dict = {}
@@ -2399,15 +2399,15 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                 logger.error(f"[阈值回调] 为设备创建任务时异常: {e}")
                 skipped_count += 1
                 continue
-            
-            if skipped_count > 0:
-                logger.warning(f"[阈值回调] 跳过了 {skipped_count} 个没有主键值的设备")
-            
-            if not tasks:
-                logger.warning(f"[阈值回调] 没有创建任何任务（跳过了 {skipped_count} 个设备），返回空列表")
+        
+        if skipped_count > 0:
+            logger.warning(f"[阈值回调] 跳过了 {skipped_count} 个没有主键值的设备")
+        
+        if not tasks:
+            logger.warning(f"[阈值回调] 没有创建任何任务（跳过了 {skipped_count} 个设备），返回空列表")
             # 将设备状态更新回 0，因为任务创建失败 - 在线程池中执行，避免阻塞
-                device_ids = [device.get(primary_key_field) for device in devices if device.get(primary_key_field) is not None]
-                if device_ids:
+            device_ids = [device.get(primary_key_field) for device in devices if device.get(primary_key_field) is not None]
+            if device_ids:
                 try:
                     import concurrent.futures
                     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -2421,15 +2421,15 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                         future.result(timeout=10.0)  # 最多等待10秒
                 except Exception as e:
                     logger.error(f"[阈值回调] 更新设备状态失败: {e}")
-                return []
-            
-            # 确保返回任务列表，补充到队列中
-            if tasks:
-                return tasks  # 返回任务列表，补充到队列
-            else:
-                # 将设备状态更新回 0，因为任务创建失败
-                device_ids = [device.get(primary_key_field) for device in devices if device.get(primary_key_field) is not None]
-                if device_ids:
+            return []
+        
+        # 确保返回任务列表，补充到队列中
+        if tasks:
+            return tasks  # 返回任务列表，补充到队列
+        else:
+            # 将设备状态更新回 0，因为任务创建失败
+            device_ids = [device.get(primary_key_field) for device in devices if device.get(primary_key_field) is not None]
+            if device_ids:
                 try:
                     import concurrent.futures
                     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -2443,11 +2443,11 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
                         future.result(timeout=10.0)  # 最多等待10秒
                 except Exception as e:
                     logger.error(f"[阈值回调] 更新设备状态失败: {e}")
-                return []  # 任务创建失败，返回空列表
-                except Exception as e:
-            logger.error(f"阈值回调执行失败: {e}")
-                    import traceback
-                    logger.error(traceback.format_exc())
+            return []  # 任务创建失败，返回空列表
+    except Exception as e:
+        logger.error(f"阈值回调执行失败: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return []
 
 
@@ -2680,7 +2680,7 @@ async def task_callback(task_data: Dict[str, Any]):
                             logger.info(f"✓ 设备 {device_id} (primary_key={primary_key_value}) 异常状态标记已提交到Redis队列")
                         else:
                             logger.warning(f"设备 {device_id} 的主键值未找到，无法更新状态")
-        except Exception as e:
+                    except Exception as e:
                         logger.error(f"更新设备 {device_id} 状态失败: {e}")
                         import traceback
                         logger.error(traceback.format_exc())
@@ -2692,8 +2692,8 @@ async def task_callback(task_data: Dict[str, Any]):
         # 请求完成（异常），打印主键ID
         logger.info(f"[请求完成] 主键ID: {primary_key_value}, 设备ID: {device_id}, 结果: 异常, 视频ID: {aweme_id}")
         logger.error(f"任务执行异常: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
+        import traceback
+        logger.error(traceback.format_exc())
         # 异常也视为失败，增加失败计数
         device_table = task_data.get('device_table', _device_table_name)
         primary_key_value = task_data.get('primary_key_value')
@@ -2956,15 +2956,15 @@ def main():
                 # 步骤3：在事务中获取并发数数量的设备并更新状态为1（进行中）
                 logger.info("=" * 80)
                 logger.info(f"步骤3：在事务中获取 {_max_concurrent} 个设备并更新状态为1...")
-        logger.info("=" * 80)
-        initial_devices = get_and_lock_devices(
-            db=_db_instance,
-            table_name=_device_table_name,
-            limit=_max_concurrent,
-            status=0
-        )
-        
-        if not initial_devices:
+                logger.info("=" * 80)
+                initial_devices = get_and_lock_devices(
+                    db=_db_instance,
+                    table_name=_device_table_name,
+                    limit=_max_concurrent,
+                    status=0
+                )
+                
+                if not initial_devices:
                     logger.warning("没有可用的设备（status=0），等待设备释放...")
                     logger.info("提示：程序将每30秒检查一次是否有可用设备，按 Ctrl+C 可退出")
                     
@@ -3000,127 +3000,127 @@ def main():
                 logger.info("步骤4：从Redis获取第一个待处理订单...")
                 logger.info("=" * 80)
                 orders = get_all_pending_orders_from_redis()
-        
-        if not orders:
+                
+                if not orders:
                     logger.warning("Redis中没有待处理的订单（这不应该发生，因为步骤1已确保有订单）")
-            # 将设备状态更新回 0
-            device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
-            if device_ids:
-                update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
+                    # 将设备状态更新回 0
+                    device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
+                    if device_ids:
+                        update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
                     # 回到外层循环重新开始
                     logger.info("返回步骤1重新检查订单...")
                     continue
-        
-        order = orders[0]
-        order_id = order['id']
-        order_info_str = order.get('order_info', '')
+                
+                order = orders[0]
+                order_id = order['id']
+                order_info_str = order.get('order_info', '')
                 order_num = order.get('order_num', 0) or 0
-        video_ids = parse_video_ids(order_info_str)
+                video_ids = parse_video_ids(order_info_str)
                 
                 logger.info(f"从Redis获取到第一个订单: ID={order_id}, order_num={order_num}, Redis中共有 {len(orders)} 个待处理订单")
-        
-        if not video_ids:
+                
+                if not video_ids:
                     logger.warning(f"订单 {order_id} 没有有效的视频ID，跳过此订单")
-            # 将设备状态更新回 0
-            device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
-            if device_ids:
-                update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
+                    # 将设备状态更新回 0
+                    device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
+                    if device_ids:
+                        update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
                     # 标记订单为失败状态（可选）
                     _db_instance.update("uni_order", {"status": 3}, "id = %s", (order_id,))
                     _db_instance.commit()
                     # 回到外层循环重新开始
                     logger.info("返回步骤1处理下一个订单...")
                     continue
-        
-        # 设置当前正在处理的订单（全局变量）
-        global _current_order
-        with _current_order_lock:
-            _current_order = order
-        
+                
+                # 设置当前正在处理的订单（全局变量）
+                global _current_order
+                with _current_order_lock:
+                    _current_order = order
+                
                 logger.info(f"使用订单 {order_id}，视频ID数量: {len(video_ids)}，order_num={order_num}，已设置为当前处理订单")
-        
+                
                 # 步骤5：创建初始任务列表
-        logger.info("=" * 80)
+                logger.info("=" * 80)
                 logger.info("步骤5：创建初始任务列表...")
-        logger.info("=" * 80)
-        initial_tasks = []
-        primary_key_field = get_table_primary_key_field(_db_instance, _device_table_name)
-        
-        for device in initial_devices:
+                logger.info("=" * 80)
+                initial_tasks = []
+                primary_key_field = get_table_primary_key_field(_db_instance, _device_table_name)
+                
+                for device in initial_devices:
                     # 获取主键值
-            primary_key_value = device.get(primary_key_field)
-            
-            if not primary_key_value:
+                    primary_key_value = device.get(primary_key_field)
+                    
+                    if not primary_key_value:
                         logger.warning(f"设备主键值为空，跳过")
-                continue
-            
-            # 解析 device_config
-            device_config_str = device.get('device_config', '')
-            if device_config_str:
-                device_dict = parse_device_config(device_config_str)
-            else:
-                device_dict = {}
-            
+                        continue
+                    
+                    # 解析 device_config
+                    device_config_str = device.get('device_config', '')
+                    if device_config_str:
+                        device_dict = parse_device_config(device_config_str)
+                    else:
+                        device_dict = {}
+                    
                     # 从解析后的 device_config 中获取 device_id
                     device_id = device_dict.get('device_id', '')
                     if not device_id:
                         # 如果没有device_id，使用主键值作为标识
                         device_id = str(primary_key_value)
                     
-            # 随机选择一个视频ID
-            aweme_id = random.choice(video_ids)
-            
-            # 创建任务
-            task = {
-                "aweme_id": aweme_id,
-                "device": device_dict,
-                "device_id": device_id,
-                "device_table": _device_table_name,
-                "primary_key_value": primary_key_value,
-                "order_id": order_id
-            }
-            initial_tasks.append(task)
-        
-        logger.info(f"创建了 {len(initial_tasks)} 个初始任务")
-        
+                    # 随机选择一个视频ID
+                    aweme_id = random.choice(video_ids)
+                    
+                    # 创建任务
+                    task = {
+                        "aweme_id": aweme_id,
+                        "device": device_dict,
+                        "device_id": device_id,
+                        "device_table": _device_table_name,
+                        "primary_key_value": primary_key_value,
+                        "order_id": order_id
+                    }
+                    initial_tasks.append(task)
+                
+                logger.info(f"创建了 {len(initial_tasks)} 个初始任务")
+                
                 # 步骤6：创建消息队列（如果还没创建）
-        logger.info("=" * 80)
+                logger.info("=" * 80)
                 if _queue_instance is None:
                     logger.info("步骤6：创建消息队列...")
-        logger.info("=" * 80)
-        _queue_instance = MessageQueue(
-            max_concurrent=_max_concurrent,
-            threshold_callback=threshold_callback,
+                    logger.info("=" * 80)
+                    _queue_instance = MessageQueue(
+                        max_concurrent=_max_concurrent,
+                        threshold_callback=threshold_callback,
                         task_callback=task_callback,
                         task_timeout=300.0  # 5 分钟超时（视频播放任务）
-        )
-        
+                    )
+                    
                     # 步骤7：启动队列
-        logger.info("=" * 80)
+                    logger.info("=" * 80)
                     logger.info("步骤7：启动消息队列...")
-        logger.info("=" * 80)
-        _queue_instance.start()
-        
-        # 等待队列启动
-        logger.info("等待队列启动...")
-        max_wait = 10
-        wait_count = 0
-        while not _queue_instance.is_running and wait_count < max_wait * 10:
-            time.sleep(0.1)
-            wait_count += 1
-            if wait_count % 10 == 0:
-                logger.info(f"等待队列启动... ({wait_count/10:.1f}秒)")
-        
-        if not _queue_instance.is_running:
+                    logger.info("=" * 80)
+                    _queue_instance.start()
+                    
+                    # 等待队列启动
+                    logger.info("等待队列启动...")
+                    max_wait = 10
+                    wait_count = 0
+                    while not _queue_instance.is_running and wait_count < max_wait * 10:
+                        time.sleep(0.1)
+                        wait_count += 1
+                        if wait_count % 10 == 0:
+                            logger.info(f"等待队列启动... ({wait_count/10:.1f}秒)")
+                    
+                    if not _queue_instance.is_running:
                         logger.error("队列启动超时，返回步骤1重试")
                         continue
-        
-        logger.info("队列已启动")
-        
+                    
+                    logger.info("队列已启动")
+                    
                     # 步骤6.5：为事件循环设置专用线程池（解决线程池耗尽问题）
-        logger.info("=" * 80)
+                    logger.info("=" * 80)
                     logger.info("步骤6.5：设置专用线程池...")
-        logger.info("=" * 80)
+                    logger.info("=" * 80)
                     import concurrent.futures
                     # 创建一个足够大的线程池：max_concurrent * 3（每个worker可能同时使用多个线程）
                     thread_pool_size = _max_concurrent * 3
@@ -3138,7 +3138,7 @@ def main():
                         continue
                     
                     # 步骤6.8：启动设备状态监控线程
-        logger.info("=" * 80)
+                    logger.info("=" * 80)
                     logger.info("步骤6.8：启动设备状态监控线程...")
                     logger.info("=" * 80)
                     global _monitor_thread, _monitor_stop_event
@@ -3180,9 +3180,9 @@ def main():
                 # 步骤9：主循环（监控队列状态）
                 logger.info("=" * 80)
                 logger.info("步骤9：进入内层循环，监控队列状态...")
-        logger.info("=" * 80)
-        
-        stats_every = order_config.get("stats_every", 5)
+                logger.info("=" * 80)
+                
+                stats_every = order_config.get("stats_every", 5)
                 
                 # Session 池监控变量
                 last_session_check = time.time()
@@ -3200,16 +3200,16 @@ def main():
                 # 无设备等待计数器
                 no_device_wait_count = 0
                 max_no_device_wait = 6  # 最多等待6个周期（30秒，如果stats_every=5）
-        
-        try:
-            while _queue_instance.is_running:
-                time.sleep(stats_every)  # 主循环中的 sleep，用于控制统计频率
                 
-                queue_stats = _queue_instance.get_stats()
-                queue_size = queue_stats.get("queue_size", 0)
-                running_tasks = queue_stats.get("running_tasks", 0)
-                completed_tasks = queue_stats.get("completed_tasks", 0)
-                failed_tasks = queue_stats.get("failed_tasks", 0)
+                try:
+                    while _queue_instance.is_running:
+                        time.sleep(stats_every)  # 主循环中的 sleep，用于控制统计频率
+                        
+                        queue_stats = _queue_instance.get_stats()
+                        queue_size = queue_stats.get("queue_size", 0)
+                        running_tasks = queue_stats.get("running_tasks", 0)
+                        completed_tasks = queue_stats.get("completed_tasks", 0)
+                        failed_tasks = queue_stats.get("failed_tasks", 0)
                 
                         # 获取当前订单的实时进度（从Redis）
                         order_progress_info = ""
@@ -3227,7 +3227,7 @@ def main():
                                     except:
                                         pass
                         
-                logger.info(f"队列状态: 队列大小={queue_size}, 运行中={running_tasks}/{_max_concurrent}, "
+                        logger.info(f"队列状态: 队列大小={queue_size}, 运行中={running_tasks}/{_max_concurrent}, "
                                   f"队列任务完成={completed_tasks}, 失败={failed_tasks}{order_progress_info}")
                         
                         # 检查失败率，如果过高则发出警告
@@ -3429,18 +3429,18 @@ def main():
                                     logger.warning(f"订单 {order_id} 在Redis中没有order_num数据，尝试从数据库重新加载...")
                                     # 从数据库重新加载订单信息到Redis
                                     try:
-                order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
-                if order_info:
+                                        order_info = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
+                                        if order_info:
                                             # 保存订单信息到Redis
                                             order_info_json = json.dumps(order_info, ensure_ascii=False, default=str)
                                             _redis.hset(REDIS_ORDER_INFO_KEY, str(order_id), order_info_json)
                                             
                                             # 保存order_num到Redis
-                    order_num = order_info.get('order_num', 0) or 0
+                                            order_num = order_info.get('order_num', 0) or 0
                                             _redis.hset(REDIS_ORDER_NUM_KEY, str(order_id), order_num)
                                             
                                             # 保存complete_num到Redis
-                    complete_num = order_info.get('complete_num', 0) or 0
+                                            complete_num = order_info.get('complete_num', 0) or 0
                                             _redis.hset(REDIS_ORDER_COMPLETE_KEY, str(order_id), complete_num)
                                             
                                             logger.info(f"✅ 订单 {order_id} 信息已重新加载到Redis: order_num={order_num}, complete_num={complete_num}")
@@ -3466,7 +3466,7 @@ def main():
                                     
                                     # 更新数据库状态（使用Redis中的完成数）
                                     _db_instance.update("uni_order", {"status": 2, "complete_num": redis_complete}, "id = %s", (order_id,))
-                        _db_instance.commit()
+                                    _db_instance.commit()
                                     logger.info(f"✅ 订单 {order_id} 数据库状态已更新: status=2, complete_num={redis_complete}")
                                     
                                     # 查找下一个待处理订单
@@ -3485,7 +3485,7 @@ def main():
                                     else:
                                         logger.info("没有更多待处理订单")
                                         stop_reason = "所有订单已完成"
-                        break
+                                    break
                                 else:
                                     # 订单未完成，但队列已空
                                     logger.warning(f"⚠️ 订单 {order_id} 未完成但队列已空")
@@ -3509,7 +3509,7 @@ def main():
                         
                         # 注意：订单完成检查已经在队列空闲时立即执行
                         # 这里不再需要定期检查，避免重复查询数据库
-        except KeyboardInterrupt:
+                except KeyboardInterrupt:
                     stop_reason = "用户中断（Ctrl+C）"
                     logger.info(f"[队列停止] 原因: {stop_reason}")
                     raise  # 重新抛出到最外层
@@ -3662,20 +3662,20 @@ def main():
         
         # 打印最终统计
         if _queue_instance:
-        final_stats = _queue_instance.get_stats()
+            final_stats = _queue_instance.get_stats()
             total_tasks = final_stats.get('total_tasks', 0)
             completed_tasks = final_stats.get('completed_tasks', 0)
             failed_tasks = final_stats.get('failed_tasks', 0)
             success_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
             
-        logger.info("=" * 80)
+            logger.info("=" * 80)
             logger.info("📊 最终统计:")
             logger.info(f"  队列总任务数: {total_tasks}")
             logger.info(f"  ✅ 已完成: {completed_tasks}")
             logger.info(f"  ❌ 失败: {failed_tasks}")
             logger.info(f"  📈 成功率: {success_rate:.2f}%")
             logger.info(f"  🛑 停止原因: {stop_reason}")
-        logger.info("=" * 80)
+            logger.info("=" * 80)
             
             # 根据成功率给出评价
             if success_rate >= 80:
