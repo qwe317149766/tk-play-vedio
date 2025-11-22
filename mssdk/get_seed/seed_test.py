@@ -11,7 +11,7 @@ from headers import make_headers
 # 1. Define the URL and query parameters
 import hashlib, time, datetime, base64, os, random
 
-import jpype
+# import jpype
 from Crypto.Cipher import AES
 # 我们需要 pad 和 unpad 分别用于加密填充和解密逆填充
 from Crypto.Util.Padding import pad, unpad
