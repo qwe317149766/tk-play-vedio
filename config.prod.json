@@ -1,19 +1,19 @@
 {
   "mysql": {
-    "host": "your-prod-mysql-host",
+    "host": "localhost",
     "port": 3306,
-    "user": "your-prod-user",
-    "password": "your-prod-password",
+    "user": "ins_fb",
+    "password": "G4fMJZCkjHLLZDNs",
     "database": "tiktok_play",
     "charset": "utf8mb4",
     "autocommit": false,
     "max_connections": 100
   },
   "redis": {
-    "host": "your-prod-redis-host",
+   "host": "localhost",
     "port": 6379,
     "db": 0,
-    "password": "your-prod-redis-password",
+    "password": "a123456",
     "decode_responses": true,
     "socket_timeout": 5,
     "socket_connect_timeout": 5,
@@ -22,7 +22,7 @@
   },
   "message_queue": {
     "max_concurrent": 200,
-    "proxy": "socks5h://your-prod-proxy",
+    "proxy": "socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000",
     "results_log": "state/results.log",
     "device_save_path": "state/devices1.jsonl",
     "sticky_batch": 1,
@@ -32,14 +32,14 @@
     "stats_every": 5,
     "pool_initial_size": 500,
     "pool_max_size": 2000,
-    "pool_grow_step": 1
+    "pool_grow_step": 10
   },
   "order_processor": {
     "page_size": 100,
     "max_concurrent": 200,
     "threshold_size": 600,
     "device_fail_threshold": 3,
-    "proxy": "socks5h://your-prod-proxy",
+    "proxy": "socks5h://accountId-5086-tunnelId-12988-area-us:a123456@proxyas.starryproxy.com:10000",
     "max_session_usage": 50,
     "max_pool_size": 2000,
     "stats_timeout": 45.0,
