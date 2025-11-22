@@ -4,7 +4,7 @@
     "port": 3306,
     "user": "ins_fb",
     "password": "G4fMJZCkjHLLZDNs",
-    "database": "tiktok_play",
+    "database": "ins_fb",
     "charset": "utf8mb4",
     "autocommit": false,
     "max_connections": 100
