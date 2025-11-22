@@ -1,0 +1,50 @@
+{
+  "mysql": {
+    "host": "your-prod-mysql-host",
+    "port": 3306,
+    "user": "your-prod-user",
+    "password": "your-prod-password",
+    "database": "tiktok_play",
+    "charset": "utf8mb4",
+    "autocommit": false,
+    "max_connections": 100
+  },
+  "redis": {
+    "host": "your-prod-redis-host",
+    "port": 6379,
+    "db": 0,
+    "password": "your-prod-redis-password",
+    "decode_responses": true,
+    "socket_timeout": 5,
+    "socket_connect_timeout": 5,
+    "max_connections": 200,
+    "default_ex": null
+  },
+  "message_queue": {
+    "max_concurrent": 200,
+    "proxy": "socks5h://your-prod-proxy",
+    "results_log": "state/results.log",
+    "device_save_path": "state/devices1.jsonl",
+    "sticky_batch": 1,
+    "sticky_fetch_timeout": 0.2,
+    "global_qps": 0,
+    "log_flush_every": 10,
+    "stats_every": 5,
+    "pool_initial_size": 500,
+    "pool_max_size": 2000,
+    "pool_grow_step": 1
+  },
+  "order_processor": {
+    "page_size": 100,
+    "max_concurrent": 200,
+    "threshold_size": 600,
+    "device_fail_threshold": 3,
+    "proxy": "socks5h://your-prod-proxy",
+    "max_session_usage": 50,
+    "max_pool_size": 2000,
+    "stats_timeout": 45.0,
+    "request_delay_min": 0.05,
+    "request_delay_max": 0.15
+  }
+}
+
