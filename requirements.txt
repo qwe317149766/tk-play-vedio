@@ -15,7 +15,7 @@ gmssl>=3.2.1              # 国密算法库（SM3 哈希）
 ecdsa>=0.18.0             # 椭圆曲线数字签名算法
 
 # Protobuf
-protobuf>=4.21.0          # Google Protocol Buffers，用于 TikTok 协议
+protobuf>=6.0.0           # Google Protocol Buffers，用于 TikTok 协议（需要匹配 gencode 版本）
 
 # 数据库
 pymysql>=1.0.2            # MySQL 数据库连接库
