@@ -9,6 +9,8 @@
  - 完整的重试机制和错误处理
  - 修复事件循环绑定问题
 """
+from __future__ import annotations
+
 import time
 import asyncio
 from typing import Optional, Dict, Any
