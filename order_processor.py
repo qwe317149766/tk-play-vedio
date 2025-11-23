@@ -385,15 +385,8 @@ def increment_order_complete_in_redis(order_id: int, amount: int = 1) -> bool:
     
     try:
         _redis.hincrby(REDIS_ORDER_COMPLETE_KEY, str(order_id), amount)
-        
-        # 如果订单有 parent_order_id，同时更新父订单完成次数
-        order_info = get_order_info_from_redis(order_id)
-        if order_info:
-            parent_order_id = order_info.get('parent_order_id')
-            if parent_order_id:
-                increment_parent_order_complete_in_redis(parent_order_id, amount)
-                logger.debug(f"[订单完成] 订单 {order_id} 完成，父订单 {parent_order_id} 完成次数+{amount}")
-        
+        # 注意：父订单完成次数不应该在这里增加，应该在子订单真正完成（status=2）时增加
+        # 这样可以确保每个子订单只计算一次，而不是每次任务完成都计算
         return True
     except Exception as e:
         logger.error(f"[Redis] 增加订单完成次数失败: order_id={order_id}, error={e}")
@@ -533,10 +526,11 @@ def check_and_update_parent_order_completion(order_id: int, db: MySQLDB) -> bool
         # 3. 获取父订单的当前完成次数
         parent_complete_num = get_parent_order_complete_from_redis(parent_order_id)
         
-        logger.debug(f"[父订单检查] 父订单 {parent_order_id}: 完成次数={parent_complete_num}, 需要完成次数={sub_order_num}")
+        logger.info(f"[父订单检查] 父订单 {parent_order_id}: 完成次数={parent_complete_num}, 需要完成次数={sub_order_num}")
         
         # 4. 检查是否达到完成条件（完成次数大于等于 sub_order_num）
         if parent_complete_num >= sub_order_num:
+            logger.info(f"[父订单检查] ✅ 父订单 {parent_order_id} 达到完成条件（{parent_complete_num} >= {sub_order_num}），开始更新状态...")
             # 5. 更新 uni_order 表中所有 parent_order_id = parent_order_id 的记录的 status = 2
             try:
                 db.update("uni_order", {"status": 2}, "parent_order_id = %s", (parent_order_id,))
@@ -545,11 +539,22 @@ def check_and_update_parent_order_completion(order_id: int, db: MySQLDB) -> bool
                 
                 # 6. 同时更新 uni_job_order 表中 order_id = parent_order_id 的记录的 status = 2 和 complate_time
                 try:
-                    db.update("uni_job_order", {"status": 2, "complate_time": datetime.now()}, "order_id = %s", (parent_order_id,))
+                    # complate_time 是 int(11) 类型，使用时间戳（整数）
+                    # 注意：int(11) 在 MySQL 中是有符号整数，范围是 -2147483648 到 2147483647
+                    # 如果字段是无符号整数，范围是 0 到 4294967295
+                    # 当前时间戳（2025年）大约是 1735000000，在范围内
+                    complate_time = int(datetime.now().timestamp())
+                    logger.debug(f"[父订单检查] 准备更新 status=2, complate_time={complate_time} (类型: {type(complate_time).__name__})")
+                    
+                    # 同时更新 status 和 complate_time
+                    update_result = db.update("uni_job_order", {"status": 2, "complate_time": complate_time}, "order_id = %s", (parent_order_id,))
                     db.commit()
-                    logger.info(f"[父订单检查] ✅ 已更新 uni_job_order 表中 order_id={parent_order_id} 的记录状态为 2，并更新完成时间")
+                    logger.info(f"[父订单检查] ✅ 已更新 uni_job_order 表中 order_id={parent_order_id} 的记录: status=2, complate_time={complate_time}（影响行数: {update_result if update_result is not None else '未知'}）")
                 except Exception as job_e:
-                    logger.warning(f"[父订单检查] 更新 uni_job_order 表失败（可能表不存在或记录不存在）: {job_e}")
+                    logger.error(f"[父订单检查] ❌ 更新 uni_job_order 表失败: {job_e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    # 即使更新 uni_job_order 失败，也不影响整体流程，继续执行
                 
                 return True
             except Exception as e:
@@ -914,7 +919,17 @@ def check_and_update_order_completion(order_id: int, db: MySQLDB) -> Tuple[bool,
             _redis.hset(REDIS_ORDER_INFO_KEY, str(order_id), order_info_json)
             logger.info(f"[订单完成检查] ✓ 订单 {order_id} Redis状态已更新为 2（已完成），complete_num={current_complete_num}")
             
-            # 8. 检查并更新父订单完成状态
+            # 8. 子订单真正完成时，增加父订单完成次数
+            order_info_for_parent = get_order_info_from_redis(order_id)
+            if order_info_for_parent:
+                parent_order_id = order_info_for_parent.get('parent_order_id')
+                if parent_order_id:
+                    # 子订单完成时，父订单完成次数+1（每个子订单只计算一次）
+                    increment_parent_order_complete_in_redis(parent_order_id, amount=1)
+                    updated_count = get_parent_order_complete_from_redis(parent_order_id)
+                    logger.info(f"[订单完成] 子订单 {order_id} 已完成，父订单 {parent_order_id} 完成次数+1，当前完成次数={updated_count}")
+            
+            # 9. 检查并更新父订单完成状态
             check_and_update_parent_order_completion(order_id, db)
             
             return True, order_num, current_complete_num
@@ -2291,17 +2306,17 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
         if not _db_instance or not _queue_instance:
             logger.warning("[阈值回调] 数据库或队列实例未初始化")
             return []
-            
-            # 获取队列状态
-            queue_stats = _queue_instance.get_stats()
-            queue_size = queue_stats.get("queue_size", 0)
-            running_tasks = queue_stats.get("running_tasks", 0)
-            
-            # 计算需要获取的设备数量
+        
+        # 获取队列状态
+        queue_stats = _queue_instance.get_stats()
+        queue_size = queue_stats.get("queue_size", 0)
+        running_tasks = queue_stats.get("running_tasks", 0)
+        
+        # 计算需要获取的设备数量
         # 总任务数 = 队列中的任务数 + 正在执行的任务数
         # 需要补充的数量 = 阈值数量 - 总任务数
-            total_in_queue = queue_size + running_tasks
-            need_count = _threshold_size - total_in_queue
+        total_in_queue = queue_size + running_tasks
+        need_count = _threshold_size - total_in_queue
         
         if need_count <= 0:
             return []  # 队列充足，不需要补充
@@ -3231,14 +3246,22 @@ def main():
                 orders = get_all_pending_orders_from_redis()
                 
                 if not orders:
-                    logger.warning("Redis中没有待处理的订单（这不应该发生，因为步骤1已确保有订单）")
-                    # 将设备状态更新回 0
-                    device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
-                    if device_ids:
-                        update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
-                    # 回到外层循环重新开始
-                    logger.info("返回步骤1重新检查订单...")
-                    continue
+                    logger.warning("Redis中没有待处理的订单（可能订单状态已改变），尝试重新从数据库加载...")
+                    # 尝试重新从数据库加载订单
+                    orders_loaded = load_orders_to_redis(_db_instance)
+                    if orders_loaded > 0:
+                        logger.info(f"✅ 重新加载了 {orders_loaded} 个订单到Redis，继续处理")
+                        orders = get_all_pending_orders_from_redis()
+                    
+                    if not orders:
+                        logger.warning("重新加载后仍然没有待处理订单，可能所有订单已完成或被其他进程处理")
+                        # 将设备状态更新回 0
+                        device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
+                        if device_ids:
+                            update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
+                        # 回到外层循环重新开始
+                        logger.info("返回步骤1重新检查订单...")
+                        continue
                 
                 order = orders[0]
                 order_id = order['id']
