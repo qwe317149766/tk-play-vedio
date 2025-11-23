@@ -3123,7 +3123,7 @@ def main():
         logger.info("=" * 80)
         
         while True:  # 外层循环：持续等待和处理订单
-            global _order_completed_flag, _order_completed_lock
+            global _order_completed_flag, _order_completed_lock, _current_order
             
             try:
                 logger.info("")
@@ -3262,9 +3262,28 @@ def main():
                     continue
                 
                 # 设置当前正在处理的订单（全局变量）
-                global _current_order
                 with _current_order_lock:
                     _current_order = order
+                
+                # 检查订单的 proxyUrl，如果不为空则更新代理（只判断一次，后续批次复用）
+                proxy_url = order.get('proxyUrl', '') or order.get('proxy_url', '')
+                # 如果 Redis 中的订单信息没有 proxyUrl，尝试从数据库读取
+                if not proxy_url:
+                    try:
+                        order_from_db = _db_instance.select_one("uni_order", where="id = %s", where_params=(order_id,))
+                        if order_from_db:
+                            proxy_url = order_from_db.get('proxyUrl', '') or order_from_db.get('proxy_url', '')
+                    except Exception as e:
+                        logger.debug(f"从数据库读取订单 {order_id} 的 proxyUrl 失败: {e}")
+                
+                if proxy_url:
+                    try:
+                        _api_instance.update_proxy(proxy_url)
+                        logger.info(f"✅ 订单 {order_id} 的 proxyUrl 不为空，已更新代理为: {proxy_url[:50]}..." if len(proxy_url) > 50 else f"✅ 订单 {order_id} 的 proxyUrl 不为空，已更新代理为: {proxy_url}")
+                    except Exception as e:
+                        logger.error(f"更新代理失败: {e}")
+                else:
+                    logger.debug(f"订单 {order_id} 的 proxyUrl 为空，使用默认代理")
                 
                 logger.info(f"使用订单 {order_id}，视频ID数量: {len(video_ids)}，order_num={order_num}，已设置为当前处理订单")
                 
