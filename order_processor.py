@@ -932,6 +932,22 @@ def check_and_update_order_completion(order_id: int, db: MySQLDB) -> Tuple[bool,
             # 9. 检查并更新父订单完成状态
             check_and_update_parent_order_completion(order_id, db)
             
+            # 10. 立即设置订单完成停止标志，停止添加新任务（但保持队列中运行和等待的任务）
+            global _order_complete_stop_flag, _queue_instance
+            with _order_complete_stop_lock:
+                _order_complete_stop_flag = True
+                logger.info(f"[订单完成] ✅ 订单 {order_id} 已完成，已立即设置停止标志，将停止添加新任务，等待队列中任务完成...")
+            
+            # 11. 立即停止队列的阈值补充机制（通过设置 is_stopped 标志）
+            # 这样可以确保 MessageQueue 不会再触发补充检查
+            if _queue_instance:
+                try:
+                    # 设置队列的停止标志，阻止阈值补充
+                    _queue_instance.is_stopped = True
+                    logger.info(f"[订单完成] ✅ 已立即停止队列的阈值补充机制")
+                except Exception as e:
+                    logger.warning(f"[订单完成] 停止队列补充机制失败: {e}")
+            
             return True, order_num, current_complete_num
         
         return False, order_num, current_complete_num
@@ -2157,6 +2173,10 @@ _threshold_size: int = 3000  # 队列阈值大小（可配置）
 _current_order: Optional[Dict[str, Any]] = None
 _current_order_lock = threading.Lock()
 
+# 订单完成停止标志（用于停止添加新任务，但保持队列中运行的任务）
+_order_complete_stop_flag = False
+_order_complete_stop_lock = threading.Lock()
+
 # 阈值回调队列和控制变量
 _threshold_callback_queue = None  # 阈值回调任务队列
 _threshold_callback_processor_thread = None  # 阈值回调处理器线程
@@ -2174,7 +2194,7 @@ def _threshold_callback_processor():
     """
     global _threshold_callback_queue, _threshold_callback_stop_event
     global _threshold_callback_processing, _threshold_callback_stopped
-    global _queue_instance
+    global _queue_instance, _order_complete_stop_flag, _order_complete_stop_lock
     
     logger.info("[阈值回调处理器] 启动")
     
@@ -2306,6 +2326,12 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
         if not _db_instance or not _queue_instance:
             logger.warning("[阈值回调] 数据库或队列实例未初始化")
             return []
+        
+        # 检查订单完成停止标志，如果已设置则不再添加新任务
+        with _order_complete_stop_lock:
+            if _order_complete_stop_flag:
+                logger.info("[阈值回调] 订单已完成，停止添加新任务（保持队列中运行和等待的任务）")
+                return []  # 返回空列表，不再添加新任务
         
         # 获取队列状态
         queue_stats = _queue_instance.get_stats()
@@ -3751,8 +3777,25 @@ def main():
                                     if next_orders:
                                         next_order = next_orders[0]
                                         next_order_id = next_order['id']
-                                        logger.info(f"发现下一个订单 {next_order_id}，准备切换...")
+                                        logger.info(f"✅ 发现下一个订单 {next_order_id}，准备快速切换...")
                                         stop_reason = "当前订单完成，切换到下一个订单"
+                                        
+                                        # 快速切换：等待队列中运行的任务完成，然后立即切换
+                                        logger.info(f"[快速切换] 等待队列中运行的任务完成...")
+                                        max_wait_time = 30  # 最多等待30秒
+                                        wait_start = time.time()
+                                        while time.time() - wait_start < max_wait_time:
+                                            queue_stats = _queue_instance.get_stats()
+                                            running = queue_stats.get("running_tasks", 0)
+                                            queue_size = queue_stats.get("queue_size", 0)
+                                            if running == 0 and queue_size == 0:
+                                                logger.info(f"[快速切换] ✅ 队列中所有任务已完成，立即切换")
+                                                break
+                                            time.sleep(0.5)  # 每0.5秒检查一次
+                                        else:
+                                            remaining_running = queue_stats.get("running_tasks", 0)
+                                            remaining_queue = queue_stats.get("queue_size", 0)
+                                            logger.warning(f"[快速切换] ⚠️ 等待超时，仍有 {remaining_running} 个运行中的任务和 {remaining_queue} 个等待的任务，继续切换")
                                     else:
                                         logger.info("没有更多待处理订单")
                                         stop_reason = "所有订单已完成"
@@ -3796,10 +3839,22 @@ def main():
                 logger.info("强制清理当前循环的资源...")
                 logger.info("=" * 80)
                 
-                # 0. 重置订单完成标志
+                # 0. 重置订单完成标志和停止标志
                 with _order_completed_lock:
                     _order_completed_flag = False
                 logger.info("✓ 订单完成标志已重置")
+                
+                with _order_complete_stop_lock:
+                    _order_complete_stop_flag = False
+                logger.info("✓ 订单完成停止标志已重置")
+                
+                # 恢复队列的阈值补充机制
+                if _queue_instance:
+                    try:
+                        _queue_instance.is_stopped = False
+                        logger.info("✓ 队列的阈值补充机制已恢复")
+                    except Exception as e:
+                        logger.warning(f"恢复队列补充机制失败: {e}")
                 
                 # 1. 强制停止队列（不等待）
                 if _queue_instance:
