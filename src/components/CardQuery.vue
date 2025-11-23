@@ -49,7 +49,7 @@
             <div class="value">{{ queryStats.complate_job_num }}</div>
           </div>
         </div>
-        <div class="card-query-orders" v-if="queryOrders">
+        <!-- <div class="card-query-orders" v-if="queryOrders">
           <div class="card-query-orders-title">关联订单</div>
           <div class="card-query-orders-list" style="max-height: 400px; overflow-y: auto;">
             <div v-if="queryOrders.length === 0" class="card-query-placeholder">
@@ -75,7 +75,7 @@
               </p>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
