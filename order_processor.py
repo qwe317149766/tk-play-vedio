@@ -97,6 +97,9 @@ REDIS_ORDER_COMPLETE_KEY = "tk_play:order:complete_num"  # Hash: field=order_id,
 REDIS_ORDER_NUM_KEY = "tk_play:order:order_num"  # Hash: field=order_id, value=订单总数（缓存，避免频繁查库）
 REDIS_ORDER_INFO_KEY = "tk_play:order:info"  # Hash: field=order_id, value=JSON(订单完整信息)
 REDIS_DEVICE_STATUS_KEY = "tk_play:device:status_update"  # Hash: field=primary_key_id, value=target_status（设备状态更新队列）
+REDIS_PARENT_ORDER_COMPLETE_KEY = "tk_play:parent_order:complete_num"  # Hash: field=parent_order_id, value=父订单完成次数
+REDIS_ORDER_COMPLETE_ORDER_NUM_KEY = "tk_play:order:complete_order_num"  # Hash: field=order_id, value=子订单的complate_order_num
+REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY = "tk_play:parent_order:sub_order_num"  # Hash: field=parent_order_id, value=父订单的sub_order_num
 
 # 任务统计（用于监控）
 _task_stats = {
@@ -366,7 +369,7 @@ def increment_device_play_in_redis(primary_key_value: int, amount: int = 1) -> b
 
 def increment_order_complete_in_redis(order_id: int, amount: int = 1) -> bool:
     """
-    增加订单完成次数到Redis
+    增加订单完成次数到Redis，同时更新父订单完成次数
     
     Args:
         order_id: 订单ID
@@ -382,6 +385,15 @@ def increment_order_complete_in_redis(order_id: int, amount: int = 1) -> bool:
     
     try:
         _redis.hincrby(REDIS_ORDER_COMPLETE_KEY, str(order_id), amount)
+        
+        # 如果订单有 parent_order_id，同时更新父订单完成次数
+        order_info = get_order_info_from_redis(order_id)
+        if order_info:
+            parent_order_id = order_info.get('parent_order_id')
+            if parent_order_id:
+                increment_parent_order_complete_in_redis(parent_order_id, amount)
+                logger.debug(f"[订单完成] 订单 {order_id} 完成，父订单 {parent_order_id} 完成次数+{amount}")
+        
         return True
     except Exception as e:
         logger.error(f"[Redis] 增加订单完成次数失败: order_id={order_id}, error={e}")
@@ -411,6 +423,148 @@ def get_order_complete_from_redis(order_id: int) -> int:
     except Exception as e:
         logger.error(f"[Redis] 获取订单完成次数失败: order_id={order_id}, error={e}")
         return 0
+
+
+def increment_parent_order_complete_in_redis(parent_order_id: int, amount: int = 1) -> bool:
+    """
+    增加父订单完成次数到Redis
+    
+    Args:
+        parent_order_id: 父订单ID
+        amount: 增量（默认为1）
+    
+    Returns:
+        是否成功
+    """
+    global _redis
+    if _redis is None:
+        logger.error("[Redis] Redis客户端未初始化")
+        return False
+    
+    try:
+        # 如果不存在则创建，存在则增加
+        if not _redis.hexists(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id)):
+            _redis.hset(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id), amount)
+        else:
+            _redis.hincrby(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id), amount)
+        return True
+    except Exception as e:
+        logger.error(f"[Redis] 增加父订单完成次数失败: parent_order_id={parent_order_id}, error={e}")
+        return False
+
+
+def get_parent_order_complete_from_redis(parent_order_id: int) -> int:
+    """
+    从Redis获取父订单完成次数
+    
+    Args:
+        parent_order_id: 父订单ID
+    
+    Returns:
+        父订单完成次数（如果Redis中没有，返回0）
+    """
+    global _redis
+    if _redis is None:
+        logger.error("[Redis] Redis客户端未初始化")
+        return 0
+    
+    try:
+        value = _redis.hget(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id))
+        if value is None:
+            return 0
+        return int(value)
+    except Exception as e:
+        logger.error(f"[Redis] 获取父订单完成次数失败: parent_order_id={parent_order_id}, error={e}")
+        return 0
+
+
+def check_and_update_parent_order_completion(order_id: int, db: MySQLDB) -> bool:
+    """
+    检查并更新父订单完成状态
+    
+    Args:
+        order_id: 子订单ID
+        db: 数据库实例
+    
+    Returns:
+        是否更新了父订单状态
+    """
+    global _redis
+    if _redis is None:
+        logger.error("[Redis] Redis客户端未初始化")
+        return False
+    
+    try:
+        # 1. 从Redis获取订单信息，查找 parent_order_id
+        order_info = get_order_info_from_redis(order_id)
+        if not order_info:
+            logger.warning(f"[父订单检查] 订单 {order_id} 在Redis中不存在，跳过父订单检查")
+            return False
+        
+        parent_order_id = order_info.get('parent_order_id')
+        if not parent_order_id:
+            # 没有父订单，不需要检查
+            return False
+        
+        # 2. 从Redis获取父订单的 sub_order_num（这个值来自子订单的 sub_order_num）
+        sub_order_num_value = _redis.hget(REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY, str(parent_order_id))
+        if sub_order_num_value is None:
+            logger.warning(f"[父订单检查] 父订单 {parent_order_id} 的 sub_order_num 未在Redis中找到，尝试从当前订单读取...")
+            # 尝试从当前订单（子订单）读取 sub_order_num
+            try:
+                sub_order_num = order_info.get('sub_order_num', 0) or 0
+                if sub_order_num > 0:
+                    _redis.hset(REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY, str(parent_order_id), sub_order_num)
+                    logger.debug(f"[父订单检查] ✓ 从当前订单 {order_id} 读取 sub_order_num={sub_order_num} 并存入 Redis（key=parent_order_id={parent_order_id}）")
+                else:
+                    logger.warning(f"[父订单检查] 当前订单 {order_id} 的 sub_order_num={sub_order_num} <= 0，跳过父订单检查")
+                    return False
+            except Exception as e:
+                logger.error(f"[父订单检查] 从当前订单 {order_id} 读取 sub_order_num 失败: {e}")
+                return False
+        else:
+            sub_order_num = int(sub_order_num_value)
+        
+        # 确保 sub_order_num 有值
+        if sub_order_num <= 0:
+            logger.debug(f"[父订单检查] 父订单 {parent_order_id} 的 sub_order_num={sub_order_num} <= 0，无需检查完成状态")
+            return False
+        
+        # 3. 获取父订单的当前完成次数
+        parent_complete_num = get_parent_order_complete_from_redis(parent_order_id)
+        
+        logger.debug(f"[父订单检查] 父订单 {parent_order_id}: 完成次数={parent_complete_num}, 需要完成次数={sub_order_num}")
+        
+        # 4. 检查是否达到完成条件（完成次数大于等于 sub_order_num）
+        if parent_complete_num >= sub_order_num:
+            # 5. 更新 uni_order 表中所有 parent_order_id = parent_order_id 的记录的 status = 2
+            try:
+                db.update("uni_order", {"status": 2}, "parent_order_id = %s", (parent_order_id,))
+                db.commit()
+                logger.info(f"[父订单检查] ✅ 父订单 {parent_order_id} 已完成（完成次数={parent_complete_num} >= sub_order_num={sub_order_num}），已更新 uni_order 表中所有 parent_order_id={parent_order_id} 的记录状态为 2")
+                
+                # 6. 同时更新 uni_job_order 表中 order_id = parent_order_id 的记录的 status = 2 和 complate_time
+                try:
+                    db.update("uni_job_order", {"status": 2, "complate_time": datetime.now()}, "order_id = %s", (parent_order_id,))
+                    db.commit()
+                    logger.info(f"[父订单检查] ✅ 已更新 uni_job_order 表中 order_id={parent_order_id} 的记录状态为 2，并更新完成时间")
+                except Exception as job_e:
+                    logger.warning(f"[父订单检查] 更新 uni_job_order 表失败（可能表不存在或记录不存在）: {job_e}")
+                
+                return True
+            except Exception as e:
+                logger.error(f"[父订单检查] 更新父订单 {parent_order_id} 状态失败: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                return False
+        
+        return False
+        
+    except Exception as e:
+        logger.error(f"[父订单检查] 检查父订单完成状态失败: order_id={order_id}, error={e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return False
 
 
 def set_order_num_to_redis(order_id: int, order_num: int) -> bool:
@@ -512,6 +666,22 @@ def load_orders_to_redis(db: MySQLDB) -> int:
                 logger.info(f"[订单加载] 🔄 订单 {order_id} 已在Redis中，保留Redis数据（complete_num={redis_complete_num}，数据库={complete_num}）")
                 skipped_count += 1
                 
+                # 如果订单有 parent_order_id，确保父订单相关数据已存入 Redis
+                parent_order_id = order.get('parent_order_id')
+                if parent_order_id:
+                    # 直接读取当前订单（子订单）的 sub_order_num
+                    sub_order_num = order.get('sub_order_num', 0) or 0
+                    if sub_order_num > 0:
+                        # 检查 sub_order_num 是否已存入 Redis（以 parent_order_id 为 key）
+                        if not _redis.hexists(REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY, str(parent_order_id)):
+                            _redis.hset(REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY, str(parent_order_id), sub_order_num)
+                            logger.debug(f"[订单加载] ✓ 订单 {order_id} 的 sub_order_num={sub_order_num} 已存入 Redis（key=parent_order_id={parent_order_id}）")
+                    
+                    # 确保父订单完成次数已初始化（如果不存在则创建）
+                    if not _redis.hexists(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id)):
+                        _redis.hset(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id), 0)
+                        logger.debug(f"[订单加载] ✓ 初始化父订单 {parent_order_id} 的完成次数为 0")
+                
                 # 检查Redis中的订单是否已完成
                 if order_num > 0 and redis_complete_num >= order_num:
                     logger.info(f"[订单加载] 🎉 订单 {order_id} 在Redis中已完成（{redis_complete_num}/{order_num}），更新数据库状态")
@@ -553,6 +723,22 @@ def load_orders_to_redis(db: MySQLDB) -> int:
             
             # 3. 初始化订单完成次数（使用数据库中的值）
             _redis.hset(REDIS_ORDER_COMPLETE_KEY, str(order_id), complete_num)
+            
+            # 4. 如果订单有 parent_order_id，处理父订单相关数据
+            parent_order_id = order.get('parent_order_id')
+            if parent_order_id:
+                # 4.1. 直接读取当前订单（子订单）的 sub_order_num
+                sub_order_num = order.get('sub_order_num', 0) or 0
+                if sub_order_num > 0:
+                    # 存储子订单的 sub_order_num 到 Redis（以 parent_order_id 为 key，如果不存在则创建，存在则保留）
+                    if not _redis.hexists(REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY, str(parent_order_id)):
+                        _redis.hset(REDIS_PARENT_ORDER_SUB_ORDER_NUM_KEY, str(parent_order_id), sub_order_num)
+                        logger.debug(f"[订单加载] ✓ 订单 {order_id} 的 sub_order_num={sub_order_num} 已存入 Redis（key=parent_order_id={parent_order_id}）")
+                
+                # 初始化父订单完成次数（如果不存在则创建，存在则保留）
+                if not _redis.hexists(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id)):
+                    _redis.hset(REDIS_PARENT_ORDER_COMPLETE_KEY, str(parent_order_id), 0)
+                    logger.debug(f"[订单加载] ✓ 初始化父订单 {parent_order_id} 的完成次数为 0")
             
             loaded_count += 1
             logger.debug(f"[订单加载] ✓ 订单 {order_id}: order_num={order_num}, complete_num={complete_num}, status={order_status}（从数据库加载）")
@@ -727,6 +913,9 @@ def check_and_update_order_completion(order_id: int, db: MySQLDB) -> Tuple[bool,
             order_info_json = json.dumps(order_info, ensure_ascii=False, default=str)
             _redis.hset(REDIS_ORDER_INFO_KEY, str(order_id), order_info_json)
             logger.info(f"[订单完成检查] ✓ 订单 {order_id} Redis状态已更新为 2（已完成），complete_num={current_complete_num}")
+            
+            # 8. 检查并更新父订单完成状态
+            check_and_update_parent_order_completion(order_id, db)
             
             return True, order_num, current_complete_num
         
