@@ -2326,23 +2326,23 @@ def _execute_threshold_callback() -> List[Dict[str, Any]]:
         if not _db_instance or not _queue_instance:
             logger.warning("[阈值回调] 数据库或队列实例未初始化")
             return []
-        
+            
         # 检查订单完成停止标志，如果已设置则不再添加新任务
         with _order_complete_stop_lock:
             if _order_complete_stop_flag:
                 logger.info("[阈值回调] 订单已完成，停止添加新任务（保持队列中运行和等待的任务）")
                 return []  # 返回空列表，不再添加新任务
         
-        # 获取队列状态
-        queue_stats = _queue_instance.get_stats()
-        queue_size = queue_stats.get("queue_size", 0)
-        running_tasks = queue_stats.get("running_tasks", 0)
-        
-        # 计算需要获取的设备数量
+            # 获取队列状态
+            queue_stats = _queue_instance.get_stats()
+            queue_size = queue_stats.get("queue_size", 0)
+            running_tasks = queue_stats.get("running_tasks", 0)
+            
+            # 计算需要获取的设备数量
         # 总任务数 = 队列中的任务数 + 正在执行的任务数
         # 需要补充的数量 = 阈值数量 - 总任务数
-        total_in_queue = queue_size + running_tasks
-        need_count = _threshold_size - total_in_queue
+            total_in_queue = queue_size + running_tasks
+            need_count = _threshold_size - total_in_queue
         
         if need_count <= 0:
             return []  # 队列充足，不需要补充
@@ -2998,7 +2998,8 @@ def main():
     global _db_instance, _api_instance, _http_client_instance, _queue_instance, _thread_pool
     global _device_table_name, _max_concurrent, _threshold_size, _device_fail_threshold
     global _threshold_callback_queue, _threshold_callback_processor_thread, _threshold_callback_stop_event
-    global _threshold_callback_stopped, _threshold_callback_queue_lock
+    global _threshold_callback_stopped, _threshold_callback_queue_lock, _order_complete_stop_flag, _order_complete_stop_lock
+    global _order_completed_flag, _order_completed_lock, _redis, _current_order, _current_order_lock
     global log_file
     
     # 解析命令行参数
@@ -3281,13 +3282,13 @@ def main():
                     
                     if not orders:
                         logger.warning("重新加载后仍然没有待处理订单，可能所有订单已完成或被其他进程处理")
-                        # 将设备状态更新回 0
-                        device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
-                        if device_ids:
-                            update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
-                        # 回到外层循环重新开始
-                        logger.info("返回步骤1重新检查订单...")
-                        continue
+                    # 将设备状态更新回 0
+                    device_ids = [device.get('id') for device in initial_devices if device.get('id') is not None]
+                    if device_ids:
+                        update_devices_status(_db_instance, device_ids, _device_table_name, status=0)
+                    # 回到外层循环重新开始
+                    logger.info("返回步骤1重新检查订单...")
+                    continue
                 
                 order = orders[0]
                 order_id = order['id']
