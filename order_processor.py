@@ -1,6 +1,12 @@
 """
 订单处理脚本
 从 uni_order 表拉取订单，并发处理视频播放任务
+
+命令行参数：
+    python order_processor.py [table_number]
+    例如：
+    - python order_processor.py 1  # 使用 uni_devices_1 表
+    - python order_processor.py 2  # 使用 uni_devices_2 表
 """
 import os
 import sys
@@ -9,6 +15,7 @@ import time
 import random
 import asyncio
 import threading
+import argparse
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 from mysql_db import MySQLDB
@@ -2729,6 +2736,33 @@ async def task_callback(task_data: Dict[str, Any]):
         raise
 
 
+def parse_args():
+    """
+    解析命令行参数
+    
+    Returns:
+        argparse.Namespace: 解析后的参数对象
+    """
+    parser = argparse.ArgumentParser(
+        description="订单处理脚本 - 从 uni_order 表拉取订单，并发处理视频播放任务",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python order_processor.py 1    # 使用 uni_devices_1 表
+  python order_processor.py 2    # 使用 uni_devices_2 表
+  python order_processor.py      # 使用配置文件中的 device_table 或默认 uni_devices_1
+        """
+    )
+    parser.add_argument(
+        "table_number",
+        type=int,
+        nargs="?",
+        default=None,
+        help="设备表编号（例如: 1 表示使用 uni_devices_1 表，2 表示使用 uni_devices_2 表）"
+    )
+    return parser.parse_args()
+
+
 def main():
     """主函数（使用消息队列）"""
     global _db_instance, _api_instance, _http_client_instance, _queue_instance, _thread_pool
@@ -2736,6 +2770,9 @@ def main():
     global _threshold_callback_queue, _threshold_callback_processor_thread, _threshold_callback_stop_event
     global _threshold_callback_stopped, _threshold_callback_queue_lock
     global log_file
+    
+    # 解析命令行参数
+    args = parse_args()
     
     logger.info("=" * 80)
     logger.info("订单处理程序启动（消息队列模式）")
@@ -2807,7 +2844,16 @@ def main():
     # 从配置文件读取参数
     _max_concurrent = order_config.get("max_concurrent", 1000)
     _threshold_size = order_config.get("threshold_size", 3 * _max_concurrent)  # 默认阈值为并发数的3倍
-    _device_table_name = order_config.get("device_table", "uni_devices_1")
+    
+    # 确定设备表名（优先级：命令行参数 > 配置文件 > 默认值）
+    if args.table_number is not None:
+        # 命令行参数优先
+        _device_table_name = f"uni_devices_{args.table_number}"
+        logger.info(f"使用命令行参数指定的设备表: {_device_table_name}")
+    else:
+        # 从配置文件读取，如果没有则使用默认值
+        _device_table_name = order_config.get("device_table", "uni_devices_1")
+        logger.info(f"使用配置文件中的设备表: {_device_table_name}")
     
     # 从配置文件读取设备连续失败阈值（必须配置）
     if "device_fail_threshold" not in order_config:
@@ -2924,9 +2970,6 @@ def main():
                                     break
                                 else:
                                     logger.info(f"[等待订单] 暂无新订单，{wait_interval}秒后再次检查...")
-                            except KeyboardInterrupt:
-                                logger.info("用户中断等待，程序退出")
-                                raise  # 重新抛出，让外层处理
                             except Exception as e:
                                 logger.error(f"检查订单时出错: {e}")
                                 logger.info(f"{wait_interval}秒后重试...")
@@ -2988,9 +3031,6 @@ def main():
                                 break
                             else:
                                 logger.info(f"[等待设备] 暂无可用设备，{wait_interval}秒后再次检查...")
-                        except KeyboardInterrupt:
-                            logger.info("用户中断等待，程序退出")
-                            raise
                         except Exception as e:
                             logger.error(f"检查设备时出错: {e}")
                             logger.info(f"{wait_interval}秒后重试...")
@@ -3509,10 +3549,6 @@ def main():
                         
                         # 注意：订单完成检查已经在队列空闲时立即执行
                         # 这里不再需要定期检查，避免重复查询数据库
-                except KeyboardInterrupt:
-                    stop_reason = "用户中断（Ctrl+C）"
-                    logger.info(f"[队列停止] 原因: {stop_reason}")
-                    raise  # 重新抛出到最外层
                 except Exception as inner_e:
                     stop_reason = f"主循环异常: {inner_e}"
                     logger.error(f"[队列停止] 原因: {stop_reason}")
@@ -3603,9 +3639,6 @@ def main():
                 # 明确标记：即将回到外层循环开始
                 logger.info("🔄 回到外层循环，重新开始步骤1...")
                 
-            except KeyboardInterrupt:
-                logger.info("用户中断，程序退出")
-                raise  # 退出外层循环
             except Exception as outer_e:
                 logger.error(f"外层循环异常: {outer_e}")
                 import traceback
@@ -3701,5 +3734,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"程序异常退出: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        sys.exit(1)
 
