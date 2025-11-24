@@ -26,6 +26,7 @@ import { SERVICE_TYPES, SERVICE_KEY_MAP } from '../constants'
 const props = defineProps({
   selectedService: String,
   servicePrices: Object,
+  renderedServices: Array,
   playConfig: Object,
   likeConfig: Object,
   commentConfig: Object,
@@ -41,6 +42,25 @@ const summaryService = computed(() => {
 
 const summaryUnitPrice = computed(() => {
   if (!props.selectedService) return '-'
+
+  // 从 renderedServices 中获取当前服务的完整信息
+  const serviceObj = props.renderedServices?.find(s => s.key === props.selectedService)
+  if (serviceObj) {
+    const price = Number(serviceObj.price) || 0
+    const unitNum = Number(serviceObj.unit_num) || 1
+    // 根据服务类型显示不同的单位
+    if (isServiceType(props.selectedService, 'playVedio')) {
+      return `${price} 积分/${unitNum}次播放`
+    } else if (isServiceType(props.selectedService, 'likeVedio')) {
+      return `${price} 积分/${unitNum}个点赞`
+    } else if (isServiceType(props.selectedService, 'commentVedio')) {
+      return `${price} 积分/${unitNum}条评论`
+    } else if (isServiceType(props.selectedService, 'followVedio')) {
+      return `${price} 积分/${unitNum}条私信`
+    }
+  }
+
+  // 降级方案：使用默认值
   const unitPrice = props.servicePrices[props.selectedService] || 0
   const unit = SERVICE_TYPES[props.selectedService]?.unit || ''
   return `${unitPrice} 积分/${unit}`
@@ -81,28 +101,34 @@ const summaryTotal = computed(() => {
   if (!props.selectedService) return '0 积分'
 
   const service = props.selectedService
-  const unitPrice = props.servicePrices[service] || 0
+  // 从 renderedServices 中获取当前服务的完整信息
+  const serviceObj = props.renderedServices?.find(s => s.key === service)
+  if (!serviceObj) return '0 积分'
+
+  const price = Number(serviceObj.price) || 0
+  const unitNum = Number(serviceObj.unit_num) || 1
   let totalTasks = 0
 
   if (isServiceType(service, 'playVedio')) {
     const videoCount = props.playConfig?.videoIds?.length || 0
     const orderQuantityPerVideo = props.playConfig?.orderQuantityPerVideo || 0
     totalTasks = videoCount * orderQuantityPerVideo * 1000
-    return `${((totalTasks / 1000) * unitPrice).toFixed(2)} 积分`
+    // 根据 unit_num 和 price 计算：总价 = (总次数 / 单位次数) * 单价
+    return `${((totalTasks / unitNum) * price).toFixed(2)} 积分`
   } else if (isServiceType(service, 'likeVedio')) {
     const videoCount = props.likeConfig?.videoIds?.length || 0
     const likeCountPerVideo = props.likeConfig?.likeCountPerVideo || 0
     totalTasks = videoCount * likeCountPerVideo
-    return `${((totalTasks / 1000) * unitPrice).toFixed(2)} 积分`
+    return `${((totalTasks / unitNum) * price).toFixed(2)} 积分`
   } else if (isServiceType(service, 'commentVedio')) {
     const videoCount = props.commentConfig?.videoIds?.length || 0
     const commentCountPerVideo = props.commentConfig?.commentCountPerVideo || 0
     totalTasks = videoCount * commentCountPerVideo
-    return `${((totalTasks / 1000) * unitPrice).toFixed(2)} 积分`
+    return `${((totalTasks / unitNum) * price).toFixed(2)} 积分`
   } else if (isServiceType(service, 'followVedio')) {
     const userCount = props.followConfig?.targetUsers?.length || 0
     totalTasks = userCount
-    return `${((totalTasks / 1000) * unitPrice).toFixed(2)} 积分`
+    return `${((totalTasks / unitNum) * price).toFixed(2)} 积分`
   }
 
   return '0 积分'

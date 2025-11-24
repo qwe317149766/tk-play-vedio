@@ -53,8 +53,9 @@
         </div>
 
         <!-- 订单摘要 -->
-        <OrderSummary :selected-service="selectedService" :service-prices="servicePrices" :play-config="playConfig"
-          :like-config="likeConfig" :comment-config="commentConfig" :follow-config="followConfig" />
+        <OrderSummary :selected-service="selectedService" :service-prices="servicePrices"
+          :rendered-services="renderedServices" :play-config="playConfig" :like-config="likeConfig"
+          :comment-config="commentConfig" :follow-config="followConfig" />
 
         <!-- 下单按钮 -->
         <a-button type="primary" size="large" block :disabled="!canSubmit" @click="showConfirmModal"
@@ -348,42 +349,62 @@ function normalizeServiceItem (item, index) {
 function showConfirmModal () {
   if (!selectedService.value) return
 
-  const service = selectedService.value
-  const unitPrice = servicePrices.value[service] || 0
+  const serviceKey = selectedService.value
+  const serviceObj = renderedServices.value.find(s => s.key === serviceKey)
+  if (!serviceObj) return
+
+  // 使用服务对象的 price 和 unit_num 进行计算
+  const price = Number(serviceObj.price) || 0
+  const unitNum = Number(serviceObj.unit_num) || 1
   let detailText = ''
   let totalTasks = 0
   let total = 0
 
-  if (isServiceType(service, 'play')) {
+  if (isServiceType(serviceKey, 'play')) {
     const videoCount = playConfig.value.videoIds.length
     const orderQuantityPerVideo = playConfig.value.orderQuantityPerVideo
     const playCountPerVideo = orderQuantityPerVideo * 1000
     totalTasks = videoCount * playCountPerVideo
     detailText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`
-    total = (totalTasks / 1000) * unitPrice
-  } else if (isServiceType(service, 'like')) {
+    // 根据 unit_num 和 price 计算：总价 = (总次数 / 单位次数) * 单价
+    total = (totalTasks / unitNum) * price
+  } else if (isServiceType(serviceKey, 'like')) {
     const videoCount = likeConfig.value.videoIds.length
     const likeCountPerVideo = likeConfig.value.likeCountPerVideo
     totalTasks = videoCount * likeCountPerVideo
     detailText = `${videoCount} 个视频 × ${likeCountPerVideo} 个点赞 = ${totalTasks} 个点赞`
-    total = (totalTasks / 1000) * unitPrice
-  } else if (isServiceType(service, 'comment')) {
+    total = (totalTasks / unitNum) * price
+  } else if (isServiceType(serviceKey, 'comment')) {
     const videoCount = commentConfig.value.videoIds.length
     const commentCountPerVideo = commentConfig.value.commentCountPerVideo
     totalTasks = videoCount * commentCountPerVideo
     detailText = `${videoCount} 个视频 × ${commentCountPerVideo} 条评论 = ${totalTasks} 条评论`
-    total = (totalTasks / 1000) * unitPrice
-  } else if (isServiceType(service, 'follow')) {
+    total = (totalTasks / unitNum) * price
+  } else if (isServiceType(serviceKey, 'follow')) {
     const userCount = followConfig.value.targetUsers.length
     totalTasks = userCount
     detailText = `${userCount} 个用户`
-    total = (totalTasks / 1000) * unitPrice
+    total = (totalTasks / unitNum) * price
+  }
+
+  // 根据服务类型显示不同的单位
+  let unitText = ''
+  if (isServiceType(serviceKey, 'play')) {
+    unitText = `${unitNum}次播放`
+  } else if (isServiceType(serviceKey, 'like')) {
+    unitText = `${unitNum}个点赞`
+  } else if (isServiceType(serviceKey, 'comment')) {
+    unitText = `${unitNum}条评论`
+  } else if (isServiceType(serviceKey, 'follow')) {
+    unitText = `${unitNum}条私信`
+  } else {
+    unitText = SERVICE_TYPES[serviceKey]?.unit || ''
   }
 
   confirmData.value = {
-    service: SERVICE_TYPES[service].name,
+    service: serviceObj.name || SERVICE_TYPES[serviceKey]?.name || '未知服务',
     quantity: detailText,
-    unitPrice: `${unitPrice} 积分/${SERVICE_TYPES[service].unit}`,
+    unitPrice: `${price} 积分/${unitText}`,
     total: `${total.toFixed(2)} 积分`
   }
 
