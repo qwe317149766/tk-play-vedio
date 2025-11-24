@@ -18,10 +18,10 @@
     </div>
 
     <div class="input-group">
-      <label>每个视频订单数量（每单=1000次播放）</label>
+      <label>每个视频订单数量（每单={{ unitNum }}次播放）</label>
       <a-input-number v-model:value="orderQuantityPerVideo" :min="1" :step="1" style="width: 100%"
-        placeholder="例如：5 表示5000次播放" @change="handleQuantityChange" />
-      <div class="hint">订单以1000次播放为单位，请输入整数订单数</div>
+        :placeholder="`例如：5 表示${5 * unitNum}次播放`" @change="handleQuantityChange" />
+      <div class="hint">订单以{{ unitNum }}次播放为单位，请输入整数订单数</div>
     </div>
   </div>
 </template>
@@ -31,7 +31,11 @@ import { ref, computed, watch } from 'vue'
 import { readTextFile } from '../utils/file'
 
 const props = defineProps({
-  modelValue: Object
+  modelValue: Object,
+  unitNum: {
+    type: Number,
+    default: 1000
+  }
 })
 
 const emit = defineEmits(['update:modelValue'])

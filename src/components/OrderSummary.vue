@@ -79,8 +79,11 @@ const summaryQuantity = computed(() => {
   if (isServiceType(service, 'playVedio')) {
     const videoCount = props.playConfig?.videoIds?.length || 0
     const orderQuantityPerVideo = props.playConfig?.orderQuantityPerVideo || 0
-    const totalTasks = videoCount * orderQuantityPerVideo * 1000
-    return `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`
+    // 从 renderedServices 中获取当前服务的 unit_num
+    const serviceObj = props.renderedServices?.find(s => s.key === service)
+    const unitNum = Number(serviceObj?.unit_num) || 1000
+    const totalTasks = videoCount * orderQuantityPerVideo * unitNum
+    return `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单${unitNum}次播放） = ${totalTasks} 次播放`
   } else if (isServiceType(service, 'likeVedio')) {
     const videoCount = props.likeConfig?.videoIds?.length || 0
     const likeCountPerVideo = props.likeConfig?.likeCountPerVideo || 0
@@ -112,7 +115,7 @@ const summaryTotal = computed(() => {
   if (isServiceType(service, 'playVedio')) {
     const videoCount = props.playConfig?.videoIds?.length || 0
     const orderQuantityPerVideo = props.playConfig?.orderQuantityPerVideo || 0
-    totalTasks = videoCount * orderQuantityPerVideo * 1000
+    totalTasks = videoCount * orderQuantityPerVideo * unitNum
     // 根据 unit_num 和 price 计算：总价 = (总次数 / 单位次数) * 单价
     return `${((totalTasks / unitNum) * price).toFixed(2)} 积分`
   } else if (isServiceType(service, 'likeVedio')) {

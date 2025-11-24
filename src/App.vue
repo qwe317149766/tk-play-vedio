@@ -24,7 +24,7 @@
         </div>
 
         <!-- 播放服务配置 -->
-        <PlayConfig v-if="selectedService === 'playVedio'" v-model="playConfig" />
+        <PlayConfig v-if="selectedService === 'playVedio'" v-model="playConfig" :unit-num="currentServiceUnitNum" />
 
         <!-- 点赞服务配置 -->
         <LikeConfig v-if="selectedService === 'likeVedio'" v-model="likeConfig" />
@@ -304,6 +304,13 @@ const renderedServices = computed(() => {
   return serviceList.value.map((item, index) => normalizeServiceItem(item, index))
 })
 
+// 获取当前选中服务的 unit_num
+const currentServiceUnitNum = computed(() => {
+  if (!selectedService.value) return 1000
+  const serviceObj = renderedServices.value.find(s => s.key === selectedService.value)
+  return Number(serviceObj?.unit_num) || 1000
+})
+
 watch(renderedServices, (list) => {
   const priceMap = {}
   list.forEach((item) => {
@@ -363,9 +370,9 @@ function showConfirmModal () {
   if (isServiceType(serviceKey, 'play')) {
     const videoCount = playConfig.value.videoIds.length
     const orderQuantityPerVideo = playConfig.value.orderQuantityPerVideo
-    const playCountPerVideo = orderQuantityPerVideo * 1000
+    const playCountPerVideo = orderQuantityPerVideo * unitNum
     totalTasks = videoCount * playCountPerVideo
-    detailText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单1000次播放） = ${totalTasks} 次播放`
+    detailText = `${videoCount} 个视频 × ${orderQuantityPerVideo} 单（每单${unitNum}次播放） = ${totalTasks} 次播放`
     // 根据 unit_num 和 price 计算：总价 = (总次数 / 单位次数) * 单价
     total = (totalTasks / unitNum) * price
   } else if (isServiceType(serviceKey, 'like')) {
